@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     paths:
-    - 'packages/evm'
+    - 'packages/evm/**'
   pull_request:
     paths:
-    - 'packages/evm'
+    - 'packages/evm/**'
 
 jobs:
   lint:
