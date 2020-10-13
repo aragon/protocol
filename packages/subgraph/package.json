@@ -1,6 +1,9 @@
 {
   "name": "@aragon/protocol-subgraph",
-  "version": "1.5.0",
+  "version": "1.0.0",
+  "description": "Aragon Protocol subgraph",
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "GPL-3.0",
   "scripts": {
     "draw-schema": "./scripts/draw-schema.sh",
     "build:graph": "./scripts/build-graph.sh",

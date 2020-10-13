@@ -1,7 +1,7 @@
 {
   "name": "@aragon/protocol-evm",
-  "version": "1.5.0",
-  "description": "Aragon Protocol Ethereum contracts",
+  "version": "1.0.0",
+  "description": "Aragon Protocol EVM contracts",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "GPL-3.0",
   "files": [
@@ -51,6 +51,6 @@
     "solidity-coverage": "^0.7.9",
     "solium": "^1.2.5",
     "web3": "^1.2.11",
-    "web3-eth-abi": "1.0.0-beta.33"
+    "web3-eth-abi": "^1.2.11"
   }
 }
