@@ -97,6 +97,11 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
         return super._computeTermRandomness(_termId);
     }
 
+    function _setModule(bytes32 _id, address _addr) internal {
+        IModuleCache[] memory modulesToBeCached = new IModuleCache[](0);
+        _setModule(_id, _addr, modulesToBeCached);
+    }
+
     function _computeTermRandomness(uint64 _termId) internal view returns (bytes32) {
         if (mockedTermRandomness != bytes32(0)) return mockedTermRandomness;
         return super._computeTermRandomness(_termId);

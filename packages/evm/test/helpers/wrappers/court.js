@@ -405,7 +405,7 @@ class CourtHelper {
 
     const ids = Object.values(MODULE_IDS)
     const implementations = [this.disputeManager, this.treasury, this.voting, this.jurorsRegistry, this.subscriptions].map(i => i.address)
-    await this.court.setModules(ids, implementations, { from: this.modulesGovernor })
+    await this.court.setModules(ids, implementations, implementations, { from: this.modulesGovernor })
 
     const zeroTermStartTime = this.firstTermStartTime.sub(this.termDuration)
     await this.setTimestamp(zeroTermStartTime)

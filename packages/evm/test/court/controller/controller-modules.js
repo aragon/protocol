@@ -4,7 +4,7 @@ const { assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/con
 
 const { buildHelper } = require('../../helpers/wrappers/court')
 const { CONTROLLER_ERRORS } = require('../../helpers/utils/errors')
-const { CONTROLLER_EVENTS } = require('../../helpers/utils/events')
+const { CONTROLLER_EVENTS, CONTROLLED_EVENTS } = require('../../helpers/utils/events')
 
 const Controlled = artifacts.require('Controlled')
 
@@ -220,7 +220,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
           context('when the module was not set yet', () => {
             it('sets given module', async () => {
-              const receipt = await controller.setModule(id, module.address, { from })
+              const receipt = await controller.setModule(id, module.address, [], { from })
 
               assert.equal(await controller.getModule(id), module.address, 'module address does not match')
 
@@ -234,13 +234,13 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
             beforeEach('set module', async () => {
               previousModule = await Controlled.new(controller.address)
-              await controller.setModule(id, previousModule.address, { from })
+              await controller.setModule(id, previousModule.address, [], { from })
 
               assert.equal(await controller.getModule(id), previousModule.address, 'module address does not match')
             })
 
             it('overwrites the previous address', async () => {
-              const receipt = await controller.setModule(id, module.address, { from })
+              const receipt = await controller.setModule(id, module.address, [], { from })
 
               assert.equal(await controller.getModule(id), module.address, 'module address does not match')
 
@@ -265,32 +265,62 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             describe(getter, () => {
               context('when the module was not set yet', () => {
                 it('sets given module', async () => {
-                  const receipt = await controller.setModule(id, module.address, { from })
+                  const receipt = await controller.setModule(id, module.address, [module.address], { from })
 
                   assert.equal(await controller[getter](), module.address, 'module address does not match')
 
                   assertAmountOfEvents(receipt, CONTROLLER_EVENTS.MODULE_SET)
                   assertEvent(receipt, CONTROLLER_EVENTS.MODULE_SET, { expectedArgs: { id, addr: module.address } })
+
+                  assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { decodeForAbi: Controlled.abi })
+                  assertEvent(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { expectedArgs: { id, addr: module.address }, decodeForAbi: Controlled.abi })
                 })
               })
 
               context('when the module was already set', () => {
-                let module
+                let previousModule, newModule
 
                 beforeEach('set module', async () => {
-                  module = await Controlled.new(controller.address)
-                  await controller.setModule(id, module.address, { from })
+                  previousModule = await Controlled.new(controller.address)
+                  await controller.setModule(id, previousModule.address, [], { from })
+                  assert.equal(await controller.getModule(id), previousModule.address, 'module address does not match')
 
-                  assert.equal(await controller.getModule(id), module.address, 'module address does not match')
+                  newModule = await Controlled.new(controller.address)
                 })
 
-                it('overwrites the previous implementation', async () => {
-                  const receipt = await controller.setModule(id, module.address, { from })
+                context('when a cache update is requested', async () => {
+                  it('overwrites the previous implementation', async () => {
+                    const receipt = await controller.setModule(id, newModule.address, [previousModule.address], { from })
 
-                  assert.equal(await controller[getter](), module.address, 'module implementation does not match')
+                    assert.equal(await controller[getter](), newModule.address, 'module implementation does not match')
 
-                  assertAmountOfEvents(receipt, CONTROLLER_EVENTS.MODULE_SET)
-                  assertEvent(receipt, CONTROLLER_EVENTS.MODULE_SET, { expectedArgs: { id, addr: module.address } })
+                    assertAmountOfEvents(receipt, CONTROLLER_EVENTS.MODULE_SET)
+                    assertEvent(receipt, CONTROLLER_EVENTS.MODULE_SET, { expectedArgs: { id, addr: newModule.address } })
+                  })
+
+                  it('updates the requested cache', async () => {
+                    const receipt = await controller.setModule(id, newModule.address, [previousModule.address], { from })
+
+                    assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { decodeForAbi: Controlled.abi })
+                    assertEvent(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { expectedArgs: { id, addr: newModule.address }, decodeForAbi: Controlled.abi })
+                  })
+                })
+
+                context('when a cache update is not requested', async () => {
+                  it('overwrites the previous implementation', async () => {
+                    const receipt = await controller.setModule(id, newModule.address, [], { from })
+
+                    assert.equal(await controller[getter](), newModule.address, 'module implementation does not match')
+
+                    assertAmountOfEvents(receipt, CONTROLLER_EVENTS.MODULE_SET)
+                    assertEvent(receipt, CONTROLLER_EVENTS.MODULE_SET, { expectedArgs: { id, addr: newModule.address } })
+                  })
+
+                  it('does not update the requested cache', async () => {
+                    const receipt = await controller.setModule(id, newModule.address, [], { from })
+
+                    assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { expectedAmount: 0, decodeForAbi: Controlled.abi })
+                  })
                 })
               })
             })
@@ -302,7 +332,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
         const module = someone
 
         it('reverts', async () => {
-          await assertRevert(controller.setModule('0x0', module, { from }), CONTROLLER_ERRORS.IMPLEMENTATION_NOT_CONTRACT)
+          await assertRevert(controller.setModule('0x0', module, [], { from }), CONTROLLER_ERRORS.IMPLEMENTATION_NOT_CONTRACT)
         })
       })
 
@@ -310,7 +340,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
         const module = ZERO_ADDRESS
 
         it('reverts', async () => {
-          await assertRevert(controller.setModule('0x0', module, { from }), CONTROLLER_ERRORS.IMPLEMENTATION_NOT_CONTRACT)
+          await assertRevert(controller.setModule('0x0', module, [], { from }), CONTROLLER_ERRORS.IMPLEMENTATION_NOT_CONTRACT)
         })
       })
     })
@@ -319,7 +349,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(controller.setModule('0x0', ZERO_ADDRESS, { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
+        await assertRevert(controller.setModule('0x0', ZERO_ADDRESS, [], { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
       })
     })
   })

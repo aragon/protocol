@@ -2,32 +2,19 @@ pragma solidity ^0.5.8;
 
 import "../../lib/os/IsContract.sol";
 
+import "./Modules.sol";
+import "./IModuleCache.sol";
 import "../clock/CourtClock.sol";
 import "../config/CourtConfig.sol";
 
 
-contract Controller is IsContract, CourtClock, CourtConfig {
+contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
     string private constant ERROR_IMPLEMENTATION_NOT_CONTRACT = "CTR_IMPLEMENTATION_NOT_CONTRACT";
     string private constant ERROR_INVALID_IMPLS_INPUT_LENGTH = "CTR_INVALID_IMPLS_INPUT_LENGTH";
 
     address private constant ZERO_ADDRESS = address(0);
-
-    // DisputeManager module ID - keccak256(abi.encodePacked("DISPUTE_MANAGER"))
-    bytes32 internal constant DISPUTE_MANAGER = 0x14a6c70f0f6d449c014c7bbc9e68e31e79e8474fb03b7194df83109a2d888ae6;
-
-    // Treasury module ID - keccak256(abi.encodePacked("TREASURY"))
-    bytes32 internal constant TREASURY = 0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7;
-
-    // Voting module ID - keccak256(abi.encodePacked("VOTING"))
-    bytes32 internal constant VOTING = 0x7cbb12e82a6d63ff16fe43977f43e3e2b247ecd4e62c0e340da8800a48c67346;
-
-    // JurorsRegistry module ID - keccak256(abi.encodePacked("JURORS_REGISTRY"))
-    bytes32 internal constant JURORS_REGISTRY = 0x3b21d36b36308c830e6c4053fb40a3b6d79dde78947fbf6b0accd30720ab5370;
-
-    // Subscriptions module ID - keccak256(abi.encodePacked("SUBSCRIPTIONS"))
-    bytes32 internal constant SUBSCRIPTIONS = 0x2bfa3327fe52344390da94c32a346eeb1b65a8b583e4335a419b9471e88c1365;
 
     /**
     * @dev Governor of the whole system. Set of three addresses to recover funds, change configuration settings and setup modules
@@ -235,21 +222,25 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     * @notice Set module `_id` to `_addr`
     * @param _id ID of the module to be set
     * @param _addr Address of the module to be set
+    * @param _modulesToBeCached List of modules addresses to be cached
     */
-    function setModule(bytes32 _id, address _addr) external onlyModulesGovernor {
-        _setModule(_id, _addr);
+    function setModule(bytes32 _id, address _addr, IModuleCache[] calldata _modulesToBeCached) external onlyModulesGovernor {
+        _setModule(_id, _addr, _modulesToBeCached);
     }
 
     /**
     * @notice Set many modules at once
     * @param _ids List of ids of each module to be set
-    * @param _addresses List of addressed of each the module to be set
+    * @param _addresses List of addresses of each the module to be set
+    * @param _modulesToBeCached List of modules addresses to be cached about each new module set
     */
-    function setModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyModulesGovernor {
+    function setModules(bytes32[] calldata _ids, address[] calldata _addresses, IModuleCache[] calldata _modulesToBeCached)
+        external onlyModulesGovernor
+    {
         require(_ids.length == _addresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
         for (uint256 i = 0; i < _ids.length; i++) {
-            _setModule(_ids[i], _addresses[i]);
+            _setModule(_ids[i], _addresses[i], _modulesToBeCached);
         }
     }
 
@@ -341,7 +332,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell address of a module based on a given ID
+    * @dev Tell the current address of a module based on a given ID
     * @param _id ID of the module being queried
     * @return Address of the requested module
     */
@@ -350,7 +341,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the address of the DisputeManager module
+    * @dev Tell the address of the current DisputeManager module
     * @return Address of the DisputeManager module
     */
     function getDisputeManager() external view returns (address) {
@@ -358,7 +349,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the address of the Treasury module
+    * @dev Tell the address of the current Treasury module
     * @return Address of the Treasury module
     */
     function getTreasury() external view returns (address) {
@@ -366,7 +357,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the address of the Voting module
+    * @dev Tell the address of the current Voting module
     * @return Address of the Voting module
     */
     function getVoting() external view returns (address) {
@@ -374,7 +365,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the address of the JurorsRegistry module
+    * @dev Tell the address of the current JurorsRegistry module
     * @return Address of the JurorsRegistry module
     */
     function getJurorsRegistry() external view returns (address) {
@@ -382,7 +373,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the address of the Subscriptions module
+    * @dev Tell the address of the current Subscriptions module
     * @return Address of the Subscriptions module
     */
     function getSubscriptions() external view returns (address) {
@@ -420,11 +411,16 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     * @dev Internal function to set a module
     * @param _id Id of the module to be set
     * @param _addr Address of the module to be set
+    * @param _modulesToBeCached List of modules addresses to be cached
     */
-    function _setModule(bytes32 _id, address _addr) internal {
+    function _setModule(bytes32 _id, address _addr, IModuleCache[] memory _modulesToBeCached) internal {
         require(isContract(_addr), ERROR_IMPLEMENTATION_NOT_CONTRACT);
         modules[_id] = _addr;
         emit ModuleSet(_id, _addr);
+
+        for (uint256 i = 0; i < _modulesToBeCached.length; i++) {
+            _modulesToBeCached[i].cacheModule(_id, _addr);
+        }
     }
 
     /**
@@ -436,7 +432,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Internal function to tell the address of the DisputeManager module
+    * @dev Internal function to tell the address of the current DisputeManager module
     * @return Address of the DisputeManager module
     */
     function _getDisputeManager() internal view returns (address) {
@@ -444,7 +440,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Internal function to tell the address of the Subscriptions module
+    * @dev Internal function to tell the address of the current Subscriptions module
     * @return Address of the Subscriptions module
     */
     function _getSubscriptions() internal view returns (address) {
@@ -452,7 +448,7 @@ contract Controller is IsContract, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Internal function to tell address of a module based on a given ID
+    * @dev Internal function to tell latest address registered for a module based on a given ID
     * @param _id ID of the module being queried
     * @return Address of the requested module
     */
