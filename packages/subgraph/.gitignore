@@ -1,8 +1,7 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
-# Dependencies
-node_modules
-
-# Logs
-yarn-debug.log*
-yarn-error.log*
+# Production
+build
+types
+subgraph.yaml
+blacklisted-modules.ts

@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: master
+    paths:
+    - 'packages/evm/**'
   pull_request:
-    branches: '*'
+    paths:
+    - 'packages/evm/**'
 
 jobs:
   lint:
@@ -18,8 +20,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Lint
-      run: yarn lint
-  court_controller:
+      run: yarn workspace @aragon/protocol-evm lint
+
+  controller:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -30,8 +33,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Court Controller
-      run: yarn test test/court/**/*.js test/court/*.js test/arbitration/*.js
-  court_disputes:
+      run: yarn workspace @aragon/protocol-evm test:controller
+
+  disputes:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -42,8 +46,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Court Disputes
-      run: yarn test test/disputes/disputes-{create,evidence,draft}.js
-  court_appeals:
+      run: yarn workspace @aragon/protocol-evm test:disputes
+
+  appeals:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -54,8 +59,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Court Appeals
-      run: yarn test test/disputes/disputes-{voting,appeal,confirm-appeal}.js
-  court_settle_rounds:
+      run: yarn workspace @aragon/protocol-evm test:appeals
+
+  settle_rounds:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -66,8 +72,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Court Settle Rounds
-      run: yarn test test/disputes/disputes-settle-round.js
-  court_settle_appeals:
+      run: yarn workspace @aragon/protocol-evm test:settle-rounds
+
+  settle_appeals:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -78,7 +85,8 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Court Settle Appeals
-      run: yarn test test/disputes/disputes-settle-appeal.js
+      run: yarn workspace @aragon/protocol-evm test:settle-appeals
+
   registry:
     runs-on: ubuntu-latest
     steps:
@@ -90,7 +98,8 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Registry
-      run: yarn test test/registry/*.js
+      run: yarn workspace @aragon/protocol-evm test:registry
+
   lib:
     runs-on: ubuntu-latest
     steps:
@@ -102,7 +111,8 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Lib
-      run: yarn test test/lib/*.js
+      run: yarn workspace @aragon/protocol-evm test:lib
+
   voting:
     runs-on: ubuntu-latest
     steps:
@@ -114,7 +124,8 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Voting
-      run : yarn test test/voting/*.js
+      run : yarn workspace @aragon/protocol-evm test:voting
+
   subscriptions:
     runs-on: ubuntu-latest
     steps:
@@ -126,8 +137,9 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Subscriptions
-      run: yarn test test/subscriptions/*.js
-  controller:
+      run: yarn workspace @aragon/protocol-evm test:subscriptions
+
+  treasury:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -138,6 +150,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Treasury
-      run: yarn test test/treasury/court-treasury.js
+      run: yarn workspace @aragon/protocol-evm test:treasury
+
 env:
   CI: true
