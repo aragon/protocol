@@ -9,9 +9,8 @@ const ERC20 = artifacts.require('ERC20Mock')
 const DisputeManager = artifacts.require('DisputeManager')
 const CourtClock = artifacts.require('CourtClock')
 const Arbitrable = artifacts.require('ArbitrableMock')
-const FakeArbitrable = artifacts.require('FakeArbitrableMock')
 
-contract('DisputeManager', () => {
+contract('DisputeManager', ([_, fakeArbitrable]) => {
   let courtHelper, court, disputeManager, feeToken, arbitrable
 
   const termDuration = bn(ONE_DAY)
@@ -175,14 +174,15 @@ contract('DisputeManager', () => {
     })
 
     context('when the sender is not an arbitrable', () => {
-      let fakeArbitrable
+      it('creates a dispute', async () => {
+        const { disputeFees } = await courtHelper.getDisputeFees()
+        await courtHelper.mintFeeTokens(fakeArbitrable, disputeFees)
+        await feeToken.approve(disputeManager.address, disputeFees, { from: fakeArbitrable })
 
-      beforeEach('mock non arbitrable', async () => {
-        fakeArbitrable = await FakeArbitrable.new(court.address)
-      })
+        const receipt = await court.createDispute(2, '0xabcd', { from: fakeArbitrable })
 
-      it('reverts', async () => {
-        await assertRevert(fakeArbitrable.createDispute(2, '0x'), ARAGON_COURT_ERRORS.SENDER_NOT_ARBITRABLE)
+        assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { decodeForAbi: DisputeManager.abi })
+        assertEvent(receipt, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: fakeArbitrable, metadata: '0xabcd' }, decodeForAbi: DisputeManager.abi })
       })
     })
 

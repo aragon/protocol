@@ -3,13 +3,12 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { buildHelper, DEFAULTS } = require('../helpers/wrappers/court')
 const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
-const { DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
+const { ARAGON_COURT_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Arbitrable = artifacts.require('ArbitrableMock')
 const DisputeManager = artifacts.require('DisputeManager')
-const FakeArbitrable = artifacts.require('FakeArbitrableMock')
 
-contract('DisputeManager', ([_, juror500, juror1000, juror1500]) => {
+contract('DisputeManager', ([_, juror500, juror1000, juror1500, fakeArbitrable]) => {
   let courtHelper, court, disputeManager, arbitrable, disputeId
 
   const jurors = [
@@ -130,14 +129,8 @@ contract('DisputeManager', ([_, juror500, juror1000, juror1500]) => {
     })
 
     context('when the sender is not the arbitrable of the dispute', () => {
-      let fakeArbitrable
-
-      beforeEach('mock non arbitrable', async () => {
-        fakeArbitrable = await FakeArbitrable.new(court.address)
-      })
-
       it('reverts', async () => {
-        await assertRevert(fakeArbitrable.submitEvidence(disputeId, '0x', true), DISPUTE_MANAGER_ERRORS.SENDER_NOT_DISPUTE_SUBJECT)
+        await assertRevert(court.submitEvidence(disputeId, juror500, '0x', { from: fakeArbitrable }), ARAGON_COURT_ERRORS.ERROR_SENDER_NOT_DISPUTE_SUBJECT)
       })
     })
 
