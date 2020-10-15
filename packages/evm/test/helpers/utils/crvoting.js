@@ -36,7 +36,8 @@ async function createRepresetativeAuthorization(voting, voteId, voter, represent
     { type: 'bytes1', value: '0x19' },
     { type: 'bytes1', value: '0x01' },
     { type: 'bytes32', value: domainSeparator },
-    { type: 'bytes32', value:
+    { type: 'bytes32',
+      value:
       keccak256(
         abi.encodeParameters(
           ['bytes32', 'uint256', 'address', 'address'],
@@ -55,5 +56,5 @@ module.exports = {
   outcomeFor,
   oppositeOutcome,
   createRepresetativeAuthorization,
-  COMMIT_WITH_SIG_TYPEHASH,
+  COMMIT_WITH_SIG_TYPEHASH
 }
