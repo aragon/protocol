@@ -50,7 +50,7 @@ contract('Controller', ([_, modulesGovernor]) => {
     it('cannot create disputes if disabled', async () => {
       await court.disableModule(previousDisputeManager.address, { from: modulesGovernor })
 
-      await assertRevert(courtHelper.dispute(), CONTROLLED_ERRORS.ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
+      await assertRevert(courtHelper.dispute(), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
     })
   })
 

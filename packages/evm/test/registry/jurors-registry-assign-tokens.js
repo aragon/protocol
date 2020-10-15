@@ -185,7 +185,7 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(registry.assignTokens(juror, bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(registry.assignTokens(juror, bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })
@@ -243,7 +243,7 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(registry.burnTokens(bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(registry.burnTokens(bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })

@@ -364,7 +364,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       }
 
       context('when the given address was not registered yet', () => {
-        it ('reverts', async () => {
+        it('reverts', async () => {
           await assertRevert(controller.disableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
         })
       })
@@ -384,7 +384,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
               await controller.disableModule(module.address, { from })
             })
 
-            it ('reverts', async () => {
+            it('reverts', async () => {
               await assertRevert(controller.disableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_ALREADY_DISABLED)
             })
           })
@@ -414,7 +414,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
               await controller.disableModule(module.address, { from })
             })
 
-            it ('reverts', async () => {
+            it('reverts', async () => {
               await assertRevert(controller.disableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_ALREADY_DISABLED)
             })
 
@@ -458,7 +458,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       }
 
       context('when the given address was not registered yet', () => {
-        it ('reverts', async () => {
+        it('reverts', async () => {
           await assertRevert(controller.enableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
         })
       })
@@ -470,7 +470,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
         context('when the given address is the current module', () => {
           context('when the given address was already enabled', () => {
-            it ('reverts', async () => {
+            it('reverts', async () => {
               await assertRevert(controller.enableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_ALREADY_ENABLED)
             })
           })
@@ -501,7 +501,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
           context('when the given address was already enabled', () => {
             itDoesNotAffectTheCurrentModule()
 
-            it ('reverts', async () => {
+            it('reverts', async () => {
               await assertRevert(controller.enableModule(module.address, { from }), CONTROLLER_ERRORS.MODULE_ALREADY_ENABLED)
             })
           })

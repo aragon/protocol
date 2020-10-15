@@ -99,7 +99,7 @@ contract('CRVoting', ([_, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(voting.create(1, 2, { from }), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(voting.create(1, 2, { from }), CONTROLLED_ERRORS.SENDER_NOT_CURRENT_DISPUTE_MANAGER)
       })
     })
   })
