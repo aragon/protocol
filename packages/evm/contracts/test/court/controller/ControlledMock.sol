@@ -23,7 +23,7 @@ contract ControlledMock is Controlled {
         emit EtherReceived(msg.sender, msg.value);
     }
 
-    function fail() external {
+    function fail() external pure {
         revert('CONTROLLED_FAIL');
     }
 }
