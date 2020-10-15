@@ -142,6 +142,7 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
         address target = customFunctions[msg.sig];
         require(target != address(0), ERROR_CUSTOM_FUNCTION_NOT_SET);
 
+        // solium-disable-next-line security/no-call-value
         (bool success,) = address(target).call.value(msg.value)(msg.data);
         assembly {
             let size := returndatasize
