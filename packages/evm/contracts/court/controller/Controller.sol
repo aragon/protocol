@@ -11,6 +11,9 @@ import "../config/CourtConfig.sol";
 contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
+    string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
+    string private constant ERROR_MODULE_ALREADY_ENABLED = "CTR_MODULE_ALREADY_ENABLED";
+    string private constant ERROR_MODULE_ALREADY_DISABLED = "CTR_MODULE_ALREADY_DISABLED";
     string private constant ERROR_IMPLEMENTATION_NOT_CONTRACT = "CTR_IMPLEMENTATION_NOT_CONTRACT";
     string private constant ERROR_INVALID_IMPLS_INPUT_LENGTH = "CTR_INVALID_IMPLS_INPUT_LENGTH";
 
@@ -25,13 +28,26 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
         address modules;    // This address can be unset at any time. It is allowed to plug/unplug modules from the system
     }
 
+    /**
+    * @dev Module information
+    */
+    struct Module {
+        bytes32 id;         // ID associated to a module
+        bool disabled;      // Whether the module is disabled
+    }
+
     // Governor addresses of the system
     Governor private governor;
 
-    // List of modules registered for the system indexed by ID
-    mapping (bytes32 => address) internal modules;
+    // List of current modules registered for the system indexed by ID
+    mapping (bytes32 => address) internal currentModules;
+
+    // List of all modules registered for the system indexed by address
+    mapping (address => Module) internal allModules;
 
     event ModuleSet(bytes32 id, address addr);
+    event ModuleEnabled(bytes32 id, address addr);
+    event ModuleDisabled(bytes32 id, address addr);
     event FundsGovernorChanged(address previousGovernor, address currentGovernor);
     event ConfigGovernorChanged(address previousGovernor, address currentGovernor);
     event ModulesGovernorChanged(address previousGovernor, address currentGovernor);
@@ -222,25 +238,69 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     * @notice Set module `_id` to `_addr`
     * @param _id ID of the module to be set
     * @param _addr Address of the module to be set
-    * @param _modulesToBeCached List of modules addresses to be cached
     */
-    function setModule(bytes32 _id, address _addr, IModuleCache[] calldata _modulesToBeCached) external onlyModulesGovernor {
-        _setModule(_id, _addr, _modulesToBeCached);
+    function setModule(bytes32 _id, address _addr) external onlyModulesGovernor {
+        _setModule(_id, _addr);
     }
 
     /**
     * @notice Set many modules at once
     * @param _ids List of ids of each module to be set
     * @param _addresses List of addresses of each the module to be set
-    * @param _modulesToBeCached List of modules addresses to be cached about each new module set
     */
-    function setModules(bytes32[] calldata _ids, address[] calldata _addresses, IModuleCache[] calldata _modulesToBeCached)
-        external onlyModulesGovernor
-    {
+    function setModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyModulesGovernor {
         require(_ids.length == _addresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
         for (uint256 i = 0; i < _ids.length; i++) {
-            _setModule(_ids[i], _addresses[i], _modulesToBeCached);
+            _setModule(_ids[i], _addresses[i]);
+        }
+    }
+
+    /**
+    * @notice Disabled module `_addr`
+    * @dev Current modules can be disabled to allow pausing the protocol. However, these can be enabled back again, see `enableModule`
+    * @param _addr Address of the module to be disabled
+    */
+    function disableModule(address _addr) external onlyModulesGovernor {
+        Module storage module = allModules[_addr];
+        _ensureModuleExists(module);
+        require(!module.disabled, ERROR_MODULE_ALREADY_DISABLED);
+
+        module.disabled = true;
+        emit ModuleDisabled(module.id, _addr);
+    }
+
+    /**
+    * @notice Enable module `_addr`
+    * @param _addr Address of the module to be enabled
+    */
+    function enableModule(address _addr) external onlyModulesGovernor {
+        Module storage module = allModules[_addr];
+        _ensureModuleExists(module);
+        require(module.disabled, ERROR_MODULE_ALREADY_ENABLED);
+
+        module.disabled = false;
+        emit ModuleEnabled(module.id, _addr);
+    }
+
+    /**
+    * @notice Sync modules' cache for a list of modules IDs based on their current address
+    * @param _modules List of modules addresses to be synced
+    * @param _ids List of IDs of the modules to be cached
+    */
+    function cacheModules(IModuleCache[] calldata _modules, bytes32[] calldata _ids) external onlyModulesGovernor {
+        require(_ids.length > 0 && _modules.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
+        address[] memory addresses = new address[](_ids.length);
+
+        for (uint256 i = 0; i < _ids.length; i++) {
+            address moduleAddress = currentModules[_ids[i]];
+            Module storage module = allModules[moduleAddress];
+            _ensureModuleExists(module);
+            addresses[i] = moduleAddress;
+        }
+
+        for (uint256 j = 0; j < _modules.length; j++) {
+            _modules[j].cacheModules(_ids, addresses);
         }
     }
 
@@ -332,52 +392,81 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the current address of a module based on a given ID
-    * @param _id ID of the module being queried
-    * @return Address of the requested module
+    * @dev Tell if a given module is active
+    * @param _id ID of the module to be checked
+    * @param _addr Address of the module to be checked
+    * @return True if the given module address has the requested ID and is enabled
     */
-    function getModule(bytes32 _id) external view returns (address) {
+    function isActive(bytes32 _id, address _addr) external view returns (bool) {
+        Module storage module = allModules[_addr];
+        return module.id == _id && !module.disabled;
+    }
+
+    /**
+    * @dev Tell the current ID and disable status of a module based on a given address
+    * @param _addr Address of the requested module
+    * @return id ID of the module being queried
+    * @return disabled Whether the module has been disabled
+    */
+    function getModuleByAddress(address _addr) external view returns (bytes32 id, bool disabled) {
+        Module storage module = allModules[_addr];
+        id = module.id;
+        disabled = module.disabled;
+    }
+
+    /**
+    * @dev Tell the current address and disable status of a module based on a given ID
+    * @param _id ID of the module being queried
+    * @return addr Current address of the requested module
+    * @return disabled Whether the module has been disabled
+    */
+    function getModule(bytes32 _id) external view returns (address addr, bool disabled) {
         return _getModule(_id);
     }
 
     /**
     * @dev Tell the address of the current DisputeManager module
-    * @return Address of the DisputeManager module
+    * @return addr Current address of the DisputeManager module
+    * @return disabled Whether the module has been disabled
     */
-    function getDisputeManager() external view returns (address) {
-        return _getDisputeManager();
+    function getDisputeManager() external view returns (address addr, bool disabled) {
+        return _getModule(DISPUTE_MANAGER);
     }
 
     /**
-    * @dev Tell the address of the current Treasury module
-    * @return Address of the Treasury module
+    * @dev Tell the current address of the current Treasury module
+    * @return addr Current address of the Treasury module
+    * @return disabled Whether the module has been disabled
     */
-    function getTreasury() external view returns (address) {
+    function getTreasury() external view returns (address addr, bool disabled) {
         return _getModule(TREASURY);
     }
 
     /**
-    * @dev Tell the address of the current Voting module
-    * @return Address of the Voting module
+    * @dev Tell the current address of the current Voting module
+    * @return addr Current address of the Voting module
+    * @return disabled Whether the module has been disabled
     */
-    function getVoting() external view returns (address) {
+    function getVoting() external view returns (address addr, bool disabled) {
         return _getModule(VOTING);
     }
 
     /**
-    * @dev Tell the address of the current JurorsRegistry module
-    * @return Address of the JurorsRegistry module
+    * @dev Tell the current address of the current JurorsRegistry module
+    * @return addr Current address of the JurorsRegistry module
+    * @return disabled Whether the module has been disabled
     */
-    function getJurorsRegistry() external view returns (address) {
+    function getJurorsRegistry() external view returns (address addr, bool disabled) {
         return _getModule(JURORS_REGISTRY);
     }
 
     /**
-    * @dev Tell the address of the current Subscriptions module
-    * @return Address of the Subscriptions module
+    * @dev Tell the current address of the current Subscriptions module
+    * @return addr Current a of the Subscriptions module
+    * @return disabled Whether the module has been disabled
     */
-    function getSubscriptions() external view returns (address) {
-        return _getSubscriptions();
+    function getSubscriptions() external view returns (address addr, bool disabled) {
+        return _getModule(SUBSCRIPTIONS);
     }
 
     /**
@@ -408,19 +497,17 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Internal function to set a module
+    * @dev Internal function to set an address as the current implementation for a module
+    *      Note that the disabled condition is not affected, if the module was not set before it will be enabled by default
     * @param _id Id of the module to be set
     * @param _addr Address of the module to be set
-    * @param _modulesToBeCached List of modules addresses to be cached
     */
-    function _setModule(bytes32 _id, address _addr, IModuleCache[] memory _modulesToBeCached) internal {
+    function _setModule(bytes32 _id, address _addr) internal {
         require(isContract(_addr), ERROR_IMPLEMENTATION_NOT_CONTRACT);
-        modules[_id] = _addr;
-        emit ModuleSet(_id, _addr);
 
-        for (uint256 i = 0; i < _modulesToBeCached.length; i++) {
-            _modulesToBeCached[i].cacheModule(_id, _addr);
-        }
+        currentModules[_id] = _addr;
+        allModules[_addr].id = _id;
+        emit ModuleSet(_id, _addr);
     }
 
     /**
@@ -432,27 +519,37 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     }
 
     /**
+    * @dev Internal function to check if a module was set
+    * @param _module Module to be checked
+    */
+    function _ensureModuleExists(Module storage _module) internal {
+        require(_module.id != bytes32(0), ERROR_MODULE_NOT_SET);
+    }
+
+    /**
+    * @dev Internal function to tell the current address registered for a module based on a given ID
+    * @param _id ID of the module being queried
+    * @return addr Current address of the requested module
+    * @return disabled Whether the module has been disabled
+    */
+    function _getModule(bytes32 _id) internal view returns (address addr, bool disabled) {
+        addr = currentModules[_id];
+        disabled = allModules[addr].disabled;
+    }
+
+    /**
     * @dev Internal function to tell the address of the current DisputeManager module
-    * @return Address of the DisputeManager module
+    * @return Current address of the DisputeManager module
     */
     function _getDisputeManager() internal view returns (address) {
-        return _getModule(DISPUTE_MANAGER);
+        return currentModules[DISPUTE_MANAGER];
     }
 
     /**
     * @dev Internal function to tell the address of the current Subscriptions module
-    * @return Address of the Subscriptions module
+    * @return Current address of the Subscriptions module
     */
     function _getSubscriptions() internal view returns (address) {
-        return _getModule(SUBSCRIPTIONS);
-    }
-
-    /**
-    * @dev Internal function to tell latest address registered for a module based on a given ID
-    * @param _id ID of the module being queried
-    * @return Address of the requested module
-    */
-    function _getModule(bytes32 _id) internal view returns (address) {
-        return modules[_id];
+        return currentModules[SUBSCRIPTIONS];
     }
 }
