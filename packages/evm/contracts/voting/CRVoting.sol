@@ -140,7 +140,10 @@ contract CRVoting is Controlled, ICRVoting {
     * @param _voter Address of the voter to commit a vote for
     * @param _commitment Hashed outcome to be stored for future reveal
     */
-    function commitForWithSig(uint256 _voteId, address _voter, bytes32 _commitment, uint8 _v, bytes32 _r, bytes32 _s) external voteExists(_voteId) {
+    function commitForWithSig(uint256 _voteId, address _voter, bytes32 _commitment, uint8 _v, bytes32 _r, bytes32 _s)
+        external
+        voteExists(_voteId)
+    {
         require(_isRepresentativeAllowed(_voteId, _voter, msg.sender, _v, _r, _s), ERROR_SENDER_NOT_REPRESENTATIVE);
         _commitFor(_voteId, _voter, _commitment);
     }
@@ -151,7 +154,9 @@ contract CRVoting is Controlled, ICRVoting {
     * @param _voters List of addresses of the voters to commit a vote for
     * @param _commitments List of hashed outcomes to be stored for future reveals
     */
-    function commitForMany(uint256[] calldata _voteIds, address[] calldata _voters, bytes32[] calldata _commitments) external {
+    function commitForMany(uint256[] calldata _voteIds, address[] calldata _voters, bytes32[] calldata _commitments)
+        external
+    {
         require(_voteIds.length == _voters.length, ERROR_INVALID_INPUTS_LENGTH);
         require(_voteIds.length == _commitments.length, ERROR_INVALID_INPUTS_LENGTH);
 
@@ -168,7 +173,16 @@ contract CRVoting is Controlled, ICRVoting {
     * @param _voters List of addresses of the voters to commit a vote for
     * @param _commitments List of hashed outcomes to be stored for future reveals
     */
-    function commitForManyWithSig(uint256[] calldata _voteIds, address[] calldata _voters, bytes32[] calldata _commitments, uint8[] calldata _v, bytes32[] calldata _r, bytes32[] calldata _s) external {
+    function commitForManyWithSig(
+        uint256[] calldata _voteIds,
+        address[] calldata _voters,
+        bytes32[] calldata _commitments,
+        uint8[] calldata _v,
+        bytes32[] calldata _r,
+        bytes32[] calldata _s
+    )
+        external
+    {
         require(_voteIds.length == _voters.length, ERROR_INVALID_INPUTS_LENGTH);
         require(_voteIds.length == _commitments.length, ERROR_INVALID_INPUTS_LENGTH);
         require(_voteIds.length == _v.length, ERROR_INVALID_INPUTS_LENGTH);
@@ -237,7 +251,18 @@ contract CRVoting is Controlled, ICRVoting {
     * @param _representative Address of the representative to be checked
     * @return True if the representative was authorized by a voter
     */
-    function isRepresentativeAllowed(uint256 _voteId, address _voter, address _representative, uint8 _v, bytes32 _r, bytes32 _s) external view returns (bool) {
+    function isRepresentativeAllowed(
+        uint256 _voteId,
+        address _voter,
+        address _representative,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    )
+        external
+        view
+        returns (bool)
+    {
         return _isRepresentativeAllowed(_voteId, _voter, _representative, _v, _r, _s);
     }
 
@@ -444,7 +469,18 @@ contract CRVoting is Controlled, ICRVoting {
     * @param _representative Address of the representative to be checked
     * @return True if the representative was authorized by a voter
     */
-    function _isRepresentativeAllowed(uint256 _voteId, address _voter, address _representative, uint8 _v, bytes32 _r, bytes32 _s) internal view returns (bool) {
+    function _isRepresentativeAllowed(
+        uint256 _voteId,
+        address _voter,
+        address _representative,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    )
+        internal
+        view
+        returns (bool)
+    {
         bytes32 encodeData = keccak256(abi.encode(COMMIT_WITH_SIG_TYPEHASH, _voteId, _voter, _representative));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _getDomainSeparator(), encodeData));
         address recoveredAddress = ecrecover(digest, _v, _r, _s);
@@ -473,7 +509,7 @@ contract CRVoting is Controlled, ICRVoting {
     * @dev Tell chain ID
     * @return chainId Chain ID
     */
-    function _chainId() public pure returns (uint256 chainId) {
+    function _chainId() internal pure returns (uint256 chainId) {
         assembly { chainId := chainid() }
     }
 

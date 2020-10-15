@@ -32,7 +32,7 @@ contract('CRVoting', ([_, voter, anotherVoter, representative, anotherRepresenta
     assert.isTrue(await voting.isRepresentativeAllowed(voteId, voter, representative, v, r, s), 'representative is not allowed')
     return { v, r, s }
   }
-  
+
   describe('commit', () => {
     context('when the given vote ID is valid', () => {
       const voteId = 0
