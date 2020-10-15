@@ -1,5 +1,6 @@
+const abi = require('web3-eth-abi')
 const { bn } = require('@aragon/contract-helpers-test')
-const { soliditySha3 } = require('web3-utils')
+const { keccak256, soliditySha3 } = require('web3-utils')
 
 const OUTCOMES = {
   MISSING: bn(0),
@@ -27,11 +28,32 @@ const oppositeOutcome = outcome => {
   return outcome.eq(OUTCOMES.LOW) ? OUTCOMES.HIGH : OUTCOMES.LOW
 }
 
+const COMMIT_WITH_SIG_TYPEHASH = keccak256('CommitWithSig(uint256 voteId,address voter,address representative)')
+
+async function createRepresetativeAuthorization(voting, voteId, voter, representative) {
+  const domainSeparator = await voting.getDomainSeparator()
+  return soliditySha3(
+    { type: 'bytes1', value: '0x19' },
+    { type: 'bytes1', value: '0x01' },
+    { type: 'bytes32', value: domainSeparator },
+    { type: 'bytes32', value:
+      keccak256(
+        abi.encodeParameters(
+          ['bytes32', 'uint256', 'address', 'address'],
+          [COMMIT_WITH_SIG_TYPEHASH, voteId, voter, representative]
+        )
+      )
+    }
+  )
+}
+
 module.exports = {
   SALT,
   OUTCOMES,
   hashVote,
   getVoteId,
   outcomeFor,
-  oppositeOutcome
+  oppositeOutcome,
+  createRepresetativeAuthorization,
+  COMMIT_WITH_SIG_TYPEHASH,
 }
