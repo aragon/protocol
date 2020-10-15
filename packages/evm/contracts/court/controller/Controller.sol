@@ -14,6 +14,7 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
     string private constant ERROR_MODULE_ALREADY_ENABLED = "CTR_MODULE_ALREADY_ENABLED";
     string private constant ERROR_MODULE_ALREADY_DISABLED = "CTR_MODULE_ALREADY_DISABLED";
+    string private constant ERROR_CUSTOM_FUNCTION_NOT_SET = "CTR_CUSTOM_FUNCTION_NOT_SET";
     string private constant ERROR_IMPLEMENTATION_NOT_CONTRACT = "CTR_IMPLEMENTATION_NOT_CONTRACT";
     string private constant ERROR_INVALID_IMPLS_INPUT_LENGTH = "CTR_INVALID_IMPLS_INPUT_LENGTH";
 
@@ -45,9 +46,13 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     // List of all modules registered for the system indexed by address
     mapping (address => Module) internal allModules;
 
+    // List of custom functions indexed by signature
+    mapping (bytes4 => address) internal customFunctions;
+
     event ModuleSet(bytes32 id, address addr);
     event ModuleEnabled(bytes32 id, address addr);
     event ModuleDisabled(bytes32 id, address addr);
+    event CustomFunctionSet(bytes4 signature, address target);
     event FundsGovernorChanged(address previousGovernor, address currentGovernor);
     event ConfigGovernorChanged(address previousGovernor, address currentGovernor);
     event ModulesGovernorChanged(address previousGovernor, address currentGovernor);
@@ -127,6 +132,26 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
         _setFundsGovernor(_governors[0]);
         _setConfigGovernor(_governors[1]);
         _setModulesGovernor(_governors[2]);
+    }
+
+    /**
+    * @dev Fallback function allows to forward calls to a specific address in case it was previously registered
+    *      Note the sender will be always the controller in case it is forwarded
+    */
+    function () external payable {
+        address target = customFunctions[msg.sig];
+        require(target != address(0), ERROR_CUSTOM_FUNCTION_NOT_SET);
+
+        (bool success,) = address(target).call.value(msg.value)(msg.data);
+        assembly {
+            let size := returndatasize
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, size)
+
+            let result := success
+            switch result case 0 { revert(ptr, size) }
+            default { return(ptr, size) }
+        }
     }
 
     /**
@@ -232,6 +257,16 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     */
     function ejectModulesGovernor() external onlyModulesGovernor {
         _setModulesGovernor(ZERO_ADDRESS);
+    }
+
+    /**
+    * @notice Set custom function `_sig` for `_target`
+    * @param _sig Signature of the function to be set
+    * @param _target Address of the target implementation to be registered for the given signature
+    */
+    function setCustomFunction(bytes4 _sig, address _target) external onlyModulesGovernor {
+        customFunctions[_sig] = _target;
+        emit CustomFunctionSet(_sig, _target);
     }
 
     /**

@@ -59,6 +59,7 @@ const CONTROLLER_EVENTS = {
   MODULE_SET: 'ModuleSet',
   MODULE_ENABLED: 'ModuleEnabled',
   MODULE_DISABLED: 'ModuleDisabled',
+  CUSTOM_FUNCTION_SET: 'CustomFunctionSet',
   FUNDS_GOVERNOR_CHANGED: 'FundsGovernorChanged',
   CONFIG_GOVERNOR_CHANGED: 'ConfigGovernorChanged',
   MODULES_GOVERNOR_CHANGED: 'ModulesGovernorChanged'
