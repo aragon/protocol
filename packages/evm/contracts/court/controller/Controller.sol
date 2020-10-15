@@ -522,7 +522,7 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     * @dev Internal function to check if a module was set
     * @param _module Module to be checked
     */
-    function _ensureModuleExists(Module storage _module) internal {
+    function _ensureModuleExists(Module storage _module) internal view {
         require(_module.id != bytes32(0), ERROR_MODULE_NOT_SET);
     }
 
