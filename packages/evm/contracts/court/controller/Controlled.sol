@@ -11,7 +11,7 @@ import "../../voting/ICRVoting.sol";
 import "../../treasury/ITreasury.sol";
 import "../../registry/IJurorsRegistry.sol";
 import "../../disputes/IDisputeManager.sol";
-import "../../subscriptions/ISubscriptions.sol";
+import "../../payments/IPaymentsBook.sol";
 
 
 contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
@@ -187,11 +187,11 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the address of the Subscriptions module implementation
-    * @return Address of the Subscriptions module implementation
+    * @dev Internal function to fetch the address of the PaymentsBook module implementation
+    * @return Address of the PaymentsBook module implementation
     */
-    function _subscriptions() internal view returns (ISubscriptions) {
-        return ISubscriptions(_getModuleCache(SUBSCRIPTIONS));
+    function _paymentsBook() internal view returns (IPaymentsBook) {
+        return IPaymentsBook(_getModuleCache(PAYMENTS_BOOK));
     }
 
     /**

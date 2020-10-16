@@ -56,8 +56,8 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
         _setAndCacheModule(JURORS_REGISTRY, _addr);
     }
 
-    function setSubscriptions(address _addr) external {
-        _setAndCacheModule(SUBSCRIPTIONS, _addr);
+    function setPaymentsBook(address _addr) external {
+        _setAndCacheModule(PAYMENTS_BOOK, _addr);
     }
 
     function mockIncreaseTerm() external {
@@ -111,7 +111,7 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
         ids[1] = VOTING;
         ids[2] = TREASURY;
         ids[3] = JURORS_REGISTRY;
-        ids[4] = SUBSCRIPTIONS;
+        ids[4] = PAYMENTS_BOOK;
 
         address[] memory addresses = new address[](5);
         for (uint i = 0; i < ids.length; i++) {

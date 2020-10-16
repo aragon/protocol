@@ -43,7 +43,6 @@ contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, juror500
       beforeEach('create arbitrable and approve fee amount', async () => {
         await courtHelper.setTerm(1)
         arbitrable = await Arbitrable.new(court.address)
-        await courtHelper.subscriptions.mockUpToDate(true)
         const { disputeFees } = await courtHelper.getDisputeFees()
         await courtHelper.mintFeeTokens(arbitrable.address, disputeFees)
       })

@@ -47,8 +47,8 @@ const DEFAULTS = {
   appealConfirmCollateralFactor:      bn(35000),       //  permyriad multiple of dispute fees required to confirm appeal (1/10,000)
   minActiveBalance:                   bigExp(100, 18), //  100 ANJ is the minimum balance jurors must activate to participate in the Court
   finalRoundWeightPrecision:          bn(1000),        //  use to improve division rounding for final round maths
-  subscriptionPeriodDuration:         bn(10),          //  each subscription period lasts 10 terms
-  subscriptionGovernorSharePct:       bn(0)            //  none subscription governor shares
+  paymentPeriodDuration:              bn(10),          //  each payment period lasts 10 terms
+  paymentsGovernorSharePct:           bn(0)            //  none payments governor share
 }
 
 class CourtHelper {
@@ -191,9 +191,8 @@ class CourtHelper {
   }
 
   async dispute({ arbitrable = undefined, possibleRulings = bn(2), metadata = '0x', closeEvidence = true } = {}) {
-    // create an arbitrable if no one was given, and mock subscriptions
+    // create an arbitrable if no one was given
     if (!arbitrable) arbitrable = await this.artifacts.require('ArbitrableMock').new(this.court.address)
-    await this.subscriptions.mockUpToDate(true)
 
     // mint fee tokens for the arbitrable instance
     const { disputeFees } = await this.getDisputeFees()
@@ -387,17 +386,16 @@ class CourtHelper {
       )
     }
 
-    if (!this.subscriptions) {
-      this.subscriptions = await this.artifacts.require('SubscriptionsMock').new(
+    if (!this.paymentsBook) {
+      this.paymentsBook = await this.artifacts.require('PaymentsBook').new(
         this.court.address,
-        this.subscriptionPeriodDuration,
-        this.feeToken.address,
-        this.subscriptionGovernorSharePct
+        this.paymentPeriodDuration,
+        this.paymentsGovernorSharePct
       )
     }
 
     const ids = Object.values(MODULE_IDS)
-    const implementations = [this.disputeManager, this.treasury, this.voting, this.jurorsRegistry, this.subscriptions].map(i => i.address)
+    const implementations = [this.disputeManager, this.treasury, this.voting, this.jurorsRegistry, this.paymentsBook].map(i => i.address)
     await this.court.setModules(ids, implementations, { from: this.modulesGovernor })
     await this.court.cacheModules(implementations, ids, { from: this.modulesGovernor })
 

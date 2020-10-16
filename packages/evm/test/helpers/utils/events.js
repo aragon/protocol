@@ -46,11 +46,9 @@ const TREASURY_EVENTS = {
   WITHDRAW: 'Withdraw'
 }
 
-const SUBSCRIPTIONS_EVENTS = {
-  APP_FEE_PAID: 'AppFeePaid',
-  FEES_DONATED: 'FeesDonated',
-  FEES_CLAIMED: 'FeesClaimed',
-  FEE_TOKEN_CHANGED: 'FeeTokenChanged',
+const PAYMENTS_BOOK_EVENTS = {
+  PAYMENT_RECEIVED: 'PaymentReceived',
+  JUROR_FEES_CLAIMED: 'JurorFeesClaimed',
   GOVERNOR_FEES_TRANSFERRED: 'GovernorFeesTransferred',
   GOVERNOR_SHARE_PCT_CHANGED: 'GovernorSharePctChanged'
 }
@@ -85,7 +83,7 @@ module.exports = {
   VOTING_EVENTS,
   REGISTRY_EVENTS,
   TREASURY_EVENTS,
-  SUBSCRIPTIONS_EVENTS,
+  PAYMENTS_BOOK_EVENTS,
   CONTROLLER_EVENTS,
   CONTROLLED_EVENTS,
   CONFIG_EVENTS,
