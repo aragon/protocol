@@ -40,7 +40,7 @@ The advantage of this is reducing the number of participants that need to review
 
 If jurors were only rewarded when drafted to work, by doing their job really well and maintaining a super honest court, they would be decreasing their future returns, as the incentive to create disputes in a highly effective court is low, as both parties to the dispute can predict what the outcome will be. If jurors leave the Court because the returns are decreasing as a result of a well functioning Court, the market cap of the token will decrease, making attacks cheaper.
 
-For this reason, Aragon Court charges subscription fees to its users for the right to use the Court should a dispute arise. These subscription fees are then distributed to all active jurors during that period proportional to their relative stake. Even if no disputes are created in a period of time, jurors should expect a predictable income coming from passive users of the Court who are getting security from it even if they don't have the need create disputes.
+For this reason, Aragon Court supports charging payment fees to its users for the right to use the Court should a dispute arise. These payment fees are then distributed to all active jurors during that period proportional to their relative stake. Even if no disputes are created in a period of time, jurors should expect a predictable income coming from passive users of the Court who are getting security from it even if they don't have the need create disputes.
 
 ## A glimpse into Aragon Court v2 potential improvements
 

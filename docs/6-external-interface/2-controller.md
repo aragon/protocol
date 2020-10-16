@@ -223,12 +223,12 @@ The following functions are state getters provided by the `Controller`:
 - **Outputs:**
     - **Voting address:** Address of the `Voting` module set
 
-#### 6.2.2.21. Subscriptions
+#### 6.2.2.21. PaymentsBook
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Subscriptions address:** Address of the `Subscriptions` module set
+    - **Payments book address:** Address of the `PaymentsBook` module set
 
 #### 6.2.2.22. Treasury
 

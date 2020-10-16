@@ -136,7 +136,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Subscriptions
+    - name: Payments
       run: yarn workspace @aragon/protocol-evm test:payments
 
   treasury:

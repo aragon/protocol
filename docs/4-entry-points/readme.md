@@ -9,5 +9,5 @@ The following sections aim to deeply describe the functionality exposed by each 
 3. [Dispute Manager](./3-dispute-manager.md)
 4. [Jurors Registry](./4-jurors-registry.md)
 5. [Voting](./5-voting.md)
-6. [Subscriptions](./6-subscriptions.md)
+6. [Payments](6-payments-book.md)
 7. [Treasury](./7-treasury.md)
