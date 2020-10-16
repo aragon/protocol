@@ -35,7 +35,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 - **State transitions:**
     - Update the total amount of collected juror fees during the current period
     - Update the total amount of collected governor fees during the current period
-    - Pull the corresponding amount of tokens from the sender to be deposited in the `PaymentsBook` module, revert if the ERC20-transfer wasn't successful or if the ETH received does not match the requested one
+    - Pull the corresponding amount of tokens from the sender to be deposited in the `PaymentsBook` module, revert if the EC20-transfer wasn't successful or if the ETH received does not match the requested one
 
 ### 4.6.3. Claim juror fees
 
@@ -92,7 +92,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 - **Actor:** External entity in charge of maintaining the Court protocol
 - **Inputs:**
-    - **Token:** Address of the ERC20-compatible token to be recovered from the `PaymentsBook` module
+    - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `PaymentsBook` module
     - **Recipient:** Address that will receive the funds of the `PaymentsBook` module
 - **Authentication:** Only funds governor
 - **Pre-flight checks:**

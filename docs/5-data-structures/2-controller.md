@@ -6,7 +6,7 @@ The following objects are the data-structures used by the `Controller`:
 
 The governor object includes the following fields:
 
-- **Funds:** Address allowed to recover funds from the ERC20-Recoverable modules
+- **Funds:** Address allowed to recover funds from the recoverable modules
 - **Config:** Address allowed to change the different configurations of the whole system
 - **Modules:** Address allowed to plug/unplug modules from the system
 

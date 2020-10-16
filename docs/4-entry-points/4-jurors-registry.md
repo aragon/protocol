@@ -225,7 +225,7 @@ This module is in the one handling all the staking/unstaking logic for the juror
 
 - **Actor:** External entity in charge of maintaining the Court protocol
 - **Inputs:**
-    - **Token:** Address of the ERC20-compatible token to be recovered from the `JurorsRegistry` module
+    - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `JurorsRegistry` module
     - **Recipient:** Address that will receive the funds of the `JurorsRegistry` module
 - **Authentication:** Only funds governor
 - **Pre-flight checks:**

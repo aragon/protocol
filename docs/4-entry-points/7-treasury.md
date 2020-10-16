@@ -60,7 +60,7 @@ Except from those, the rest of the fees, deposits, and collaterals required to b
 
 - **Actor:** External entity in charge of maintaining the Court protocol
 - **Inputs:**
-    - **Token:** Address of the ERC20-compatible token to be recovered from the `Treasury` module
+    - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `Treasury` module
     - **Recipient:** Address that will receive the funds of the `Treasury` module
 - **Authentication:** Only funds governor
 - **Pre-flight checks:**
