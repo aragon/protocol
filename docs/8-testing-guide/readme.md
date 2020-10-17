@@ -7,10 +7,10 @@ This guide aims to cover all the things you should know in order to try Aragon P
 There are a few testing instances already deployed for Aragon Protocol. 
 All of these are mimicking the mainnet instance with some exceptions of term durations to provide a better testing experience.
 Additionally, all the instances are using their own deployed version of the following ERC20 tokens:
-- ANJ, the native token of Aragon Protocol. You will need some fake ANJ to stake as a guardian to be selected to resolve disputes.  
+- ANT, the native token of Aragon Protocol. You will need some fake ANT to stake as a guardian to be selected to resolve disputes.  
 - DAI, used for the Aragon Protocol fees. You will need some fake DAI to pay the dispute fees.
 
-Of course, there is an ERC20 faucet deployed for all these instances that you can use to claim some fake ANJ or DAI to start testing. More information is outlined below on using these faucets.
+Of course, there is an ERC20 faucet deployed for all these instances that you can use to claim some fake ANT or DAI to start testing. More information is outlined below on using these faucets.
 
 ### 8.1.1. Staging
 
@@ -22,7 +22,7 @@ Fees are low and protocol terms last a few minutes to make sure you can interact
 - Payment period: 3 protocol terms (30 minutes)
 - Dashboard: https://protocol-staging.aragon.org/
 - Address: [`0x52180af656a1923024d1accf1d827ab85ce48878`](http://rinkeby.etherscan.io/address/0x52180af656a1923024d1accf1d827ab85ce48878)
-- Fake ANJ: [`0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad`](http://rinkeby.etherscan.io/address/0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad)
+- Fake ANT: [`0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad`](http://rinkeby.etherscan.io/address/0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad)
 - Fake DAI: [`0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42`](http://rinkeby.etherscan.io/address/0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42)
 - ERC20 faucet: [`0x5561f73c3BBe8202F4D7E51aD2A1F22f1E056eFE`](http://rinkeby.etherscan.io/address/0x5561f73c3BBe8202F4D7E51aD2A1F22f1E056eFE)
 
@@ -35,7 +35,7 @@ This testing instance mirrors the instance deployed to Mainnet, same terms durat
 - Payment period: 90 protocol terms (1 month)
 - Dashboard: https://protocol-rinkeby.aragon.org/
 - Address: [`0xe9180dBE762Fe39520fC9883f7f7EFeBA6506534`](http://rinkeby.etherscan.io/address/0xe9180dBE762Fe39520fC9883f7f7EFeBA6506534)
-- Fake ANJ: [`0x1FAB7d0D028ded72195322998003F6e82cF4cFdB`](http://rinkeby.etherscan.io/address/0x1FAB7d0D028ded72195322998003F6e82cF4cFdB)
+- Fake ANT: [`0x1FAB7d0D028ded72195322998003F6e82cF4cFdB`](http://rinkeby.etherscan.io/address/0x1FAB7d0D028ded72195322998003F6e82cF4cFdB)
 - Fake DAI: [`0xe9a083d88eed757b1d633321ce0519f432c6284d`](http://rinkeby.etherscan.io/address/0xe9a083d88eed757b1d633321ce0519f432c6284d)
 - ERC20 faucet: [`0x5561f73c3BBe8202F4D7E51aD2A1F22f1E056eFE`](http://rinkeby.etherscan.io/address/0x5561f73c3BBe8202F4D7E51aD2A1F22f1E056eFE)
 
@@ -48,7 +48,7 @@ This testing instance basically mimics the Mainnet instance
 - Payment period: 90 protocol terms (1 month)
 - Dashboard: https://protocol-ropsten.aragon.org/
 - Address: [`0x3b26bc496aebaed5b3e0e81cde6b582cde71396e`](http://ropsten.etherscan.io/address/0x3b26bc496aebaed5b3e0e81cde6b582cde71396e)
-- Fake ANJ: [`0xc863e1ccc047beff17022f4229dbe6321a6bce65`](http://ropsten.etherscan.io/address/0xc863e1ccc047beff17022f4229dbe6321a6bce65)
+- Fake ANT: [`0xc863e1ccc047beff17022f4229dbe6321a6bce65`](http://ropsten.etherscan.io/address/0xc863e1ccc047beff17022f4229dbe6321a6bce65)
 - Fake DAI: [`0x4e1f48db14d7e1ada090c42ffe15ff3024eec8bf`](http://ropsten.etherscan.io/address/0x4e1f48db14d7e1ada090c42ffe15ff3024eec8bf)
 - ERC20 faucet: [`0x83c1ECDC6fAAb783d9e3ac2C714C0eEce3349638`](http://ropsten.etherscan.io/address/0x83c1ECDC6fAAb783d9e3ac2C714C0eEce3349638)
 
@@ -77,17 +77,17 @@ npm run deploy:protocol:rpc
 ```
 
 This command will output the addresses of all the deployed modules of Aragon Protocol including the main entry point (the `AragonProtocol` contract).
-Additionally, it should deploy a fake version of the ANJ and DAI tokens usable for testing purposes as explained above.
+Additionally, it should deploy a fake version of the ANT and DAI tokens usable for testing purposes as explained above.
 
 ## 8.2. Claiming fake tokens from the ERC20 faucets
 
-You can claim ANJ or DAI fake tokens from the ERC20 faucets.
+You can claim ANT or DAI fake tokens from the ERC20 faucets.
 You can do this directly through Etherscan, simply click in any of the faucet links shared above in section 8.1.
 Once there, you just need to enable your Web3 account and call the `withdraw()` function providing the desired token address and amount:
 ![faucet](./images/faucet.png)
 
 When claiming tokens remember to add the 18 zeroes for the decimals, for example 10 DAI should be requested as `10000000000000000000`. 
-Bear in mind there is a quota set for these faucets; they will only allow you to withdraw up to 10,000 fake-DAI or 10,000 fake-ANJ every 7 days.
+Bear in mind there is a quota set for these faucets; they will only allow you to withdraw up to 10,000 fake-DAI or 10,000 fake-ANT every 7 days.
 
 ## 8.3. Installing the Aragon Protocol dev CLI tool
 
@@ -110,9 +110,9 @@ Let's continue with the Aragon Protocol testing guide and see how we can use the
 
 ## 8.4. Becoming a guardian
 
-To become a guardian you simply need to activate some ANJ tokens into Aragon Protocol.
-First make sure to have claimed some fake ANJ tokens from the faucet corresponding to the Aragon Protocol instance you're willing to try.
-For now, the testing instances require a minimum of 10,000 ANJ so make sure to have at least that amount. 
+To become a guardian you simply need to activate some ANT tokens into Aragon Protocol.
+First make sure to have claimed some fake ANT tokens from the faucet corresponding to the Aragon Protocol instance you're willing to try.
+For now, the testing instances require a minimum of 10,000 ANT so make sure to have at least that amount. 
 Then, you can activate tokens into Aragon Protocol using the `stake` and `activate` commands of the CLI tool as follows:
 
 ```bash
@@ -122,8 +122,8 @@ node ./bin/index.js activate --guardian [GUARDIAN] --amount [AMOUNT] --from [FRO
 
 Where:
 - `[GUARDIAN]`: address of the guardian you will activate the tokens for
-- `[AMOUNT]`: amount of fake ANJ tokens you will activate for the specified guardian (it doesn't require adding the decimals, so to activate 10,000 ANJ simply enter `10000`)
-- `[FROM]`: address paying for the fake ANJ tokens; this must be the address you used to claim the tokens from the faucet
+- `[AMOUNT]`: amount of fake ANT tokens you will activate for the specified guardian (it doesn't require adding the decimals, so to activate 10,000 ANT simply enter `10000`)
+- `[FROM]`: address paying for the fake ANT tokens; this must be the address you used to claim the tokens from the faucet
 - `[NETWORK]`: name of the Aragon Protocol instance you are willing to use: `staging`, `rinkeby`, or `ropsten` 
 
 Note that you can also avoid the flag `--verbose` if you want to avoid having too much details about the transactions being sent to the network.

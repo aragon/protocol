@@ -63,7 +63,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
     - Ensure that the draft term for the last round has been reached
     - Ensure that the randomness seed for the current term is either available (current block number within a certain range) or was saved by another draft
 - **State transitions:**
-    - Search up to the maximum batch size of guardians in the `GuardianRegistry` using the current term's randomness seed for entropy, which will lock a certain amount of ANJ tokens to each of the drafted guardians based on the penalty permille of the Protocol. The maximum number of guardians to be drafted will depend on the maximum number allowed per batch set in the Protocol and the corresponding number of guardians for the dispute. Additionally, the `GuardiansRegistry` could return fewer guardians than the requested number. To have a better understanding of how the sortition works go to **section X**.
+    - Search up to the maximum batch size of guardians in the `GuardianRegistry` using the current term's randomness seed for entropy, which will lock a certain amount of ANT tokens to each of the drafted guardians based on the penalty permille of the Protocol. The maximum number of guardians to be drafted will depend on the maximum number allowed per batch set in the Protocol and the corresponding number of guardians for the dispute. Additionally, the `GuardiansRegistry` could return fewer guardians than the requested number. To have a better understanding of how the sortition works go to **section X**.
     - Update the dispute object with the resultant guardians from the draft. If all the guardians of the dispute have been drafted, transition the dispute to the adjudication phase.
     - Reward the caller with draft fees for each guardian drafted, using the configuration at the term when the dispute was created.
 
@@ -109,7 +109,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
         - Calculate the number of guardians to be drafted for the new round applying the appeal step factor to the number of guardians drafted for the previous round
         - Transition the dispute to the draft phase
     - If the final appeal round has been reached:
-        - Calculate the number of guardians of the final round as the number of times the minimum ANJ active balance is held in the `GuardiansRegistry` module
+        - Calculate the number of guardians of the final round as the number of times the minimum ANT active balance is held in the `GuardiansRegistry` module
         - Transition the dispute to the adjudication phase
     - Update the current round appeal object tracking the address and proposed ruling of the account confirming the appeal
     - Calculate new round fees based on the Protocol configuration at the term when the dispute was created
@@ -146,13 +146,13 @@ It is also in charge of computing the final ruling for each dispute, and to sett
     - In case the final ruling of the dispute has not been computed yet, update the final ruling of the dispute object based on the ruling decided by the guardians during the current round or the ruling proposed by the appealer of the previous round in case there was one but wasn't confirmed.
     - Update the adjudication round object with the number of guardians that voted in favor of the final ruling
     - If the adjudication round being settled is not a final round:
-        - Ask the `GuardiansRegistry` module to slash or unlock the locked ANJ tokens from the drafted guardians based on whether they voted in favor of the dispute's final ruling or not.
+        - Ask the `GuardiansRegistry` module to slash or unlock the locked ANT tokens from the drafted guardians based on whether they voted in favor of the dispute's final ruling or not.
         - Update the adjudication round object marking all the guardians whose penalties were settled
         - Deposit the corresponding settle fees based on the number of guardians settled to the caller in the `Treasury` module
     - If the adjudication round being settled is a final round:
         - Update the adjudication round object to mark that all guardians' penalties were settled
     - In case all the guardians' penalties have been settled, and there was not even one guardian voting in favor of the final ruling:
-        - Ask the `GuardiansRegistry` module to burn all the ANJ tokens that were collected during the adjudication round
+        - Ask the `GuardiansRegistry` module to burn all the ANT tokens that were collected during the adjudication round
         - Return the adjudication round fees to the dispute creator or the appeal parties depending on whether the adjudication round was triggered by the `Arbitrable` instance who created the dispute or due to a previous round that was appealed respectively.
 
 ### 4.3.9. Settle reward
@@ -172,7 +172,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
     - Ensure that the guardian has voted in favor of the final ruling of the dispute
 - **State transitions:**
     - Update the adjudication round object marking that the guardian was rewarded
-    - Assign to the guardian the corresponding portion of ANJ tokens slashed from the losing guardians
+    - Assign to the guardian the corresponding portion of ANT tokens slashed from the losing guardians
     - Deposit the corresponding portion of guardian fees into the `Treasury` module to the guardian
 
 ### 4.3.10. Settle appeal deposit
