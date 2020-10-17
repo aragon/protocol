@@ -4,7 +4,7 @@ The following sections aim to complement [section 4](../4-entry-points)'s descri
 
 ## Table of Contents
 
-1. [AragonCourt](./1-aragon-court.md)
+1. [AragonProtocol](./1-aragon-protocol.md)
 2. [Controller](./2-controller.md)
 3. [Dispute Manager](./3-dispute-manager.md)
 4. [Guardians Registry](./4-guardians-registry.md)

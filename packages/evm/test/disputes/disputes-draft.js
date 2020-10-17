@@ -4,13 +4,13 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { advanceBlocks } = require('../helpers/utils/blocks')
 const { DISPUTE_MANAGER_EVENTS, CLOCK_EVENTS } = require('../helpers/utils/events')
-const { buildHelper, DEFAULTS, DISPUTE_STATES, ROUND_STATES } = require('../helpers/wrappers/court')
+const { buildHelper, DEFAULTS, DISPUTE_STATES, ROUND_STATES } = require('../helpers/wrappers/protocol')
 const { CLOCK_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const DisputeManager = artifacts.require('DisputeManager')
 
 contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500, guardian2000, configGovernor, someone]) => {
-  let courtHelper, court, disputeManager
+  let protocolHelper, protocol, disputeManager
 
   const firstRoundGuardiansNumber = 5
   const guardians = [
@@ -20,10 +20,10 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
     { address: guardian2000, initialActiveBalance: bigExp(2000, 18) }
   ]
 
-  beforeEach('create court', async () => {
-    courtHelper = buildHelper()
-    court = await courtHelper.deploy({ configGovernor, firstRoundGuardiansNumber })
-    disputeManager = courtHelper.disputeManager
+  beforeEach('create protocol', async () => {
+    protocolHelper = buildHelper()
+    protocol = await protocolHelper.deploy({ configGovernor, firstRoundGuardiansNumber })
+    disputeManager = protocolHelper.disputeManager
   })
 
   describe('draft', () => {
@@ -32,8 +32,8 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
       const roundId = 0
 
       beforeEach('create dispute', async () => {
-        await courtHelper.activate(guardians)
-        disputeId = await courtHelper.dispute({ closeEvidence: false })
+        await protocolHelper.activate(guardians)
+        disputeId = await protocolHelper.dispute({ closeEvidence: false })
       })
 
       const itDraftsRequestedRoundInOneBatch = (guardiansToBeDrafted) => {
@@ -60,23 +60,23 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.DISPUTE_STATE_CHANGED)
             assertEvent(receipt, DISPUTE_MANAGER_EVENTS.DISPUTE_STATE_CHANGED, { expectedArgs: { disputeId, state: DISPUTE_STATES.ADJUDICATING } })
 
-            const { state, finalRuling } = await courtHelper.getDispute(disputeId)
+            const { state, finalRuling } = await protocolHelper.getDispute(disputeId)
             assertBn(state, DISPUTE_STATES.ADJUDICATING, 'dispute state does not match')
             assertBn(finalRuling, 0, 'dispute final ruling does not match')
           })
 
           it('updates last round information', async () => {
-            const currentTermId = await court.getCurrentTermId()
-            const { draftTerm: draftTermId } = await courtHelper.getRound(disputeId, roundId)
+            const currentTermId = await protocol.getCurrentTermId()
+            const { draftTerm: draftTermId } = await protocolHelper.getRound(disputeId, roundId)
 
             await disputeManager.draft(disputeId, { from: drafter })
 
-            const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await courtHelper.getRound(disputeId, roundId)
+            const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await protocolHelper.getRound(disputeId, roundId)
             assertBn(draftTerm, draftTermId, 'round draft term does not match')
             assertBn(delayedTerms, currentTermId.sub(draftTermId), 'delayed terms do not match')
             assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'round guardians number does not match')
             assertBn(selectedGuardians, firstRoundGuardiansNumber, 'selected guardians does not match')
-            assertBn(guardianFees, courtHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
+            assertBn(guardianFees, protocolHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
             assertBn(roundState, ROUND_STATES.COMMITTING, 'round state should be committing')
           })
         } else {
@@ -85,22 +85,22 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
 
             assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.DISPUTE_STATE_CHANGED, { expectedAmount: 0 })
 
-            const { state, finalRuling } = await courtHelper.getDispute(disputeId)
+            const { state, finalRuling } = await protocolHelper.getDispute(disputeId)
             assertBn(state, DISPUTE_STATES.PRE_DRAFT, 'dispute state does not match')
             assertBn(finalRuling, 0, 'dispute final ruling does not match')
           })
 
           it('updates last round information', async () => {
-            const { draftTerm: draftTermId } = await courtHelper.getRound(disputeId, roundId)
+            const { draftTerm: draftTermId } = await protocolHelper.getRound(disputeId, roundId)
 
             await disputeManager.draft(disputeId, { from: drafter })
 
-            const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await courtHelper.getRound(disputeId, roundId)
+            const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await protocolHelper.getRound(disputeId, roundId)
             assertBn(draftTerm, draftTermId, 'round draft term does not match')
             assertBn(delayedTerms, 0, 'delayed terms do not match')
             assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'round guardians number does not match')
             assertBn(selectedGuardians, expectedDraftedGuardians, 'selected guardians does not match')
-            assertBn(guardianFees, courtHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
+            assertBn(guardianFees, protocolHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
             assertBn(roundState, ROUND_STATES.INVALID, 'round state should be committing')
           })
         }
@@ -114,7 +114,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
           for (let i = 0; i < guardians.length; i++) {
             const guardianAddress = guardians[i].address
             const expectedWeight = events.filter(({ args: { guardian } }) => toChecksumAddress(guardian) === guardianAddress).length
-            const { weight, rewarded } = await courtHelper.getRoundGuardian(disputeId, roundId, guardianAddress)
+            const { weight, rewarded } = await protocolHelper.getRoundGuardian(disputeId, roundId, guardianAddress)
 
             assertBn(weight, expectedWeight, 'guardian weight does not match')
             assert.isFalse(rewarded, 'guardian should not have been rewarded yet')
@@ -122,7 +122,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
         })
 
         it('deposits the draft fee to the treasury for the caller', async () => {
-          const { draftFee, treasury, feeToken } = courtHelper
+          const { draftFee, treasury, feeToken } = protocolHelper
           const expectedFee = draftFee.mul(bn(expectedDraftedGuardians))
 
           const previousDisputeManagerBalance = await feeToken.balanceOf(disputeManager.address)
@@ -162,7 +162,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             }
 
             // advance one term to avoid drafting all the batches in the same term
-            if (batch + 1 < batches) await courtHelper.passRealTerms(1)
+            if (batch + 1 < batches) await protocolHelper.passRealTerms(1)
           }
         })
 
@@ -172,36 +172,36 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             lastReceipt = await disputeManager.draft(disputeId, { from: drafter })
 
             // advance one term to avoid drafting all the batches in the same term
-            if (batch + 1 < batches) await courtHelper.passRealTerms(1)
+            if (batch + 1 < batches) await protocolHelper.passRealTerms(1)
           }
 
           assertAmountOfEvents(lastReceipt, DISPUTE_MANAGER_EVENTS.DISPUTE_STATE_CHANGED)
           assertEvent(lastReceipt, DISPUTE_MANAGER_EVENTS.DISPUTE_STATE_CHANGED, { expectedArgs: { disputeId, state: DISPUTE_STATES.ADJUDICATING } })
 
-          const { state, finalRuling } = await courtHelper.getDispute(disputeId)
+          const { state, finalRuling } = await protocolHelper.getDispute(disputeId)
           assertBn(state, DISPUTE_STATES.ADJUDICATING, 'dispute state does not match')
           assertBn(finalRuling, 0, 'dispute final ruling does not match')
         })
 
         it('updates last round information', async () => {
-          const { draftTerm: draftTermId } = await courtHelper.getRound(disputeId, roundId)
+          const { draftTerm: draftTermId } = await protocolHelper.getRound(disputeId, roundId)
 
           let lastTerm
           for (let batch = 0; batch < batches; batch++) {
             await disputeManager.draft(disputeId, { from: drafter })
-            lastTerm = await court.getLastEnsuredTermId()
+            lastTerm = await protocol.getLastEnsuredTermId()
 
             // advance one term to avoid drafting all the batches in the same term
-            if (batch + 1 < batches) await courtHelper.passRealTerms(1)
+            if (batch + 1 < batches) await protocolHelper.passRealTerms(1)
           }
 
-          const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await courtHelper.getRound(disputeId, roundId)
+          const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, roundState } = await protocolHelper.getRound(disputeId, roundId)
 
           assertBn(draftTerm, draftTermId, 'round draft term does not match')
           assertBn(delayedTerms, lastTerm - draftTermId, 'delayed terms do not match')
           assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'round guardians number does not match')
           assertBn(selectedGuardians, firstRoundGuardiansNumber, 'selected guardians does not match')
-          assertBn(guardianFees, courtHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
+          assertBn(guardianFees, protocolHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
           assertBn(roundState, ROUND_STATES.COMMITTING, 'round state should be committing')
         })
 
@@ -221,7 +221,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             }
 
             // advance one term to avoid drafting all the batches in the same term
-            if (batch + 1 < batches) await courtHelper.passRealTerms(1)
+            if (batch + 1 < batches) await protocolHelper.passRealTerms(1)
           }
 
           for (let i = 0; i < guardians.length; i++) {
@@ -234,7 +234,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
         })
 
         it('deposits the draft fee to the treasury for the caller', async () => {
-          const { draftFee, treasury, feeToken } = courtHelper
+          const { draftFee, treasury, feeToken } = protocolHelper
 
           for (let batch = 0, selectedGuardians = 0; batch < batches; batch++, selectedGuardians += guardiansPerBatch) {
             const previousDisputeManagerBalance = await feeToken.balanceOf(disputeManager.address)
@@ -256,7 +256,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             assertBn(currentDrafterAmount, previousDrafterAmount.add(expectedFee), 'drafter amount does not match')
 
             // advance one term to avoid drafting all the batches in the same term
-            if (batch + 1 < batches) await courtHelper.passRealTerms(1)
+            if (batch + 1 < batches) await protocolHelper.passRealTerms(1)
           }
         })
       }
@@ -308,18 +308,18 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
       const itHandlesDraftsProperlyForDifferentBlockNumbers = () => {
         const advanceBlocksAfterDraftBlockNumber = async blocks => {
           // NOTE: To test this scenario we cannot mock the blocknumber, we need a real block mining to have different blockhashes
-          const currentTermId = await court.getCurrentTermId()
-          const { randomnessBN } = await court.getTerm(currentTermId)
-          const currentBlockNumber = await court.getBlockNumberExt()
+          const currentTermId = await protocol.getCurrentTermId()
+          const { randomnessBN } = await protocol.getTerm(currentTermId)
+          const currentBlockNumber = await protocol.getBlockNumberExt()
           const outdatedBlocks = currentBlockNumber.toNumber() - randomnessBN.toNumber()
           if (outdatedBlocks <= blocks) await advanceBlocks(blocks - outdatedBlocks)
         }
 
         context('when the current block is the randomness block number', () => {
           beforeEach('mock current block number', async () => {
-            const { draftTerm } = await courtHelper.getRound(disputeId, roundId)
-            const { randomnessBN } = await court.getTerm(draftTerm)
-            await court.mockSetBlockNumber(randomnessBN)
+            const { draftTerm } = await protocolHelper.getRound(disputeId, roundId)
+            const { randomnessBN } = await protocol.getTerm(draftTerm)
+            await protocol.mockSetBlockNumber(randomnessBN)
           })
 
           it('reverts', async () => {
@@ -361,7 +361,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
 
           context('when the clock advances to the next term', () => {
             beforeEach('move to the next term', async () => {
-              await courtHelper.passRealTerms(1)
+              await protocolHelper.passRealTerms(1)
             })
 
             itHandlesDraftsProperlyForDifferentRequestedGuardiansNumber()
@@ -372,17 +372,17 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
       const itHandlesDraftsProperly = () => {
         context('when the given dispute was not drafted', () => {
           beforeEach('move to the draft term', async () => {
-            const neededTransitions = await court.getNeededTermTransitions()
-            if (neededTransitions.gt(bn(0))) await court.heartbeat(neededTransitions)
+            const neededTransitions = await protocol.getNeededTermTransitions()
+            if (neededTransitions.gt(bn(0))) await protocol.heartbeat(neededTransitions)
           })
 
-          context('when the court term is up-to-date', () => {
+          context('when the protocol term is up-to-date', () => {
             itHandlesDraftsProperlyForDifferentBlockNumbers()
           })
 
-          context('when the court term is outdated by one term', () => {
+          context('when the protocol term is outdated by one term', () => {
             beforeEach('increase one term', async () => {
-              await courtHelper.increaseTimeInTerms(1)
+              await protocolHelper.increaseTimeInTerms(1)
             })
 
             context('when the heartbeat was not executed', async () => {
@@ -395,8 +395,8 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
               let lastEnsuredTermId, receipt
 
               beforeEach('call heartbeat', async () => {
-                lastEnsuredTermId = await court.getLastEnsuredTermId()
-                receipt = await court.heartbeat(1, { from: drafter })
+                lastEnsuredTermId = await protocol.getLastEnsuredTermId()
+                receipt = await protocol.heartbeat(1, { from: drafter })
               })
 
               it('transitions 1 term', async () => {
@@ -408,9 +408,9 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
             })
           })
 
-          context('when the court term is outdated by more than one term', () => {
+          context('when the protocol term is outdated by more than one term', () => {
             beforeEach('increase two terms', async () => {
-              await courtHelper.increaseTimeInTerms(2)
+              await protocolHelper.increaseTimeInTerms(2)
             })
 
             it('reverts', async () => {
@@ -421,8 +421,8 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
 
         context('when the given dispute was already drafted', () => {
           beforeEach('draft dispute', async () => {
-            const neededTransitions = await court.getNeededTermTransitions()
-            if (neededTransitions.gt(bn(0))) await court.heartbeat(neededTransitions)
+            const neededTransitions = await protocol.getNeededTermTransitions()
+            if (neededTransitions.gt(bn(0))) await protocol.heartbeat(neededTransitions)
             await advanceBlocks(3) // advance some blocks to ensure term randomness
 
             await disputeManager.draft(disputeId, { from: drafter })
@@ -442,7 +442,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
 
       context('when the evidence period is closed', () => {
         beforeEach('close evidence period', async () => {
-          await courtHelper.passRealTerms(DEFAULTS.evidenceTerms)
+          await protocolHelper.passRealTerms(DEFAULTS.evidenceTerms)
         })
 
         context('when the current term is the draft term', () => {
@@ -451,7 +451,7 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
 
         context('when the current term is after the draft term', () => {
           beforeEach('delay some terms', async () => {
-            await courtHelper.increaseTimeInTerms(10)
+            await protocolHelper.increaseTimeInTerms(10)
           })
 
           itHandlesDraftsProperly()

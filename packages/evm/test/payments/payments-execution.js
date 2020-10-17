@@ -1,7 +1,7 @@
 const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 
@@ -20,21 +20,21 @@ contract('PaymentBook', ([_, someone, payer]) => {
   })
 
   beforeEach('create payments book module', async () => {
-    const courtHelper = buildHelper()
-    controller = await courtHelper.deploy({ paymentPeriodDuration: PERIOD_DURATION, paymentsGovernorSharePct: GOVERNOR_SHARE_PCT })
-    paymentsBook = courtHelper.paymentsBook
+    const protocolHelper = buildHelper()
+    controller = await protocolHelper.deploy({ paymentPeriodDuration: PERIOD_DURATION, paymentsGovernorSharePct: GOVERNOR_SHARE_PCT })
+    paymentsBook = protocolHelper.paymentsBook
   })
 
   describe('pay', () => {
     const data = '0xabcd'
 
-    context('when the court has not started yet', () => {
+    context('when the protocol has not started yet', () => {
       it('reverts', async () => {
-        await assertRevert(paymentsBook.pay(token.address, bn(0), someone, data, { from: payer }), PAYMENTS_BOOK_ERRORS.COURT_HAS_NOT_STARTED)
+        await assertRevert(paymentsBook.pay(token.address, bn(0), someone, data, { from: payer }), PAYMENTS_BOOK_ERRORS.PROTOCOL_HAS_NOT_STARTED)
       })
     })
 
-    context('when the court has already started', () => {
+    context('when the protocol has already started', () => {
       beforeEach('move terms to reach period #0', async () => {
         await controller.mockSetTerm(PERIOD_DURATION)
       })

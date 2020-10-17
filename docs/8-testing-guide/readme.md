@@ -1,26 +1,26 @@
 # 8. Testing guide
 
-This guide aims to cover all the things you should know in order to try Aragon Court or integrate your application with it. 
+This guide aims to cover all the things you should know in order to try Aragon Protocol or integrate your application with it. 
 
 ## 8.1. Testing instances
 
-There are a few testing instances already deployed for Aragon Court. 
+There are a few testing instances already deployed for Aragon Protocol. 
 All of these are mimicking the mainnet instance with some exceptions of term durations to provide a better testing experience.
 Additionally, all the instances are using their own deployed version of the following ERC20 tokens:
-- ANJ, the native token of Aragon Court. You will need some fake ANJ to stake as a guardian to be selected to resolve disputes.  
-- DAI, used for the Aragon Court fees. You will need some fake DAI to pay the dispute fees.
+- ANJ, the native token of Aragon Protocol. You will need some fake ANJ to stake as a guardian to be selected to resolve disputes.  
+- DAI, used for the Aragon Protocol fees. You will need some fake DAI to pay the dispute fees.
 
 Of course, there is an ERC20 faucet deployed for all these instances that you can use to claim some fake ANJ or DAI to start testing. More information is outlined below on using these faucets.
 
 ### 8.1.1. Staging
 
 This is probably the most useful testing instance you would like to try. 
-Fees are low and court terms last a few minutes to make sure you can interact with it a bit faster.
+Fees are low and protocol terms last a few minutes to make sure you can interact with it a bit faster.
 
 - Network: Rinkeby
-- Court term: 10 minutes
-- Payment period: 3 court terms (30 minutes)
-- Dashboard: https://court-staging.aragon.org/
+- Protocol term: 10 minutes
+- Payment period: 3 protocol terms (30 minutes)
+- Dashboard: https://protocol-staging.aragon.org/
 - Address: [`0x52180af656a1923024d1accf1d827ab85ce48878`](http://rinkeby.etherscan.io/address/0x52180af656a1923024d1accf1d827ab85ce48878)
 - Fake ANJ: [`0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad`](http://rinkeby.etherscan.io/address/0x5bc9be34f98eb072696d63b5be5d4d2f2c03d0ad)
 - Fake DAI: [`0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42`](http://rinkeby.etherscan.io/address/0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42)
@@ -31,9 +31,9 @@ Fees are low and court terms last a few minutes to make sure you can interact wi
 This testing instance mirrors the instance deployed to Mainnet, same terms duration and fee amounts
 
 - Network: Rinkeby
-- Court term: 8 hours
-- Payment period: 90 court terms (1 month)
-- Dashboard: https://court-rinkeby.aragon.org/
+- Protocol term: 8 hours
+- Payment period: 90 protocol terms (1 month)
+- Dashboard: https://protocol-rinkeby.aragon.org/
 - Address: [`0xe9180dBE762Fe39520fC9883f7f7EFeBA6506534`](http://rinkeby.etherscan.io/address/0xe9180dBE762Fe39520fC9883f7f7EFeBA6506534)
 - Fake ANJ: [`0x1FAB7d0D028ded72195322998003F6e82cF4cFdB`](http://rinkeby.etherscan.io/address/0x1FAB7d0D028ded72195322998003F6e82cF4cFdB)
 - Fake DAI: [`0xe9a083d88eed757b1d633321ce0519f432c6284d`](http://rinkeby.etherscan.io/address/0xe9a083d88eed757b1d633321ce0519f432c6284d)
@@ -44,9 +44,9 @@ This testing instance mirrors the instance deployed to Mainnet, same terms durat
 This testing instance basically mimics the Mainnet instance
 
 - Network: Ropsten
-- Court term: 8 hours
-- Payment period: 90 court terms (1 month)
-- Dashboard: https://court-ropsten.aragon.org/
+- Protocol term: 8 hours
+- Payment period: 90 protocol terms (1 month)
+- Dashboard: https://protocol-ropsten.aragon.org/
 - Address: [`0x3b26bc496aebaed5b3e0e81cde6b582cde71396e`](http://ropsten.etherscan.io/address/0x3b26bc496aebaed5b3e0e81cde6b582cde71396e)
 - Fake ANJ: [`0xc863e1ccc047beff17022f4229dbe6321a6bce65`](http://ropsten.etherscan.io/address/0xc863e1ccc047beff17022f4229dbe6321a6bce65)
 - Fake DAI: [`0x4e1f48db14d7e1ada090c42ffe15ff3024eec8bf`](http://ropsten.etherscan.io/address/0x4e1f48db14d7e1ada090c42ffe15ff3024eec8bf)
@@ -56,7 +56,7 @@ This testing instance basically mimics the Mainnet instance
 
 > Unless you are familiar with using a local Aragon development environment, we recommend skipping ahead to Section 8.2 and using one of the other available testing instances (Staging/ Rinkeby/ Ropsten).
 
-To deploy a local instance of Aragon Court you will need to clone the deployment scripts first:
+To deploy a local instance of Aragon Protocol you will need to clone the deployment scripts first:
  
 ```bash
 git clone https://github.com/aragon/aragon-network-deploy/
@@ -73,10 +73,10 @@ npx ganache-cli -i 15 --port 8545 --gasLimit 8000000 --deterministic
 Then, open a separate terminal in the same directory of the scripts repo and deploy a local instance by running the following command:
 
 ```bash
-npm run deploy:court:rpc
+npm run deploy:protocol:rpc
 ```
 
-This command will output the addresses of all the deployed modules of Aragon Court including the main entry point (the `AragonCourt` contract).
+This command will output the addresses of all the deployed modules of Aragon Protocol including the main entry point (the `AragonProtocol` contract).
 Additionally, it should deploy a fake version of the ANJ and DAI tokens usable for testing purposes as explained above.
 
 ## 8.2. Claiming fake tokens from the ERC20 faucets
@@ -89,14 +89,14 @@ Once there, you just need to enable your Web3 account and call the `withdraw()` 
 When claiming tokens remember to add the 18 zeroes for the decimals, for example 10 DAI should be requested as `10000000000000000000`. 
 Bear in mind there is a quota set for these faucets; they will only allow you to withdraw up to 10,000 fake-DAI or 10,000 fake-ANJ every 7 days.
 
-## 8.3. Installing the Aragon Court dev CLI tool
+## 8.3. Installing the Aragon Protocol dev CLI tool
 
-To interact with the deployed versions of Aragon Court, we built a node-based [CLI tool](https://github.com/aragonone/court-backend/tree/development/packages/cli) that you can use.
+To interact with the deployed versions of Aragon Protocol, we built a node-based [CLI tool](https://github.com/aragonone/protocol-backend/tree/development/packages/cli) that you can use.
 Currently, there is no published version of it. But you can clone the GitHub repo and run it locally.
 To continue with the testing guide you will need to use it. First, make sure you clone it and install its dependencies as follows:
 ```
-git clone https://github.com/aragonone/court-backend/
-cd court-backend
+git clone https://github.com/aragonone/protocol-backend/
+cd protocol-backend
 git checkout master
 npm i
 npx lerna bootstrap
@@ -106,14 +106,14 @@ cd packages/cli
 This CLI tool is built on top of Truffle using a custom [config file](https://www.npmjs.com/package/@aragon/truffle-config-v5) provided by Aragon.
 Please review that package's documentation to understand how to set up your private keys for testing.
 
-Let's continue with the Aragon Court testing guide and see how we can use the CLI tool.
+Let's continue with the Aragon Protocol testing guide and see how we can use the CLI tool.
 
 ## 8.4. Becoming a guardian
 
-To become a guardian you simply need to activate some ANJ tokens into Aragon Court.
-First make sure to have claimed some fake ANJ tokens from the faucet corresponding to the Aragon Court instance you're willing to try.
+To become a guardian you simply need to activate some ANJ tokens into Aragon Protocol.
+First make sure to have claimed some fake ANJ tokens from the faucet corresponding to the Aragon Protocol instance you're willing to try.
 For now, the testing instances require a minimum of 10,000 ANJ so make sure to have at least that amount. 
-Then, you can activate tokens into Aragon Court using the `stake` and `activate` commands of the CLI tool as follows:
+Then, you can activate tokens into Aragon Protocol using the `stake` and `activate` commands of the CLI tool as follows:
 
 ```bash
 node ./bin/index.js stake --guardian [GUARDIAN] --amount [AMOUNT] --from [FROM] --network [NETWORK] --verbose
@@ -124,7 +124,7 @@ Where:
 - `[GUARDIAN]`: address of the guardian you will activate the tokens for
 - `[AMOUNT]`: amount of fake ANJ tokens you will activate for the specified guardian (it doesn't require adding the decimals, so to activate 10,000 ANJ simply enter `10000`)
 - `[FROM]`: address paying for the fake ANJ tokens; this must be the address you used to claim the tokens from the faucet
-- `[NETWORK]`: name of the Aragon Court instance you are willing to use: `staging`, `rinkeby`, or `ropsten` 
+- `[NETWORK]`: name of the Aragon Protocol instance you are willing to use: `staging`, `rinkeby`, or `ropsten` 
 
 Note that you can also avoid the flag `--verbose` if you want to avoid having too much details about the transactions being sent to the network.
 
@@ -132,7 +132,7 @@ You can check your current stake as a guardian in the dashboards linked above in
 
 ## 8.5. Creating a dispute
 
-As you may know, disputes can only be submitted to Aragon Court through smart contracts that implement a specific interface to support being ruled by the court itself.
+As you may know, disputes can only be submitted to Aragon Protocol through smart contracts that implement a specific interface to support being ruled by the protocol itself.
 This is specified by the [`IArbitrable`](../../packages/ethereum/contracts/arbitration/IArbitrable.sol) interface.
 
 Thus, the first thing we should do is to deploy an Arbitrable contract. You can do this from the CLI running the following command:
@@ -143,11 +143,11 @@ node ./bin/index.js arbitrable -f [FROM] -n [NETWORK] --verbose
 
 Where:
 - `[FROM]`: address deploying the Arbitrable contract; this address will be the one available to create disputes with it
-- `[NETWORK]`: name of the Aragon Court instance you are using: `staging`, `rinkeby`, or `ropsten` 
+- `[NETWORK]`: name of the Aragon Protocol instance you are using: `staging`, `rinkeby`, or `ropsten` 
 
 This command will output the address of your new Arbitrable contract.
 
-Now, we are almost ready to create a dispute. The last step is to send some fake DAI to the Arbitrable instance so that it can pay for the court's dispute fees.
+Now, we are almost ready to create a dispute. The last step is to send some fake DAI to the Arbitrable instance so that it can pay for the protocol's dispute fees.
 The dispute fees are to pay the guardians for each dispute to be resolved.
 For the testing instances, each dispute costs 30.87 fake-DAI (`30870000000000000000` with 18 decimals).
 Thus, you will need to make a transfer from your account to your Arbitrable instance.
@@ -174,12 +174,12 @@ Where:
 - `[SUBMITTER_N]`: addresses submitting each piece of evidence; this list should match the evidence list length 
 - `-c` flag: optional to declare that the evidence submission period should be immediately closed. Otherwise, you will need to manually close it afterwards. 
 - `[FROM]`: address owning the Arbitrable instance being called; this address must be the one you used to deploy the Arbitrable instance before
-- `[NETWORK]`: name of the Aragon Court instance you are using: `staging`, `rinkeby`, or `ropsten`
+- `[NETWORK]`: name of the Aragon Protocol instance you are using: `staging`, `rinkeby`, or `ropsten`
 
 This command will output the ID of the dispute you've just created.
 
-A few things to bear in mind is that, even though the `[METADATA]` and `[EVIDENCE_N]` arguments could be any arbitrary information, in order to use the Court Dashboard to rule disputes, these should follow a specific structure.
-Currently, the Court Dashboard supports reading these pieces of information from files hosted in IPFS. Thus, it expects the following formats:
+A few things to bear in mind is that, even though the `[METADATA]` and `[EVIDENCE_N]` arguments could be any arbitrary information, in order to use the Protocol Dashboard to rule disputes, these should follow a specific structure.
+Currently, the Protocol Dashboard supports reading these pieces of information from files hosted in IPFS. Thus, it expects the following formats:
 - `[METADATA]`: `'{ "metadata": "[METADATA_CID]/metadata.json", "description": "Some dispute description" }'`
 - `[EVIDENCE_N]`: `ipfs:[EVIDENCE_N_CID]`
 
@@ -198,7 +198,7 @@ Additionally, the `metadata.json` file must have the following structure:
 
 Even though `agreementTitle`, `agreementText`, `plaintiff` and `defendant` are optional values, you will have a much better experience if you provide those.
 
-Additionally, it is recommended to upload all these pieces of information together to IPFS. For example, you can take a look at [these files](./sample-dispute) we used to create this [sample dispute](https://court-staging.aragon.org/disputes/15). 
+Additionally, it is recommended to upload all these pieces of information together to IPFS. For example, you can take a look at [these files](./sample-dispute) we used to create this [sample dispute](https://protocol-staging.aragon.org/disputes/15). 
 To upload those files we simply ran the following command while having the IPFS daemon running in background:
 
 ![ipfs](./images/ipfs-output.png)
@@ -212,13 +212,13 @@ node ./bin/index.js dispute -a 0xe573D236d40F331d24420075Fb2EdE84B9968E3c -m '{ 
 
 ## 8.6. Ruling a dispute
 
-You can use any of the Court Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the court—and therefore can be difficult to come to a ruling you want). 
+You can use any of the Protocol Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the protocol—and therefore can be difficult to come to a ruling you want). 
 If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to guardians.
 
-Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragonone/court-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
-- [`draft`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/draft.js): Draft dispute and close evidence submission period if necessary
-- [`commit`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/commit.js): Commit vote for a dispute round
-- [`reveal`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/reveal.js): Reveal committed vote
-- [`appeal`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/appeal.js): Appeal dispute in favour of a certain outcome
-- [`confirm-appeal`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/confirm-appeal.js): Confirm an existing appeal for a dispute
-- [`execute`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/execute.js): Execute ruling for a dispute
+Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragonone/protocol-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
+- [`draft`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/draft.js): Draft dispute and close evidence submission period if necessary
+- [`commit`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/commit.js): Commit vote for a dispute round
+- [`reveal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/reveal.js): Reveal committed vote
+- [`appeal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/appeal.js): Appeal dispute in favour of a certain outcome
+- [`confirm-appeal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/confirm-appeal.js): Confirm an existing appeal for a dispute
+- [`execute`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/execute.js): Execute ruling for a dispute

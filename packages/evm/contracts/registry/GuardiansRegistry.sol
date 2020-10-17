@@ -11,8 +11,8 @@ import "../lib/PctHelpers.sol";
 import "../lib/GuardiansTreeSortition.sol";
 import "../standards/ERC900.sol";
 import "../standards/ApproveAndCall.sol";
-import "../court/controller/Controller.sol";
-import "../court/controller/ControlledRecoverable.sol";
+import "../core/controller/Controller.sol";
+import "../core/controller/ControlledRecoverable.sol";
 
 
 contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900, ApproveAndCallFallBack {
@@ -46,13 +46,13 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
 
     /**
     * @dev Guardians have three kind of balances, these are:
-    *      - active: tokens activated for the Court that can be locked in case the guardian is drafted
+    *      - active: tokens activated for the Protocol that can be locked in case the guardian is drafted
     *      - locked: amount of active tokens that are locked for a draft
-    *      - available: tokens that are not activated for the Court and can be withdrawn by the guardian at any time
+    *      - available: tokens that are not activated for the Protocol and can be withdrawn by the guardian at any time
     *
     *      Due to a gas optimization for drafting, the "active" tokens are stored in a `HexSumTree`, while the others
     *      are stored in this contract as `lockedBalance` and `availableBalance` respectively. Given that the guardians'
-    *      active balances cannot be affected during the current Court term, if guardians want to deactivate some of their
+    *      active balances cannot be affected during the current Protocol term, if guardians want to deactivate some of their
     *      active tokens, their balance will be updated for the following term, and they won't be allowed to
     *      withdraw them until the current term has ended.
     *
@@ -67,7 +67,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Given that the guardians balances cannot be affected during a Court term, if guardians want to deactivate some
+    * @dev Given that the guardians balances cannot be affected during a Protocol term, if guardians want to deactivate some
     *      of their tokens, the tree will always be updated for the following term, and they won't be able to
     *      withdraw the requested amount until the current term has finished. Thus, we need to keep track the term
     *      when a token deactivation was requested and its corresponding amount.
@@ -168,7 +168,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @notice Stake `@tokenAmount(self.token(), _amount)` for the sender to the Court
+    * @notice Stake `@tokenAmount(self.token(), _amount)` for the sender to the Protocol
     * @param _amount Amount of tokens to be staked
     * @param _data Optional data that can be used to request the activation of the transferred tokens
     */
@@ -177,7 +177,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @notice Stake `@tokenAmount(self.token(), _amount)` for `_to` to the Court
+    * @notice Stake `@tokenAmount(self.token(), _amount)` for `_to` to the Protocol
     * @param _to Address to stake an amount of tokens to
     * @param _amount Amount of tokens to be staked
     * @param _data Optional data that can be used to request the activation of the transferred tokens
@@ -187,7 +187,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @notice Unstake `@tokenAmount(self.token(), _amount)` for `_to` from the Court
+    * @notice Unstake `@tokenAmount(self.token(), _amount)` for `_to` from the Protocol
     * @param _amount Amount of tokens to be unstaked
     * @param _data Optional data is never used by this function, only logged
     */

@@ -16,13 +16,13 @@ The config object includes the following fields:
 
 - **Fees config:** Fees config object
 - **Disputes config:** Disputes config object
-- **Min active balance:** Minimum amount of tokens guardians have to activate to participate in the Court
+- **Min active balance:** Minimum amount of tokens guardians have to activate to participate in the Protocol
 
 ### 5.2.3. Fees config
 
 The fees config object includes the following fields:
 
-- **Token:** ERC20 token to be used for the fees of the Court
+- **Token:** ERC20 token to be used for the fees of the Protocol
 - **Final round reduction:** Permyriad of fees reduction applied for final appeal round (1/10,000)
 - **Guardian fee:** Amount of tokens paid to draft a guardian to adjudicate a dispute
 - **Draft fee:** Amount of tokens paid per round to cover the costs of drafting guardians
@@ -32,7 +32,7 @@ The fees config object includes the following fields:
 
 The disputes config object includes the following fields:
 
-- **Evidence terms:** Max submitting evidence period duration in Court terms
+- **Evidence terms:** Max submitting evidence period duration in Protocol terms
 - **Commit terms:** Committing period duration in terms
 - **Reveal terms:** Revealing period duration in terms
 - **Appeal terms:** Appealing period duration in terms

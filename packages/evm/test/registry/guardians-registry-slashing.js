@@ -1,7 +1,7 @@
 const { ZERO_BYTES32, bn, bigExp, getEventAt, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { ACTIVATE_DATA, countGuardian } = require('../helpers/utils/guardians')
 const { MATH_ERRORS, CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')

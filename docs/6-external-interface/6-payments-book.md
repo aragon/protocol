@@ -48,20 +48,20 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Duration:** Duration of a payment period in Court terms
+    - **Duration:** Duration of a payment period in Protocol terms
 
 #### 6.6.2.2. Governor share
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Governor share:** Permyriad of collected fees that will be allocated to the governor of the Court (‱ - 1/10,000)
+    - **Governor share:** Permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
 
 #### 6.6.2.3. Current period ID
 
 - **Inputs:** None
 - **Pre-flight checks:**
-    - Ensure that the Court first term has already started
+    - Ensure that the Protocol first term has already started
 - **Outputs:**
     - **Period ID:** Identification number of the current period
 
@@ -81,8 +81,8 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Period ID:** Identification number of the period being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Balance checkpoint:** Court term ID of a period used to fetch the total active balance of the guardians registry
-    - **Total active balance:** Total amount of guardian tokens active in the Court at the corresponding period checkpoint
+    - **Balance checkpoint:** Protocol term ID of a period used to fetch the total active balance of the guardians registry
+    - **Total active balance:** Total amount of guardian tokens active in the Protocol at the corresponding period checkpoint
 
 #### 6.6.2.6. Guardian fees
 

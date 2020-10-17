@@ -1,7 +1,7 @@
 const { MAX_UINT256, bn, bigExp, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { MATH_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 

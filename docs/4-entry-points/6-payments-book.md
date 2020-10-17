@@ -1,15 +1,15 @@
 # 4.6. PaymentsBook
 
-The `PaymentsBook` module is in charge of handling the fees paid by the users to use Aragon Court.
+The `PaymentsBook` module is in charge of handling the fees paid by the users to use Aragon Protocol.
 This module is simply in charge of collecting any type of payment and distribute it to the corresponding parties: guardians and the governor.
-The payments module does not enforce users of Aragon Court to pay on-chain. The idea is that any custom mechanism can be built on top if desired.
+The payments module does not enforce users of Aragon Protocol to pay on-chain. The idea is that any custom mechanism can be built on top if desired.
 
 ### 4.6.1. Constructor
 
 - **Actor:** Deployer account
 - **Inputs:**
     - **Controller:** Address of the `Controller` contract that centralizes all the modules being used
-    - **Period duration:** Duration of the payment period in Court terms
+    - **Period duration:** Duration of the payment period in Protocol terms
     - **Governor share permyriad:** Initial ‱ of the collected fees that will be saved for the governor (1/10,000)
 - **Authentication:** Open
 - **Pre-flight checks:**
@@ -23,7 +23,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 ### 4.6.2. Pay
 
-- **Actor:** Users of the Court
+- **Actor:** Users of the Protocol
 - **Inputs:**
     - **Token:** Address of the token being used for the payment
     - **Amount:** Amount of tokens being paid
@@ -39,7 +39,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 ### 4.6.3. Claim guardian fees
 
-- **Actor:** Guardians of the Court
+- **Actor:** Guardians of the Protocol
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Token:** Address of the token being claimed
@@ -55,7 +55,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 ### 4.6.4. Transfer governor fees
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Token:** Address of the token being claimed
@@ -73,13 +73,13 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
     - **Period ID:** Period identification number
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that all the terms corresponding to the requested period were already been initialized for the Court
+    - Ensure that all the terms corresponding to the requested period were already been initialized for the Protocol
 - **State transitions:**
     - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANJ active balance in the `GuardiansRegistry` at that term for the requested period
 
 ### 4.6.12. Set governor share permyriad
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **New governor share permyriad:** New ‱ of the collected fees that will be saved for the governor (1/10,000)
 - **Authentication:** Only config governor
@@ -90,7 +90,7 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 ### 4.6.13. Recover funds
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `PaymentsBook` module
     - **Recipient:** Address that will receive the funds of the `PaymentsBook` module

@@ -2,7 +2,7 @@ const { sha3 } = require('web3-utils')
 const { ZERO_ADDRESS, bn, bigExp, getEventAt, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { simulateDraft } = require('../helpers/utils/registry')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, TREE_ERRORS } = require('../helpers/utils/errors')

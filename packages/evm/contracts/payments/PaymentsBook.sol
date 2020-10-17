@@ -9,8 +9,8 @@ import "../lib/os/TimeHelpers.sol";
 import "./IPaymentsBook.sol";
 import "../lib/PctHelpers.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../court/controller/Controller.sol";
-import "../court/controller/ControlledRecoverable.sol";
+import "../core/controller/Controller.sol";
+import "../core/controller/ControlledRecoverable.sol";
 
 
 contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
@@ -19,7 +19,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     using SafeMath64 for uint64;
     using PctHelpers for uint256;
 
-    string private constant ERROR_COURT_HAS_NOT_STARTED = "PB_COURT_HAS_NOT_STARTED";
+    string private constant ERROR_PROTOCOL_HAS_NOT_STARTED = "PB_PROTOCOL_HAS_NOT_STARTED";
     string private constant ERROR_NON_PAST_PERIOD = "PB_NON_PAST_PERIOD";
     string private constant ERROR_PERIOD_DURATION_ZERO = "PB_PERIOD_DURATION_ZERO";
     string private constant ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED = "PB_PERIOD_BALANCE_DETAILS_NOT_COMPUTED";
@@ -35,9 +35,9 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     uint64 internal constant START_TERM_ID = 1;
 
     struct Period {
-        // Court term ID of a period used to fetch the total active balance of the guardians registry
+        // Protocol term ID of a period used to fetch the total active balance of the guardians registry
         uint64 balanceCheckpoint;
-        // Total amount of guardian tokens active in the Court at the corresponding period checkpoint
+        // Total amount of guardian tokens active in the Protocol at the corresponding period checkpoint
         uint256 totalActiveBalance;
         // List of collected guardian fees indexed by token address
         mapping (address => uint256) guardianFees;
@@ -47,10 +47,10 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         mapping (address => mapping (address => bool)) claimedGuardianFees;
     }
 
-    // Duration of a payment period in Court terms
+    // Duration of a payment period in Protocol terms
     uint64 public periodDuration;
 
-    // Permyriad of collected fees that will be allocated to the governor of the Court (‱ - 1/10,000)
+    // Permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
     uint16 public governorSharePct;
 
     // List of periods indexed by ID
@@ -62,10 +62,10 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     event GovernorSharePctChanged(uint16 previousGovernorSharePct, uint16 currentGovernorSharePct);
 
     /**
-    * @dev Initialize court payments book
+    * @dev Initialize protocol payments book
     * @param _controller Address of the controller
-    * @param _periodDuration Duration of a payment period in Court terms
-    * @param _governorSharePct Initial permyriad of collected fees that will be allocated to the governor of the Court (‱ - 1/10,000)
+    * @param _periodDuration Duration of a payment period in Protocol terms
+    * @param _governorSharePct Initial permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
     */
     constructor(Controller _controller, uint64 _periodDuration, uint16 _governorSharePct)
         ControlledRecoverable(_controller)
@@ -175,8 +175,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     /**
     * @notice Make sure that the balance details of a certain period have been computed
     * @param _periodId Identification number of the period being ensured
-    * @return periodBalanceCheckpoint Court term ID used to fetch the total active balance of the guardians registry
-    * @return totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding used checkpoint
+    * @return periodBalanceCheckpoint Protocol term ID used to fetch the total active balance of the guardians registry
+    * @return totalActiveBalance Total amount of guardian tokens active in the Protocol at the corresponding used checkpoint
     */
     function ensurePeriodBalanceDetails(uint256 _periodId) external returns (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
@@ -186,7 +186,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
 
     /**
     * @notice Set new governor share to `_governorSharePct`‱ (1/10,000)
-    * @param _governorSharePct New permyriad of collected fees that will be allocated to the governor of the Court (‱ - 1/10,000)
+    * @param _governorSharePct New permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
     */
     function setGovernorSharePct(uint16 _governorSharePct) external onlyConfigGovernor {
         _setGovernorSharePct(_governorSharePct);
@@ -220,8 +220,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     /**
     * @dev Get the balance details of a payment period
     * @param _periodId Identification number of the period to be queried
-    * @return balanceCheckpoint Court term ID of a period used to fetch the total active balance of the guardians registry
-    * @return totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding period checkpoint
+    * @return balanceCheckpoint Protocol term ID of a period used to fetch the total active balance of the guardians registry
+    * @return totalActiveBalance Total amount of guardian tokens active in the Protocol at the corresponding period checkpoint
     */
     function getPeriodBalanceDetails(uint256 _periodId)
         external
@@ -399,8 +399,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     *      period correspond to each other.
     * @param _periodId Identification number of the period being ensured
     * @param _period Period being ensured
-    * @return Court term ID used to fetch the total active balance of the guardians registry
-    * @return Total amount of guardian tokens active in the Court at the corresponding used checkpoint
+    * @return Protocol term ID used to fetch the total active balance of the guardians registry
+    * @return Total amount of guardian tokens active in the Protocol at the corresponding used checkpoint
     */
     function _ensurePeriodBalanceDetails(Period storage _period, uint256 _periodId) internal returns (uint64, uint256) {
         // Shortcut if the period balance details were already set
@@ -412,11 +412,11 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         uint64 periodStartTermId = _getPeriodStartTermId(_periodId);
         uint64 nextPeriodStartTermId = _getPeriodStartTermId(_periodId.add(1));
 
-        // Pick a random Court term during the next period of the requested one to get the total amount of guardian tokens active in the Court
+        // Pick a random Protocol term during the next period of the requested one to get the total amount of guardian tokens active in the Protocol
         IClock clock = _clock();
         bytes32 randomness = clock.getTermRandomness(nextPeriodStartTermId);
 
-        // The randomness factor for each Court term is computed using the the hash of a block number set during the initialization of the
+        // The randomness factor for each Protocol term is computed using the the hash of a block number set during the initialization of the
         // term, to ensure it cannot be known beforehand. Note that the hash function being used only works for the 256 most recent block
         // numbers. Therefore, if that occurs we use the hash of the previous block number. This could be slightly beneficial for the first
         // guardian calling this function, but it's still impossible to predict during the requested period.
@@ -424,7 +424,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
             randomness = blockhash(getBlockNumber() - 1);
         }
 
-        // Use randomness to choose a Court term of the requested period and query the total amount of guardian tokens active at that term
+        // Use randomness to choose a Protocol term of the requested period and query the total amount of guardian tokens active at that term
         IGuardiansRegistry guardiansRegistry = _guardiansRegistry();
         uint64 periodBalanceCheckpoint = periodStartTermId.add(uint64(uint256(randomness) % periodDuration));
         totalActiveBalance = guardiansRegistry.totalActiveBalanceAt(periodBalanceCheckpoint);
@@ -436,7 +436,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
 
     /**
     * @dev Internal function to set a new governor share value
-    * @param _governorSharePct New permyriad of collected fees that will be allocated to the governor of the Court (‱ - 1/10,000)
+    * @param _governorSharePct New permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
     */
     function _setGovernorSharePct(uint16 _governorSharePct) internal {
         // Check governor share is not greater than 10,000‱
@@ -451,9 +451,9 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @return Identification number of the current period
     */
     function _getCurrentPeriodId() internal view returns (uint256) {
-        // Since the Court starts at term #1, and the first payment period is #0, then subtract one unit to the current term of the Court
+        // Since the Protocol starts at term #1, and the first payment period is #0, then subtract one unit to the current term of the Protocol
         uint64 termId = _getCurrentTermId();
-        require(termId > 0, ERROR_COURT_HAS_NOT_STARTED);
+        require(termId > 0, ERROR_PROTOCOL_HAS_NOT_STARTED);
 
         // No need for SafeMath: we already checked that the term ID is at least 1
         uint64 periodId = (termId - START_TERM_ID) / periodDuration;
@@ -471,12 +471,12 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Internal function to get the Court term in which a certain period starts
+    * @dev Internal function to get the Protocol term in which a certain period starts
     * @param _periodId Identification number of the period querying the start term of
-    * @return Court term where the given period starts
+    * @return Protocol term where the given period starts
     */
     function _getPeriodStartTermId(uint256 _periodId) internal view returns (uint64) {
-        // Periods are measured in Court terms. Since Court terms are represented in uint64, we are safe to use uint64 for period ids too.
+        // Periods are measured in Protocol terms. Since Protocol terms are represented in uint64, we are safe to use uint64 for period ids too.
         // We are using SafeMath here because if any user calls `getPeriodBalanceDetails` for a huge period ID,
         // it would overflow and therefore return wrong information.
         return START_TERM_ID.add(uint64(_periodId).mul(periodDuration));
@@ -498,7 +498,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @param _period Period being queried
     * @param _token Address of the token being queried
     * @param _guardianActiveBalance Active balance of a guardian at the corresponding period checkpoint
-    * @param _totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding period checkpoint
+    * @param _totalActiveBalance Total amount of guardian tokens active in the Protocol at the corresponding period checkpoint
     * @return Amount of fees owed to the given guardian for the requested period and token
     */
     function _getGuardianFees(

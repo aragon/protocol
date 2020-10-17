@@ -1,7 +1,7 @@
 ## 4.4. Guardians Registry
 
 The `GuardiansRegistry` module is in charge of handling the guardians activity and mainly the different states of their staked balances.
-This module is in the one handling all the staking/unstaking logic for the guardians, all the ANJ staked into the Court is held by the registry.
+This module is in the one handling all the staking/unstaking logic for the guardians, all the ANJ staked into the Protocol is held by the registry.
 
 ### 4.4.1. Constructor
 
@@ -22,40 +22,40 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.2. Activate
 
-- **Actor:** Guardian of the Court
+- **Actor:** Guardian of the Protocol
 - **Inputs:**
     - **Amount:** Amount of guardian tokens to be activated for the next term
 - **Authentication:** Open. Implicitly, only guardians with some available balance can call this function
 - **Pre-flight checks:**
-    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the requested amount is greater than zero
     - Ensure that the guardian's available balance is enough for the requested amount
-    - Ensure that the new active balance is greater than the minimum active balance for the Court
+    - Ensure that the new active balance is greater than the minimum active balance for the Protocol
     - Ensure that the total active balance held in the registry does not reach the limit
 - **State transitions:**
-    - Update current Court term if needed
+    - Update current Protocol term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Update the guardian's active balance for the next term
     - Decrease the guardian's available balance
 
 ### 4.4.3. Deactivate
 
-- **Actor:** Guardian of the Court
+- **Actor:** Guardian of the Protocol
 - **Inputs:**
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
 - **Authentication:** Open. Implicitly, only guardians with some activated balance can call this function
 - **Pre-flight checks:**
-    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the unlocked active balance of the guardians is enough for the requested amount
-    - Ensure that the remaining active balance is either zero or greater than the minimum active balance for the Court
+    - Ensure that the remaining active balance is either zero or greater than the minimum active balance for the Protocol
 - **State transitions:**
-    - Update current Court term if needed
+    - Update current Protocol term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Create a new deactivation request object for the next term
 
 ### 4.4.4. Stake
 
-- **Actor:** Guardian of the Court
+- **Actor:** Guardian of the Protocol
 - **Inputs:**
     - **Amount:** Amount of tokens to be staked
     - **Data:** Optional data that can be used to request the activation of the transferred tokens
@@ -69,7 +69,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.5. Stake for
 
-- **Actor:** External entity incentivized to stake some tokens in favor of a guardian of the Court
+- **Actor:** External entity incentivized to stake some tokens in favor of a guardian of the Protocol
 - **Inputs:**
     - **Recipient:** Address of the guardian to stake an amount of tokens to
     - **Amount:** Amount of tokens to be staked
@@ -84,7 +84,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.6. Unstake
 
-- **Actor:** Guardian of the Court
+- **Actor:** Guardian of the Protocol
 - **Inputs:**
     - **Amount:** Amount of tokens to be unstaked
     - **Data:** Optional data is never used by this function
@@ -120,7 +120,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian to process the deactivation request of
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure there is an existing deactivation request for the guardian
     - Ensure that the existing deactivation request can be processed at the current term
 - **State transitions:**
@@ -212,7 +212,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.15. Set total active balance limit
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **New total active balance limit:** New limit of total active balance of guardian tokens
 - **Authentication:** Only config governor
@@ -223,7 +223,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.16. Recover funds
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `GuardiansRegistry` module
     - **Recipient:** Address that will receive the funds of the `GuardiansRegistry` module

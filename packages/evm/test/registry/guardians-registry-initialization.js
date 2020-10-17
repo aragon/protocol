@@ -1,7 +1,7 @@
 const { ZERO_ADDRESS, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')

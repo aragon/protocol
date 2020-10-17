@@ -2,7 +2,7 @@ const { padLeft, toHex } = require('web3-utils')
 const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { ACTIVATE_DATA } = require('../helpers/utils/guardians')
 const { PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')

@@ -58,7 +58,7 @@ Except from those, the rest of the fees, deposits, and collaterals required to b
 
 ### 4.7.5. Recover funds
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `Treasury` module
     - **Recipient:** Address that will receive the funds of the `Treasury` module

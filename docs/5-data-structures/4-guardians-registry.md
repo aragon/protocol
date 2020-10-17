@@ -8,7 +8,7 @@ The guardian object includes the following fields:
 
 - **ID:** Identification number of each guardian
 - **Locked balance:** Maximum amount of tokens that can be slashed based on the guardian's drafts
-- **Active balance:** Tokens activated for the Court that can be locked in case the guardian is drafted
+- **Active balance:** Tokens activated for the Protocol that can be locked in case the guardian is drafted
 - **Available balance:** Available tokens that can be withdrawn at any time
 - **Withdrawals lock term ID:** Term identification number until which guardian's withdrawals will be locked
 - **Deactivation request:** Pending deactivation request of a guardian

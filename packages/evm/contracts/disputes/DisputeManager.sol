@@ -13,7 +13,7 @@ import "../voting/ICRVotingOwner.sol";
 import "../treasury/ITreasury.sol";
 import "../arbitration/IArbitrable.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../court/controller/ControlledRecoverable.sol";
+import "../core/controller/ControlledRecoverable.sol";
 
 
 contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManager {
@@ -103,9 +103,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     struct DraftParams {
         uint256 disputeId;            // Identification number of the dispute to be drafted
         uint256 roundId;              // Identification number of the round to be drafted
-        uint64 termId;                // Identification number of the current term of the Court
+        uint64 termId;                // Identification number of the current term of the Protocol
         bytes32 draftTermRandomness;  // Randomness of the term in which the dispute was requested to be drafted
-        DraftConfig config;           // Draft config of the Court at the draft term
+        DraftConfig config;           // Draft config of the Protocol at the draft term
     }
 
     struct NextRoundDetails {
@@ -123,7 +123,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     // As a reference, drafting 100 guardians from a small tree of 4 would cost ~2.4M. Drafting 500, ~7.75M.
     uint64 public maxGuardiansPerDraftBatch;
 
-    // List of all the disputes created in the Court
+    // List of all the disputes created in the Protocol
     Dispute[] internal disputes;
 
     event DisputeStateChanged(uint256 indexed disputeId, DisputeState indexed state);
@@ -226,7 +226,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _disputeId Identification number of the dispute to be drafted
     */
     function draft(uint256 _disputeId) external disputeExists(_disputeId) {
-        // Drafts can only be computed when the Court is up-to-date. Note that forcing a term transition won't work since the term randomness
+        // Drafts can only be computed when the Protocol is up-to-date. Note that forcing a term transition won't work since the term randomness
         // is always based on the next term which means it won't be available anyway.
         IClock clock = _clock();
         uint64 requiredTransitions = _clock().getNeededTermTransitions();
@@ -503,7 +503,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
 
     /**
     * @notice Ensure votes can be committed for vote #`_voteId`, revert otherwise
-    * @dev This function will ensure the current term of the Court and revert in case votes cannot still be committed
+    * @dev This function will ensure the current term of the Protocol and revert in case votes cannot still be committed
     * @param _voteId ID of the vote instance to request the weight of a voter for
     */
     function ensureCanCommit(uint256 _voteId) external {
@@ -516,7 +516,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
 
     /**
     * @notice Ensure `voter` can commit votes for vote #`_voteId`, revert otherwise
-    * @dev This function will ensure the current term of the Court and revert in case the given voter is not allowed to commit votes
+    * @dev This function will ensure the current term of the Protocol and revert in case the given voter is not allowed to commit votes
     * @param _voteId ID of the vote instance to request the weight of a voter for
     * @param _voter Address of the voter querying the weight of
     */
@@ -532,7 +532,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
 
     /**
     * @notice Ensure `voter` can reveal votes for vote #`_voteId`, revert otherwise
-    * @dev This function will ensure the current term of the Court and revert in case votes cannot still be revealed
+    * @dev This function will ensure the current term of the Protocol and revert in case votes cannot still be revealed
     * @param _voteId ID of the vote instance to request the weight of a voter for
     * @param _voter Address of the voter querying the weight of
     * @return Weight of the requested guardian for the requested dispute's round
@@ -759,7 +759,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to ensure the adjudication state of a certain dispute round. This function will make sure the court term is updated.
+    * @dev Internal function to ensure the adjudication state of a certain dispute round. This function will make sure the protocol term is updated.
     *      This function assumes the given round exists.
     * @param _dispute Dispute to be checked
     * @param _roundId Identification number of the dispute round to be checked
@@ -892,7 +892,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @dev Internal function to compute the guardian weight for the final round. Note that for a final round the weight of
     *      each guardian is equal to the number of times the min active balance the guardian has. This function will try to
     *      collect said amount from the active balance of a guardian, acting as a lock to allow them to vote.
-    * @param _config Court config to calculate the guardian's weight
+    * @param _config Protocol config to calculate the guardian's weight
     * @param _round Dispute round to calculate the guardian's weight for
     * @param _guardian Address of the guardian to calculate the weight of
     * @return Weight of the requested guardian for the final round of the given dispute
@@ -937,10 +937,10 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to execute a deposit of tokens from an account to the Court treasury contract
+    * @dev Internal function to execute a deposit of tokens from an account to the Protocol treasury contract
     * @param _from Address transferring the amount of tokens
     * @param _token ERC20 token to execute a transfer from
-    * @param _amount Amount of tokens to be transferred from the address transferring the funds to the Court treasury
+    * @param _amount Amount of tokens to be transferred from the address transferring the funds to the Protocol treasury
     */
     function _depositAmount(address _from, ERC20 _token, uint256 _amount) internal {
         if (_amount > 0) {
@@ -1010,7 +1010,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to calculate the guardians number for the next regular round of a given round. This function assumes Court term is
+    * @dev Internal function to calculate the guardians number for the next regular round of a given round. This function assumes Protocol term is
     *      up-to-date, that the next round of the one given is regular, and the given config corresponds to the draft term of the given round.
     * @param _round Round querying the guardians number of its next round
     * @param _config Disputes config at the draft term of the first round of the dispute
@@ -1098,12 +1098,12 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to get the Court config used for a dispute
-    * @param _dispute Dispute querying the Court config of
-    * @return Court config used for the given dispute
+    * @dev Internal function to get the Protocol config used for a dispute
+    * @param _dispute Dispute querying the Protocol config of
+    * @return Protocol config used for the given dispute
     */
     function _getDisputeConfig(Dispute storage _dispute) internal view returns (Config memory) {
-        // Note that it is safe to access a Court config directly for a past term
+        // Note that it is safe to access a Protocol config directly for a past term
         return _getConfigAt(_dispute.createTermId);
     }
 
@@ -1186,8 +1186,8 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to get fees information for regular rounds for a certain term. This function assumes Court term is up-to-date.
-    * @param _config Court config to use in order to get fees
+    * @dev Internal function to get fees information for regular rounds for a certain term. This function assumes Protocol term is up-to-date.
+    * @param _config Protocol config to use in order to get fees
     * @param _guardiansNumber Number of guardians participating in the round being queried
     * @return feeToken ERC20 token used for the fees
     * @return guardianFees Total amount of fees to be distributed between the winning guardians of a round
@@ -1205,8 +1205,8 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to get fees information for final rounds for a certain term. This function assumes Court term is up-to-date.
-    * @param _config Court config to use in order to get fees
+    * @dev Internal function to get fees information for final rounds for a certain term. This function assumes Protocol term is up-to-date.
+    * @param _config Protocol config to use in order to get fees
     * @param _guardiansNumber Number of guardians participating in the round being queried
     * @return feeToken ERC20 token used for the fees
     * @return guardianFees Total amount of fees corresponding to the guardians at the given term
@@ -1226,7 +1226,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     /**
     * @dev Internal function to tell whether a round is regular or final. This function assumes the given round exists.
     * @param _roundId Identification number of the round to be checked
-    * @param _config Court config to use in order to check if the given round is regular or final
+    * @param _config Protocol config to use in order to check if the given round is regular or final
     * @return True if the given round is regular, false in case its a final round
     */
     function _isRegularRound(uint256 _roundId, Config memory _config) internal pure returns (bool) {
@@ -1258,9 +1258,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @dev Private function to build params to call for a draft. It assumes the given data is correct.
     * @param _disputeId Identification number of the dispute to be drafted
     * @param _roundId Identification number of the round to be drafted
-    * @param _termId Identification number of the current term of the Court
+    * @param _termId Identification number of the current term of the Protocol
     * @param _draftTermRandomness Randomness of the term in which the dispute was requested to be drafted
-    * @param _config Draft config of the Court at the draft term
+    * @param _config Draft config of the Protocol at the draft term
     * @return Draft params object
     */
     function _buildDraftParams(uint256 _disputeId, uint256 _roundId, uint64 _termId, bytes32 _draftTermRandomness, DraftConfig memory _config)
@@ -1355,7 +1355,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _dispute Dispute to settle penalties for
     * @param _round Dispute round to settle penalties for
     * @param _roundId Identification number of the dispute round to settle penalties for
-    * @param _courtTreasury Treasury module to refund the corresponding guardian fees
+    * @param _protocolTreasury Treasury module to refund the corresponding guardian fees
     * @param _feeToken ERC20 token to be used for the fees corresponding to the draft term of the given dispute round
     * @param _collectedTokens Amount of tokens collected during the given dispute round
     */
@@ -1363,7 +1363,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         Dispute storage _dispute,
         AdjudicationRound storage _round,
         uint256 _roundId,
-        ITreasury _courtTreasury,
+        ITreasury _protocolTreasury,
         ERC20 _feeToken,
         uint256 _collectedTokens
     )
@@ -1385,12 +1385,12 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         // Reimburse guardian fees to the Arbtirable subject for round 0 or to the previous appeal parties for other rounds.
         // Note that if the given round is not the first round, we can ensure there was an appeal in the previous round.
         if (_roundId == 0) {
-            _courtTreasury.assign(_feeToken, address(_dispute.subject), _round.guardianFees);
+            _protocolTreasury.assign(_feeToken, address(_dispute.subject), _round.guardianFees);
         } else {
             uint256 refundFees = _round.guardianFees / 2;
             Appeal storage triggeringAppeal = _dispute.rounds[_roundId - 1].appeal;
-            _courtTreasury.assign(_feeToken, triggeringAppeal.maker, refundFees);
-            _courtTreasury.assign(_feeToken, triggeringAppeal.taker, refundFees);
+            _protocolTreasury.assign(_feeToken, triggeringAppeal.maker, refundFees);
+            _protocolTreasury.assign(_feeToken, triggeringAppeal.taker, refundFees);
         }
     }
 
