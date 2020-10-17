@@ -14,7 +14,18 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
 - **State transitions:**
     - Save the controller address
 
-### 4.5.2. Create
+### 4.5.2. Set representative
+
+- **Actor:** Any juror that could potentially be drafted for an adjudication round
+- **Inputs:**
+    - **Representatives:** List of representatives addresses
+    - **Allowed:** Whether each representative is allowed or not
+- **Authentication:** Open
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Update allowance status for each of the representatives in the list
+
+### 4.5.3. Create
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -38,9 +49,44 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
     - Ensure that the sender has not committed a vote before
     - Ensure that votes can still be committed for the adjudication round
 - **State transitions:**
-    - Create a cast vote object for the sender voter
+    - Create a cast vote object for the sender
 
-### 4.5.4. Leak
+### 4.5.4. Commit for
+
+- **Actor:** Representative of a juror drafted for an adjudication round
+- **Inputs:**
+    - **Vote ID:** Vote identification number
+    - **Voter:** Address of the juror voting on behalf of
+    - **Commitment:** Hashed outcome to be stored for future reveal
+- **Authentication:** Open. Implicitly, only representatives of the jurors that were drafted for the corresponding adjudication round can call this function
+- **Pre-flight checks:**
+    - Ensure a vote object with that ID exists
+    - Ensure that the voter was allowed as a representative by the given voter
+    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
+    - Ensure that the voter has not committed a vote before
+    - Ensure that votes can still be committed for the adjudication round
+- **State transitions:**
+    - Create a cast vote object for the voter
+
+### 4.5.5. Commit for with signature
+
+- **Actor:** Representative of a juror drafted for an adjudication round
+- **Inputs:**
+    - **Vote ID:** Vote identification number
+    - **Voter:** Address of the juror voting on behalf of
+    - **Commitment:** Hashed outcome to be stored for future reveal
+    - **Signature:** Message signed by the voter allowing the sender to cast a vote on their behalf for the given vote 
+- **Authentication:** Open. Implicitly, only representatives of the jurors that were drafted for the corresponding adjudication round can call this function
+- **Pre-flight checks:**
+    - Ensure a vote object with that ID exists
+    - Ensure that the message was actually signed by the voter
+    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
+    - Ensure that the voter has not committed a vote before
+    - Ensure that votes can still be committed for the adjudication round
+- **State transitions:**
+    - Create a cast vote object for the voter
+
+### 4.5.6. Leak
 
 - **Actor:** External entity incentivized to slash a juror
 - **Inputs:**
@@ -55,7 +101,7 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
 - **State transitions:**
     - Update the voter's cast vote object marking it as leaked
 
-### 4.5.5. Reveal
+### 4.5.7. Reveal
 
 - **Actor:** Juror drafted for an adjudication round
 - **Inputs:**
