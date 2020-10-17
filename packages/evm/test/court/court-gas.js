@@ -78,7 +78,7 @@ contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, juror500
         await court.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
       })
 
-      itCostsAtMost('draft', 388e3, () => disputeManager.draft(disputeId))
+      itCostsAtMost('draft', 389e3, () => disputeManager.draft(disputeId))
     })
 
     describe('commit', () => {
