@@ -30,7 +30,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
   beforeEach('create base contracts', async () => {
     controller = await buildHelper().deploy({ configGovernor: governor, minActiveBalance: MIN_GUARDIANS_ACTIVE_TOKENS, paymentPeriodDuration: PERIOD_DURATION })
 
-    guardianToken = await ERC20.new('AN Guardians Token', 'ANJ', 18)
+    guardianToken = await ERC20.new('AN Guardians Token', 'ANT', 18)
     guardiansRegistry = await GuardiansRegistry.new(controller.address, guardianToken.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(guardiansRegistry.address)
 

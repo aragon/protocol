@@ -10,7 +10,7 @@ const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, guardian, someone]) => {
-  let controller, registry, disputeManager, ANJ
+  let controller, registry, disputeManager, ANT
 
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
   const BURN_ADDRESS = '0x000000000000000000000000000000000000dead'
@@ -19,11 +19,11 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
     controller = await buildHelper().deploy()
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
   })
 
   beforeEach('create guardians registry module', async () => {
-    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(registry.address)
   })
 
@@ -59,15 +59,15 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
     })
 
     it('does not affect the token balances', async () => {
-      const previousGuardianBalance = await ANJ.balanceOf(recipient)
-      const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+      const previousGuardianBalance = await ANT.balanceOf(recipient)
+      const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
       await assignmentCall()
 
-      const currentSenderBalance = await ANJ.balanceOf(recipient)
+      const currentSenderBalance = await ANT.balanceOf(recipient)
       assertBn(previousGuardianBalance, currentSenderBalance, 'recipient balances do not match')
 
-      const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+      const currentRegistryBalance = await ANT.balanceOf(registry.address)
       assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
     })
 
@@ -117,15 +117,15 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
     })
 
     it('does not affect the token balances', async () => {
-      const previousGuardianBalance = await ANJ.balanceOf(recipient)
-      const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+      const previousGuardianBalance = await ANT.balanceOf(recipient)
+      const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
       await assignmentCall()
 
-      const currentSenderBalance = await ANJ.balanceOf(recipient)
+      const currentSenderBalance = await ANT.balanceOf(recipient)
       assertBn(previousGuardianBalance, currentSenderBalance, 'recipient balances do not match')
 
-      const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+      const currentRegistryBalance = await ANT.balanceOf(registry.address)
       assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
     })
   }
@@ -159,8 +159,8 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
         context('when the guardian already had some balance', () => {
           beforeEach('stake some balance', async () => {
             const initialBalance = bigExp(50, 18)
-            await ANJ.generateTokens(guardian, initialBalance)
-            await ANJ.approveAndCall(registry.address, initialBalance, '0x', { from: guardian })
+            await ANT.generateTokens(guardian, initialBalance)
+            await ANT.approveAndCall(registry.address, initialBalance, '0x', { from: guardian })
           })
 
           context('when the given amount does not overflow', () => {

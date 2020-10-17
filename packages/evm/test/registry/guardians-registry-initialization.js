@@ -8,23 +8,23 @@ const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, something]) => {
-  let controller, ANJ
+  let controller, ANT
 
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
   beforeEach('create base contracts', async () => {
     controller = await buildHelper().deploy()
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
   })
 
   describe('initialize', () => {
     context('when the initialization succeeds', () => {
       it('sets initial config correctly', async () => {
-        const registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+        const registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
 
         assert.isFalse(await registry.supportsHistory())
         assert.equal(await registry.getController(), controller.address, 'registry controller does not match')
-        assert.equal(await registry.token(), ANJ.address, 'token address does not match')
+        assert.equal(await registry.token(), ANT.address, 'token address does not match')
         assertBn((await registry.totalGuardiansActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
       })
     })
@@ -50,7 +50,7 @@ contract('GuardiansRegistry', ([_, something]) => {
         const totalActiveBalanceLimit = 0
 
         it('reverts', async () => {
-          await assertRevert(GuardiansRegistry.new(controller.address, ANJ.address, totalActiveBalanceLimit), REGISTRY_ERRORS.BAD_TOTAL_ACTIVE_BAL_LIMIT)
+          await assertRevert(GuardiansRegistry.new(controller.address, ANT.address, totalActiveBalanceLimit), REGISTRY_ERRORS.BAD_TOTAL_ACTIVE_BAL_LIMIT)
         })
       })
 
@@ -58,7 +58,7 @@ contract('GuardiansRegistry', ([_, something]) => {
         const controllerAddress = ZERO_ADDRESS
 
         it('reverts', async () => {
-          await assertRevert(GuardiansRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controllerAddress, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
 
@@ -66,7 +66,7 @@ contract('GuardiansRegistry', ([_, something]) => {
         const controllerAddress = something
 
         it('reverts', async () => {
-          await assertRevert(GuardiansRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controllerAddress, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
     })

@@ -45,7 +45,7 @@ const DEFAULTS = {
   finalRoundLockTerms:                bn(10),          //  coherent guardians in the final round won't be able to withdraw for 10 terms
   appealCollateralFactor:             bn(25000),       //  permyriad multiple of dispute fees required to appeal a preliminary ruling (1/10,000)
   appealConfirmCollateralFactor:      bn(35000),       //  permyriad multiple of dispute fees required to confirm appeal (1/10,000)
-  minActiveBalance:                   bigExp(100, 18), //  100 ANJ is the minimum balance guardians must activate to participate in the Protocol
+  minActiveBalance:                   bigExp(100, 18), //  100 ANT is the minimum balance guardians must activate to participate in the Protocol
   finalRoundWeightPrecision:          bn(1000),        //  use to improve division rounding for final round maths
   paymentPeriodDuration:              bn(10),          //  each payment period lasts 10 terms
   paymentsGovernorSharePct:           bn(0)            //  none payments governor share
@@ -360,7 +360,7 @@ class ProtocolHelper {
     if (!this.configGovernor) this.configGovernor = await this._getAccount(0)
     if (!this.modulesGovernor) this.modulesGovernor = await this._getAccount(0)
     if (!this.feeToken) this.feeToken = await this.artifacts.require('ERC20Mock').new('Protocol Fee Token', 'CFT', 18)
-    if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANJ', 18)
+    if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANT', 18)
 
     this.protocol = await this.artifacts.require('AragonProtocolMock').new(
       [this.termDuration, this.firstTermStartTime],
