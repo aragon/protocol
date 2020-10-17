@@ -1,7 +1,7 @@
 ## 4.5. Voting
 
-The `Voting` module is in charge of handling all the votes submitted by the drafted jurors and computing the tallies to ensure the final ruling of a dispute once finished.
-In particular, the first version of the Court protocol uses a commit-reveal mechanism. Therefore, the `Voting` module allows jurors to commit and reveal their votes, and leaked other jurors votes.
+The `Voting` module is in charge of handling all the votes submitted by the drafted guardians and computing the tallies to ensure the final ruling of a dispute once finished.
+In particular, the first version of the Court protocol uses a commit-reveal mechanism. Therefore, the `Voting` module allows guardians to commit and reveal their votes, and leaked other guardians votes.
 
 ### 4.5.1. Constructor
 
@@ -14,7 +14,18 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
 - **State transitions:**
     - Save the controller address
 
-### 4.5.2. Create
+### 4.5.2. Set representative
+
+- **Actor:** Any guardian that could potentially be drafted for an adjudication round
+- **Inputs:**
+    - **Representatives:** List of representatives addresses
+    - **Allowed:** Whether each representative is allowed or not
+- **Authentication:** Open
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Update allowance status for each of the representatives in the list
+
+### 4.5.3. Create
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -27,22 +38,57 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
 
 ### 4.5.3. Commit
 
-- **Actor:** Juror drafted for an adjudication round
+- **Actor:** Guardian drafted for an adjudication round
 - **Inputs:**
     - **Vote ID:** Vote identification number
     - **Commitment:** Hashed outcome to be stored for future reveal
-- **Authentication:** Open. Implicitly, only jurors that were drafted for the corresponding adjudication round can call this function
+- **Authentication:** Open. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function
 - **Pre-flight checks:**
     - Ensure a vote object with that ID exists
     - Ensure that the sender was drafted for the corresponding dispute's adjudication round
     - Ensure that the sender has not committed a vote before
     - Ensure that votes can still be committed for the adjudication round
 - **State transitions:**
-    - Create a cast vote object for the sender voter
+    - Create a cast vote object for the sender
 
-### 4.5.4. Leak
+### 4.5.4. Commit for
 
-- **Actor:** External entity incentivized to slash a juror
+- **Actor:** Representative of a guardian drafted for an adjudication round
+- **Inputs:**
+    - **Vote ID:** Vote identification number
+    - **Voter:** Address of the guardian voting on behalf of
+    - **Commitment:** Hashed outcome to be stored for future reveal
+- **Authentication:** Open. Implicitly, only representatives of the guardians that were drafted for the corresponding adjudication round can call this function
+- **Pre-flight checks:**
+    - Ensure a vote object with that ID exists
+    - Ensure that the voter was allowed as a representative by the given voter
+    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
+    - Ensure that the voter has not committed a vote before
+    - Ensure that votes can still be committed for the adjudication round
+- **State transitions:**
+    - Create a cast vote object for the voter
+
+### 4.5.5. Commit for with signature
+
+- **Actor:** Representative of a guardian drafted for an adjudication round
+- **Inputs:**
+    - **Vote ID:** Vote identification number
+    - **Voter:** Address of the guardian voting on behalf of
+    - **Commitment:** Hashed outcome to be stored for future reveal
+    - **Signature:** Message signed by the voter allowing the sender to cast a vote on their behalf for the given vote 
+- **Authentication:** Open. Implicitly, only representatives of the guardians that were drafted for the corresponding adjudication round can call this function
+- **Pre-flight checks:**
+    - Ensure a vote object with that ID exists
+    - Ensure that the message was actually signed by the voter
+    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
+    - Ensure that the voter has not committed a vote before
+    - Ensure that votes can still be committed for the adjudication round
+- **State transitions:**
+    - Create a cast vote object for the voter
+
+### 4.5.6. Leak
+
+- **Actor:** External entity incentivized to slash a guardian
 - **Inputs:**
     - **Vote ID:** Vote identification number
     - **Voter:** Address of the voter to leak a vote of
@@ -57,7 +103,7 @@ In particular, the first version of the Court protocol uses a commit-reveal mech
 
 ### 4.5.5. Reveal
 
-- **Actor:** Juror drafted for an adjudication round
+- **Actor:** Guardian drafted for an adjudication round
 - **Inputs:**
     - **Vote ID:** Vote identification number
     - **Voter:** Address of the voter revealing a vote for

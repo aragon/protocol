@@ -64,18 +64,18 @@ contract('PaymentBook', ([_, someone, payer]) => {
               assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance.add(amount), 'payments book balances do not match')
             })
 
-            it('computes the juror and governor fees correctly', async () => {
+            it('computes the guardian and governor fees correctly', async () => {
               const currentPeriodId = await paymentsBook.getCurrentPeriodId()
-              const { jurorFees: previousJurorFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
+              const { guardianFees: previousGuardianFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
 
               await paymentsBook.pay(token.address, amount, someone, data, { from })
-              const { jurorFees: currentJurorFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
+              const { guardianFees: currentGuardianFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
 
               const expectedGovernorFees = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
               assertBn(currentGovernorFees, previousGovernorFees.add(expectedGovernorFees), 'period governor fees do not match')
 
-              const expectedJurorFees = amount.sub(expectedGovernorFees)
-              assertBn(currentJurorFees, previousJurorFees.add(expectedJurorFees), 'period juror fees do not match')
+              const expectedGuardianFees = amount.sub(expectedGovernorFees)
+              assertBn(currentGuardianFees, previousGuardianFees.add(expectedGuardianFees), 'period guardian fees do not match')
             })
 
             it('emits an event', async () => {
@@ -101,18 +101,18 @@ contract('PaymentBook', ([_, someone, payer]) => {
               assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance.add(amount), 'payments book balances do not match')
             })
 
-            it('computes the juror and governor fees correctly', async () => {
+            it('computes the guardian and governor fees correctly', async () => {
               const currentPeriodId = await paymentsBook.getCurrentPeriodId()
-              const { jurorFees: previousJurorFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
+              const { guardianFees: previousGuardianFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
 
               await paymentsBook.pay(eth.address, amount, someone, data, { from, value: amount })
-              const { jurorFees: currentJurorFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
+              const { guardianFees: currentGuardianFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
 
               const expectedGovernorFees = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
               assertBn(currentGovernorFees, previousGovernorFees.add(expectedGovernorFees), 'period governor fees do not match')
 
-              const expectedJurorFees = amount.sub(expectedGovernorFees)
-              assertBn(currentJurorFees, previousJurorFees.add(expectedJurorFees), 'period juror fees do not match')
+              const expectedGuardianFees = amount.sub(expectedGovernorFees)
+              assertBn(currentGuardianFees, previousGuardianFees.add(expectedGuardianFees), 'period guardian fees do not match')
             })
 
             it('emits an event', async () => {

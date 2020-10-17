@@ -4,10 +4,10 @@ const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/as
 const { buildHelper } = require('../helpers/wrappers/court')
 const { CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
 
-const JurorsRegistry = artifacts.require('JurorsRegistry')
+const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('JurorsRegistry', ([_, something]) => {
+contract('GuardiansRegistry', ([_, something]) => {
   let controller, ANJ
 
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
@@ -20,12 +20,12 @@ contract('JurorsRegistry', ([_, something]) => {
   describe('initialize', () => {
     context('when the initialization succeeds', () => {
       it('sets initial config correctly', async () => {
-        const registry = await JurorsRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+        const registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
 
         assert.isFalse(await registry.supportsHistory())
         assert.equal(await registry.getController(), controller.address, 'registry controller does not match')
         assert.equal(await registry.token(), ANJ.address, 'token address does not match')
-        assertBn((await registry.totalJurorsActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
+        assertBn((await registry.totalGuardiansActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
       })
     })
 
@@ -34,7 +34,7 @@ contract('JurorsRegistry', ([_, something]) => {
         const token = ZERO_ADDRESS
 
         it('reverts', async () => {
-          await assertRevert(JurorsRegistry.new(controller.address, token, TOTAL_ACTIVE_BALANCE_LIMIT), REGISTRY_ERRORS.NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controller.address, token, TOTAL_ACTIVE_BALANCE_LIMIT), REGISTRY_ERRORS.NOT_CONTRACT)
         })
       })
 
@@ -42,7 +42,7 @@ contract('JurorsRegistry', ([_, something]) => {
         const token = something
 
         it('reverts', async () => {
-          await assertRevert(JurorsRegistry.new(controller.address, token, TOTAL_ACTIVE_BALANCE_LIMIT), REGISTRY_ERRORS.NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controller.address, token, TOTAL_ACTIVE_BALANCE_LIMIT), REGISTRY_ERRORS.NOT_CONTRACT)
         })
       })
 
@@ -50,7 +50,7 @@ contract('JurorsRegistry', ([_, something]) => {
         const totalActiveBalanceLimit = 0
 
         it('reverts', async () => {
-          await assertRevert(JurorsRegistry.new(controller.address, ANJ.address, totalActiveBalanceLimit), REGISTRY_ERRORS.BAD_TOTAL_ACTIVE_BAL_LIMIT)
+          await assertRevert(GuardiansRegistry.new(controller.address, ANJ.address, totalActiveBalanceLimit), REGISTRY_ERRORS.BAD_TOTAL_ACTIVE_BAL_LIMIT)
         })
       })
 
@@ -58,7 +58,7 @@ contract('JurorsRegistry', ([_, something]) => {
         const controllerAddress = ZERO_ADDRESS
 
         it('reverts', async () => {
-          await assertRevert(JurorsRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
 
@@ -66,7 +66,7 @@ contract('JurorsRegistry', ([_, something]) => {
         const controllerAddress = something
 
         it('reverts', async () => {
-          await assertRevert(JurorsRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(GuardiansRegistry.new(controllerAddress, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
     })

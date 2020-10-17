@@ -52,8 +52,8 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
         _setAndCacheModule(VOTING, _addr);
     }
 
-    function setJurorsRegistry(address _addr) external {
-        _setAndCacheModule(JURORS_REGISTRY, _addr);
+    function setGuardiansRegistry(address _addr) external {
+        _setAndCacheModule(GUARDIANS_REGISTRY, _addr);
     }
 
     function setPaymentsBook(address _addr) external {
@@ -110,7 +110,7 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
         ids[0] = DISPUTE_MANAGER;
         ids[1] = VOTING;
         ids[2] = TREASURY;
-        ids[3] = JURORS_REGISTRY;
+        ids[3] = GUARDIANS_REGISTRY;
         ids[4] = PAYMENTS_BOOK;
 
         address[] memory addresses = new address[](5);

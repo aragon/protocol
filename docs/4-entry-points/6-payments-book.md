@@ -1,7 +1,7 @@
 # 4.6. PaymentsBook
 
 The `PaymentsBook` module is in charge of handling the fees paid by the users to use Aragon Court.
-This module is simply in charge of collecting any type of payment and distribute it to the corresponding parties: jurors and the governor.
+This module is simply in charge of collecting any type of payment and distribute it to the corresponding parties: guardians and the governor.
 The payments module does not enforce users of Aragon Court to pay on-chain. The idea is that any custom mechanism can be built on top if desired.
 
 ### 4.6.1. Constructor
@@ -33,17 +33,17 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 - **Pre-flight checks:**
     - Ensure that the payment amount is greater than zero
 - **State transitions:**
-    - Update the total amount of collected juror fees during the current period
+    - Update the total amount of collected guardian fees during the current period
     - Update the total amount of collected governor fees during the current period
     - Pull the corresponding amount of tokens from the sender to be deposited in the `PaymentsBook` module, revert if the EC20-transfer wasn't successful or if the ETH received does not match the requested one
 
-### 4.6.3. Claim juror fees
+### 4.6.3. Claim guardian fees
 
-- **Actor:** Jurors of the Court
+- **Actor:** Guardians of the Court
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Token:** Address of the token being claimed
-- **Authentication:** Open. Implicitly, only jurors that have certain amount of ANJ tokens activated during the requested period can call this function
+- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANJ tokens activated during the requested period can call this function
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
     - Ensure that the sender has not claimed their fees for the requested period before
@@ -68,14 +68,14 @@ The payments module does not enforce users of Aragon Court to pay on-chain. The 
 
 ### 4.6.5. Ensure period balance details
 
-- **Actor:** External entity incentivized in updating the parameters to determine the jurors share fees for each period
+- **Actor:** External entity incentivized in updating the parameters to determine the guardians share fees for each period
 - **Inputs:**
     - **Period ID:** Period identification number
 - **Authentication:** Open
 - **Pre-flight checks:**
     - Ensure that all the terms corresponding to the requested period were already been initialized for the Court
 - **State transitions:**
-    - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANJ active balance in the `JurorsRegistry` at that term for the requested period
+    - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANJ active balance in the `GuardiansRegistry` at that term for the requested period
 
 ### 4.6.12. Set governor share permyriad
 

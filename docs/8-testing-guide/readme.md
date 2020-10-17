@@ -7,7 +7,7 @@ This guide aims to cover all the things you should know in order to try Aragon C
 There are a few testing instances already deployed for Aragon Court. 
 All of these are mimicking the mainnet instance with some exceptions of term durations to provide a better testing experience.
 Additionally, all the instances are using their own deployed version of the following ERC20 tokens:
-- ANJ, the native token of Aragon Court. You will need some fake ANJ to stake as a juror to be selected to resolve disputes.  
+- ANJ, the native token of Aragon Court. You will need some fake ANJ to stake as a guardian to be selected to resolve disputes.  
 - DAI, used for the Aragon Court fees. You will need some fake DAI to pay the dispute fees.
 
 Of course, there is an ERC20 faucet deployed for all these instances that you can use to claim some fake ANJ or DAI to start testing. More information is outlined below on using these faucets.
@@ -108,27 +108,27 @@ Please review that package's documentation to understand how to set up your priv
 
 Let's continue with the Aragon Court testing guide and see how we can use the CLI tool.
 
-## 8.4. Becoming a juror
+## 8.4. Becoming a guardian
 
-To become a juror you simply need to activate some ANJ tokens into Aragon Court.
+To become a guardian you simply need to activate some ANJ tokens into Aragon Court.
 First make sure to have claimed some fake ANJ tokens from the faucet corresponding to the Aragon Court instance you're willing to try.
 For now, the testing instances require a minimum of 10,000 ANJ so make sure to have at least that amount. 
 Then, you can activate tokens into Aragon Court using the `stake` and `activate` commands of the CLI tool as follows:
 
 ```bash
-node ./bin/index.js stake --juror [JUROR] --amount [AMOUNT] --from [FROM] --network [NETWORK] --verbose
-node ./bin/index.js activate --juror [JUROR] --amount [AMOUNT] --from [FROM] --network [NETWORK] --verbose
+node ./bin/index.js stake --guardian [GUARDIAN] --amount [AMOUNT] --from [FROM] --network [NETWORK] --verbose
+node ./bin/index.js activate --guardian [GUARDIAN] --amount [AMOUNT] --from [FROM] --network [NETWORK] --verbose
 ```
 
 Where:
-- `[JUROR]`: address of the juror you will activate the tokens for
-- `[AMOUNT]`: amount of fake ANJ tokens you will activate for the specified juror (it doesn't require adding the decimals, so to activate 10,000 ANJ simply enter `10000`)
+- `[GUARDIAN]`: address of the guardian you will activate the tokens for
+- `[AMOUNT]`: amount of fake ANJ tokens you will activate for the specified guardian (it doesn't require adding the decimals, so to activate 10,000 ANJ simply enter `10000`)
 - `[FROM]`: address paying for the fake ANJ tokens; this must be the address you used to claim the tokens from the faucet
 - `[NETWORK]`: name of the Aragon Court instance you are willing to use: `staging`, `rinkeby`, or `ropsten` 
 
 Note that you can also avoid the flag `--verbose` if you want to avoid having too much details about the transactions being sent to the network.
 
-You can check your current stake as a juror in the dashboards linked above in section 8.1.
+You can check your current stake as a guardian in the dashboards linked above in section 8.1.
 
 ## 8.5. Creating a dispute
 
@@ -148,7 +148,7 @@ Where:
 This command will output the address of your new Arbitrable contract.
 
 Now, we are almost ready to create a dispute. The last step is to send some fake DAI to the Arbitrable instance so that it can pay for the court's dispute fees.
-The dispute fees are to pay the jurors for each dispute to be resolved.
+The dispute fees are to pay the guardians for each dispute to be resolved.
 For the testing instances, each dispute costs 30.87 fake-DAI (`30870000000000000000` with 18 decimals).
 Thus, you will need to make a transfer from your account to your Arbitrable instance.
 To do that you can use the Etherscan interface for the fake DAI instance linked in section 8.1.
@@ -213,7 +213,7 @@ node ./bin/index.js dispute -a 0xe573D236d40F331d24420075Fb2EdE84B9968E3c -m '{ 
 ## 8.6. Ruling a dispute
 
 You can use any of the Court Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the court—and therefore can be difficult to come to a ruling you want). 
-If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to jurors.
+If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to guardians.
 
 Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragonone/court-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
 - [`draft`](https://github.com/aragonone/court-backend/blob/master/packages/cli/src/commands/draft.js): Draft dispute and close evidence submission period if necessary

@@ -1,32 +1,32 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { filterWinningJurors } = require('../helpers/utils/jurors')
+const { filterWinningGuardians } = require('../helpers/utils/guardians')
 const { DISPUTE_MANAGER_ERRORS } = require('../helpers/utils/errors')
 const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
 const { buildHelper, ROUND_STATES, DEFAULTS } = require('../helpers/wrappers/court')
 const { getVoteId, oppositeOutcome, OUTCOMES } = require('../helpers/utils/crvoting')
 
-contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, juror1000, juror1500, juror2000, juror2500, juror3000, juror3500, juror4000]) => {
+contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000]) => {
   let courtHelper, disputeManager, voting
 
-  const jurors = [
-    { address: juror3000, initialActiveBalance: bigExp(3000, 18) },
-    { address: juror500,  initialActiveBalance: bigExp(500,  18) },
-    { address: juror1000, initialActiveBalance: bigExp(1000, 18) },
-    { address: juror2000, initialActiveBalance: bigExp(2000, 18) },
-    { address: juror4000, initialActiveBalance: bigExp(4000, 18) },
-    { address: juror1500, initialActiveBalance: bigExp(1500, 18) },
-    { address: juror3500, initialActiveBalance: bigExp(3500, 18) },
-    { address: juror2500, initialActiveBalance: bigExp(2500, 18) }
+  const guardians = [
+    { address: guardian3000, initialActiveBalance: bigExp(3000, 18) },
+    { address: guardian500,  initialActiveBalance: bigExp(500,  18) },
+    { address: guardian1000, initialActiveBalance: bigExp(1000, 18) },
+    { address: guardian2000, initialActiveBalance: bigExp(2000, 18) },
+    { address: guardian4000, initialActiveBalance: bigExp(4000, 18) },
+    { address: guardian1500, initialActiveBalance: bigExp(1500, 18) },
+    { address: guardian3500, initialActiveBalance: bigExp(3500, 18) },
+    { address: guardian2500, initialActiveBalance: bigExp(2500, 18) }
   ]
 
-  before('create court and activate jurors', async () => {
+  before('create court and activate guardians', async () => {
     courtHelper = buildHelper()
     await courtHelper.deploy()
     voting = courtHelper.voting
     disputeManager = courtHelper.disputeManager
-    await courtHelper.activate(jurors)
+    await courtHelper.activate(guardians)
   })
 
   describe('settle', () => {
@@ -40,9 +40,9 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
       context('when the given round is valid', () => {
         const roundId = 0
         const voters = [
-          { address: juror1000, weight: 1, outcome: OUTCOMES.LEAKED },
-          { address: juror2000, weight: 1, outcome: OUTCOMES.HIGH },
-          { address: juror4000, weight: 1, outcome: OUTCOMES.LOW }
+          { address: guardian1000, weight: 1, outcome: OUTCOMES.LEAKED },
+          { address: guardian2000, weight: 1, outcome: OUTCOMES.HIGH },
+          { address: guardian4000, weight: 1, outcome: OUTCOMES.LOW }
         ]
 
         const itIsAtState = (roundId, state) => {
@@ -80,7 +80,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
         beforeEach('mock draft round', async () => {
           voteId = getVoteId(disputeId, roundId)
-          await courtHelper.draft({ disputeId, drafter, draftedJurors: voters })
+          await courtHelper.draft({ disputeId, drafter, draftedGuardians: voters })
         })
 
         context('during commit period', () => {
@@ -373,11 +373,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   const draftAndVoteSecondRound = newRoundVoters => {
                     beforeEach('draft and vote second round', async () => {
-                      const expectedNewRoundJurorsNumber = 9 // previous jurors * 3 + 1
-                      const { roundJurorsNumber } = await courtHelper.getRound(disputeId, newRoundId)
-                      assertBn(roundJurorsNumber, expectedNewRoundJurorsNumber, 'new round jurors number does not match')
+                      const expectedNewRoundGuardiansNumber = 9 // previous guardians * 3 + 1
+                      const { roundGuardiansNumber } = await courtHelper.getRound(disputeId, newRoundId)
+                      assertBn(roundGuardiansNumber, expectedNewRoundGuardiansNumber, 'new round guardians number does not match')
 
-                      await courtHelper.draft({ disputeId, maxJurorsToBeDrafted: expectedNewRoundJurorsNumber, draftedJurors: newRoundVoters })
+                      await courtHelper.draft({ disputeId, maxGuardiansToBeDrafted: expectedNewRoundGuardiansNumber, draftedGuardians: newRoundVoters })
                       await courtHelper.commit({ disputeId, roundId: newRoundId, voters: newRoundVoters })
                       await courtHelper.reveal({ disputeId, roundId: newRoundId, voters: newRoundVoters })
                       await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
@@ -386,11 +386,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   context('when the ruling is sustained', async () => {
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.LOW },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.LOW },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.LOW }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.LOW },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.LOW },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.LOW }
                     ]
 
                     draftAndVoteSecondRound(newRoundVoters)
@@ -399,11 +399,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   context('when the ruling is flipped', async () => {
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.HIGH },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.HIGH },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.HIGH }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.HIGH },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.HIGH },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.HIGH }
                     ]
 
                     draftAndVoteSecondRound(newRoundVoters)
@@ -412,11 +412,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   context('when the ruling is refused', async () => {
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.REFUSED },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.REFUSED },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.REFUSED },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.REFUSED },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.REFUSED }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.REFUSED },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.REFUSED },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.REFUSED }
                     ]
 
                     draftAndVoteSecondRound(newRoundVoters)
@@ -424,16 +424,16 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   })
 
                   context('when no one voted', async () => {
-                    const newRoundDraftedJurors = [
-                      { address: juror500,  weight: 1 },
-                      { address: juror2000, weight: 4 },
-                      { address: juror2500, weight: 1 },
-                      { address: juror4000, weight: 2 },
-                      { address: juror3000, weight: 1 }
+                    const newRoundDraftedGuardians = [
+                      { address: guardian500,  weight: 1 },
+                      { address: guardian2000, weight: 4 },
+                      { address: guardian2500, weight: 1 },
+                      { address: guardian4000, weight: 2 },
+                      { address: guardian3000, weight: 1 }
                     ]
 
                     beforeEach('pass second round', async () => {
-                      await courtHelper.draft({ disputeId, maxJurorsToBeDrafted: 0, draftedJurors: newRoundDraftedJurors })
+                      await courtHelper.draft({ disputeId, maxGuardiansToBeDrafted: 0, draftedGuardians: newRoundDraftedGuardians })
                       await courtHelper.passTerms(courtHelper.commitTerms.add(courtHelper.revealTerms).add(courtHelper.appealTerms).add(courtHelper.appealConfirmTerms))
                     })
 
@@ -474,7 +474,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                     beforeEach('settle previous rounds', async () => {
                       for (let nextRoundId = 0; nextRoundId < finalRoundId; nextRoundId++) {
                         await disputeManager.settlePenalties(disputeId, nextRoundId, 0)
-                        const [winners] = filterWinningJurors(previousRoundsVoters[nextRoundId], expectedFinalRuling)
+                        const [winners] = filterWinningGuardians(previousRoundsVoters[nextRoundId], expectedFinalRuling)
                         for (const { address } of winners) {
                           await disputeManager.settleReward(disputeId, nextRoundId, address)
                         }
@@ -487,11 +487,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is sustained', async () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.HIGH },
-                      { address: juror2000, outcome: OUTCOMES.LOW },
-                      { address: juror2500, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, outcome: OUTCOMES.LOW },
-                      { address: juror3000, outcome: OUTCOMES.LOW }
+                      { address: guardian500,  outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, outcome: OUTCOMES.LOW },
+                      { address: guardian2500, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, outcome: OUTCOMES.LOW },
+                      { address: guardian3000, outcome: OUTCOMES.LOW }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
@@ -500,11 +500,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is flipped', async () => {
                     const expectedFinalRuling = appealedRuling
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.HIGH },
-                      { address: juror2000, outcome: OUTCOMES.HIGH },
-                      { address: juror2500, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, outcome: OUTCOMES.HIGH },
-                      { address: juror3000, outcome: OUTCOMES.HIGH }
+                      { address: guardian500,  outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, outcome: OUTCOMES.HIGH },
+                      { address: guardian2500, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, outcome: OUTCOMES.HIGH },
+                      { address: guardian3000, outcome: OUTCOMES.HIGH }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
@@ -513,11 +513,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is refused', async () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.REFUSED },
-                      { address: juror2000, outcome: OUTCOMES.REFUSED },
-                      { address: juror2500, outcome: OUTCOMES.REFUSED },
-                      { address: juror4000, outcome: OUTCOMES.REFUSED },
-                      { address: juror3000, outcome: OUTCOMES.REFUSED }
+                      { address: guardian500,  outcome: OUTCOMES.REFUSED },
+                      { address: guardian2000, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2500, outcome: OUTCOMES.REFUSED },
+                      { address: guardian4000, outcome: OUTCOMES.REFUSED },
+                      { address: guardian3000, outcome: OUTCOMES.REFUSED }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)

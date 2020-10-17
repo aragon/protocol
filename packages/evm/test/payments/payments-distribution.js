@@ -3,22 +3,22 @@ const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/court')
-const { ACTIVATE_DATA } = require('../helpers/utils/jurors')
+const { ACTIVATE_DATA } = require('../helpers/utils/guardians')
 const { PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 
 const ERC20 = artifacts.require('ERC20Mock')
 const PaymentsBook = artifacts.require('PaymentsBook')
-const JurorsRegistry = artifacts.require('JurorsRegistry')
+const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 
-contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Term3, jurorMidPeriod1, governor]) => {
-  let controller, paymentsBook, jurorsRegistry, eth, token, anotherToken, jurorToken
+contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeriod0Term3, guardianMidPeriod1, governor]) => {
+  let controller, paymentsBook, guardiansRegistry, eth, token, anotherToken, guardianToken
 
   const PCT_BASE = bn(10000)
   const PERIOD_DURATION = 24 * 30           // 30 days, assuming terms are 1h
 
-  const MIN_JURORS_ACTIVE_TOKENS = bigExp(100, 18)
+  const MIN_GUARDIANS_ACTIVE_TOKENS = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
   before('deploy some tokens', async () => {
@@ -28,33 +28,33 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
   })
 
   beforeEach('create base contracts', async () => {
-    controller = await buildHelper().deploy({ configGovernor: governor, minActiveBalance: MIN_JURORS_ACTIVE_TOKENS, paymentPeriodDuration: PERIOD_DURATION })
+    controller = await buildHelper().deploy({ configGovernor: governor, minActiveBalance: MIN_GUARDIANS_ACTIVE_TOKENS, paymentPeriodDuration: PERIOD_DURATION })
 
-    jurorToken = await ERC20.new('AN Jurors Token', 'ANJ', 18)
-    jurorsRegistry = await JurorsRegistry.new(controller.address, jurorToken.address, TOTAL_ACTIVE_BALANCE_LIMIT)
-    await controller.setJurorsRegistry(jurorsRegistry.address)
+    guardianToken = await ERC20.new('AN Guardians Token', 'ANJ', 18)
+    guardiansRegistry = await GuardiansRegistry.new(controller.address, guardianToken.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    await controller.setGuardiansRegistry(guardiansRegistry.address)
 
     const disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
   })
 
   describe('fees distribution', () => {
-    const jurorPeriod0Term0Balance = MIN_JURORS_ACTIVE_TOKENS
-    const jurorPeriod0Term3Balance = MIN_JURORS_ACTIVE_TOKENS.mul(bn(2))
-    const jurorMidPeriod1Balance = MIN_JURORS_ACTIVE_TOKENS.mul(bn(3))
+    const guardianPeriod0Term0Balance = MIN_GUARDIANS_ACTIVE_TOKENS
+    const guardianPeriod0Term3Balance = MIN_GUARDIANS_ACTIVE_TOKENS.mul(bn(2))
+    const guardianMidPeriod1Balance = MIN_GUARDIANS_ACTIVE_TOKENS.mul(bn(3))
 
-    beforeEach('activate jurors', async () => {
+    beforeEach('activate guardians', async () => {
       await controller.mockSetTerm(0) // tokens are activated for the next term
-      await jurorToken.generateTokens(jurorPeriod0Term1, jurorPeriod0Term0Balance)
-      await jurorToken.approveAndCall(jurorsRegistry.address, jurorPeriod0Term0Balance, ACTIVATE_DATA, { from: jurorPeriod0Term1 })
+      await guardianToken.generateTokens(guardianPeriod0Term1, guardianPeriod0Term0Balance)
+      await guardianToken.approveAndCall(guardiansRegistry.address, guardianPeriod0Term0Balance, ACTIVATE_DATA, { from: guardianPeriod0Term1 })
 
       await controller.mockSetTerm(2) // tokens are activated for the next term
-      await jurorToken.generateTokens(jurorPeriod0Term3, jurorPeriod0Term3Balance)
-      await jurorToken.approveAndCall(jurorsRegistry.address, jurorPeriod0Term3Balance, ACTIVATE_DATA, { from: jurorPeriod0Term3 })
+      await guardianToken.generateTokens(guardianPeriod0Term3, guardianPeriod0Term3Balance)
+      await guardianToken.approveAndCall(guardiansRegistry.address, guardianPeriod0Term3Balance, ACTIVATE_DATA, { from: guardianPeriod0Term3 })
 
       await controller.mockSetTerm(PERIOD_DURATION * 1.5 - 1)
-      await jurorToken.generateTokens(jurorMidPeriod1, jurorMidPeriod1Balance)
-      await jurorToken.approveAndCall(jurorsRegistry.address, jurorMidPeriod1Balance, ACTIVATE_DATA, { from: jurorMidPeriod1 })
+      await guardianToken.generateTokens(guardianMidPeriod1, guardianMidPeriod1Balance)
+      await guardianToken.approveAndCall(guardiansRegistry.address, guardianMidPeriod1Balance, ACTIVATE_DATA, { from: guardianMidPeriod1 })
     })
 
     beforeEach('create payments book module', async () => {
@@ -89,15 +89,15 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
       context('when requesting a past period', () => {
         const periodId = 0
 
-        const jurorFees = (totalFees, governorShare, jurorShare) => {
+        const guardianFees = (totalFees, governorShare, guardianShare) => {
           const governorFees = governorShare.mul(totalFees).div(PCT_BASE)
-          return jurorShare(totalFees.sub(governorFees))
+          return guardianShare(totalFees.sub(governorFees))
         }
 
-        const itDistributesJurorFeesCorrectly = (juror, governorShare, jurorShare = x => x) => {
-          const expectedJurorTokenFees = jurorFees(period0TokenFees, governorShare, jurorShare)
-          const expectedJurorAnotherTokenFees = jurorFees(period0AnotherTokenFees, governorShare, jurorShare)
-          const expectedJurorEthFees = jurorFees(period0EthFees, governorShare, jurorShare)
+        const itDistributesGuardianFeesCorrectly = (guardian, governorShare, guardianShare = x => x) => {
+          const expectedGuardianTokenFees = guardianFees(period0TokenFees, governorShare, guardianShare)
+          const expectedGuardianAnotherTokenFees = guardianFees(period0AnotherTokenFees, governorShare, guardianShare)
+          const expectedGuardianEthFees = guardianFees(period0EthFees, governorShare, guardianShare)
 
           const expectedGovernorTokenFees = governorShare.mul(period0TokenFees).div(PCT_BASE)
           const expectedGovernorAnotherTokenFees = governorShare.mul(period0AnotherTokenFees).div(PCT_BASE)
@@ -108,63 +108,63 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
             await executePayments()
           })
 
-          it('estimates juror fees correctly', async () => {
-            const fees = await paymentsBook.getJurorFees(periodId, juror, token.address)
-            const otherFees = await paymentsBook.getManyJurorFees(periodId, juror, [anotherToken.address, eth.address])
+          it('estimates guardian fees correctly', async () => {
+            const fees = await paymentsBook.getGuardianFees(periodId, guardian, token.address)
+            const otherFees = await paymentsBook.getManyGuardianFees(periodId, guardian, [anotherToken.address, eth.address])
 
-            assertBn(fees, expectedJurorTokenFees, 'juror fees does not match')
-            assertBn(otherFees[0], expectedJurorAnotherTokenFees, 'juror another token fees does not match')
-            assertBn(otherFees[1], expectedJurorEthFees, 'juror eth fees does not match')
+            assertBn(fees, expectedGuardianTokenFees, 'guardian fees does not match')
+            assertBn(otherFees[0], expectedGuardianAnotherTokenFees, 'guardian another token fees does not match')
+            assertBn(otherFees[1], expectedGuardianEthFees, 'guardian eth fees does not match')
           })
 
-          it('transfers fees to the juror', async () => {
-            assert.isFalse(await paymentsBook.hasJurorClaimed(periodId, juror, token.address))
-            const previousBalance = await token.balanceOf(juror)
+          it('transfers fees to the guardian', async () => {
+            assert.isFalse(await paymentsBook.hasGuardianClaimed(periodId, guardian, token.address))
+            const previousBalance = await token.balanceOf(guardian)
 
-            await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
+            await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
 
-            assert.isTrue(await paymentsBook.hasJurorClaimed(periodId, juror, token.address))
+            assert.isTrue(await paymentsBook.hasGuardianClaimed(periodId, guardian, token.address))
 
-            const currentBalance = await token.balanceOf(juror)
-            assertBn(currentBalance, previousBalance.add(expectedJurorTokenFees), 'juror token balance does not match')
+            const currentBalance = await token.balanceOf(guardian)
+            assertBn(currentBalance, previousBalance.add(expectedGuardianTokenFees), 'guardian token balance does not match')
           })
 
-          it('cannot claim juror fees twice', async () => {
-            await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
+          it('cannot claim guardian fees twice', async () => {
+            await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
 
-            await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: juror }), PAYMENTS_BOOK_ERRORS.JUROR_FEES_ALREADY_CLAIMED)
+            await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian }), PAYMENTS_BOOK_ERRORS.GUARDIAN_FEES_ALREADY_CLAIMED)
           })
 
-          it('can claim remaining juror fees', async () => {
+          it('can claim remaining guardian fees', async () => {
             const tokens = [anotherToken.address, eth.address]
-            const previousEthBalance = bn(await web3.eth.getBalance(juror))
-            const previousTokenBalance = await anotherToken.balanceOf(juror)
+            const previousEthBalance = bn(await web3.eth.getBalance(guardian))
+            const previousTokenBalance = await anotherToken.balanceOf(guardian)
 
-            await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
-            await paymentsBook.claimManyJurorFees(periodId, tokens, { from: juror })
+            await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
+            await paymentsBook.claimManyGuardianFees(periodId, tokens, { from: guardian })
 
-            const hasClaimed = await paymentsBook.hasJurorClaimedMany(periodId, juror, tokens)
-            assert.isTrue(hasClaimed.every(Boolean), 'juror claim fees status does not match')
+            const hasClaimed = await paymentsBook.hasGuardianClaimedMany(periodId, guardian, tokens)
+            assert.isTrue(hasClaimed.every(Boolean), 'guardian claim fees status does not match')
 
-            const currentTokenBalance = await anotherToken.balanceOf(juror)
-            assertBn(currentTokenBalance, previousTokenBalance.add(expectedJurorAnotherTokenFees), 'juror token balance does not match')
+            const currentTokenBalance = await anotherToken.balanceOf(guardian)
+            assertBn(currentTokenBalance, previousTokenBalance.add(expectedGuardianAnotherTokenFees), 'guardian token balance does not match')
 
-            const currentEthBalance = bn(await web3.eth.getBalance(juror))
-            assert.isTrue(currentEthBalance.gt(previousEthBalance), 'juror eth balance does not match')
+            const currentEthBalance = bn(await web3.eth.getBalance(guardian))
+            assert.isTrue(currentEthBalance.gt(previousEthBalance), 'guardian eth balance does not match')
           })
 
-          it('emits an event when claiming juror fees', async () => {
+          it('emits an event when claiming guardian fees', async () => {
             const tokens = [anotherToken.address, eth.address]
 
-            const receipt = await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
-            const anotherReceipt = await paymentsBook.claimManyJurorFees(periodId, tokens, { from: juror })
+            const receipt = await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
+            const anotherReceipt = await paymentsBook.claimManyGuardianFees(periodId, tokens, { from: guardian })
 
-            assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.JUROR_FEES_CLAIMED)
-            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.JUROR_FEES_CLAIMED, { expectedArgs: { juror, periodId, token, amount: expectedJurorTokenFees } })
+            assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_FEES_CLAIMED)
+            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_FEES_CLAIMED, { expectedArgs: { guardian, periodId, token, amount: expectedGuardianTokenFees } })
 
-            assertAmountOfEvents(anotherReceipt, PAYMENTS_BOOK_EVENTS.JUROR_FEES_CLAIMED, { expectedAmount: 2 })
-            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.JUROR_FEES_CLAIMED, { index: 0, expectedArgs: { juror, periodId, token: tokens[0], amount: expectedJurorAnotherTokenFees } })
-            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.JUROR_FEES_CLAIMED, { index: 1, expectedArgs: { juror, periodId, token: tokens[1], amount: expectedJurorEthFees } })
+            assertAmountOfEvents(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_FEES_CLAIMED, { expectedAmount: 2 })
+            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_FEES_CLAIMED, { index: 0, expectedArgs: { guardian, periodId, token: tokens[0], amount: expectedGuardianAnotherTokenFees } })
+            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_FEES_CLAIMED, { index: 1, expectedArgs: { guardian, periodId, token: tokens[1], amount: expectedGuardianEthFees } })
           })
 
           if (governorShare.eq(bn(0))) {
@@ -229,10 +229,10 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
               assertBn(otherFees[1], 0, 'governor eth fees does not match')
 
               const currentTokenBalance = await anotherToken.balanceOf(governor)
-              assertBn(currentTokenBalance, previousTokenBalance.add(expectedGovernorAnotherTokenFees), 'juror token balance does not match')
+              assertBn(currentTokenBalance, previousTokenBalance.add(expectedGovernorAnotherTokenFees), 'guardian token balance does not match')
 
               const currentEthBalance = bn(await web3.eth.getBalance(governor))
-              assert.isTrue(currentEthBalance.gt(previousEthBalance), 'juror eth balance does not match')
+              assert.isTrue(currentEthBalance.gt(previousEthBalance), 'guardian eth balance does not match')
             })
 
             it('emits an event when requesting governor fees', async () => {
@@ -252,7 +252,7 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         }
 
         context('when the checkpoint used is at term #1', () => {
-          const expectedTotalActiveBalance = jurorPeriod0Term0Balance
+          const expectedTotalActiveBalance = guardianPeriod0Term0Balance
 
           beforeEach('mock term randomness', async () => {
             const randomness = padLeft(toHex(PERIOD_DURATION), 64)
@@ -267,37 +267,37 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
             assertBn(totalActiveBalance, expectedTotalActiveBalance, 'total active balance does not match')
           })
 
-          context('when the claiming juror was active at that term', async () => {
-            const juror = jurorPeriod0Term1
+          context('when the claiming guardian was active at that term', async () => {
+            const guardian = guardianPeriod0Term1
 
             context('when the governor share is zero', async () => {
               const governorShare = bn(0)
 
-              itDistributesJurorFeesCorrectly(juror, governorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare)
             })
 
             context('when the governor share is greater than zero', async () => {
               const governorShare = bn(100) // 1%
 
-              itDistributesJurorFeesCorrectly(juror, governorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare)
             })
           })
 
-          context('when the claiming juror was not active yet', async () => {
-            const juror = jurorPeriod0Term3
+          context('when the claiming guardian was not active yet', async () => {
+            const guardian = guardianPeriod0Term3
 
             beforeEach('execute payments', executePayments)
 
-            it('estimates juror fees correctly', async () => {
-              const fees = await paymentsBook.getJurorFees(periodId, juror, token.address)
+            it('estimates guardian fees correctly', async () => {
+              const fees = await paymentsBook.getGuardianFees(periodId, guardian, token.address)
 
-              assertBn(fees, 0, 'juror fees does not match')
+              assertBn(fees, 0, 'guardian fees does not match')
             })
 
             it('does not transfer any fees', async () => {
               const previousBalance = await token.balanceOf(paymentsBook.address)
 
-              await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
+              await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
 
               const currentBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentBalance, previousBalance, 'payments book balance does not match')
@@ -306,7 +306,7 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         })
 
         context('when the checkpoint used is at term #3', () => {
-          const expectedTotalActiveBalance = jurorPeriod0Term0Balance.add(jurorPeriod0Term3Balance)
+          const expectedTotalActiveBalance = guardianPeriod0Term0Balance.add(guardianPeriod0Term3Balance)
 
           beforeEach('mock term randomness', async () => {
             const randomness = padLeft(toHex(PERIOD_DURATION + 2), 64)
@@ -321,55 +321,55 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
             assertBn(totalActiveBalance, expectedTotalActiveBalance, 'total active balance does not match')
           })
 
-          context('when the claiming juror was active before that term', async () => {
-            const juror = jurorPeriod0Term1
-            const jurorShare = x => x.mul(jurorPeriod0Term0Balance).div(expectedTotalActiveBalance)
+          context('when the claiming guardian was active before that term', async () => {
+            const guardian = guardianPeriod0Term1
+            const guardianShare = x => x.mul(guardianPeriod0Term0Balance).div(expectedTotalActiveBalance)
 
             context('when the governor share is zero', async () => {
               const governorShare = bn(0)
 
-              itDistributesJurorFeesCorrectly(juror, governorShare, jurorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare, guardianShare)
             })
 
             context('when the governor share is greater than zero', async () => {
               const governorShare = bn(100) // 1%
 
-              itDistributesJurorFeesCorrectly(juror, governorShare, jurorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare, guardianShare)
             })
           })
 
-          context('when the claiming juror was active at that term', async () => {
-            const juror = jurorPeriod0Term3
-            const jurorShare = x => x.mul(jurorPeriod0Term3Balance).div(expectedTotalActiveBalance)
+          context('when the claiming guardian was active at that term', async () => {
+            const guardian = guardianPeriod0Term3
+            const guardianShare = x => x.mul(guardianPeriod0Term3Balance).div(expectedTotalActiveBalance)
 
             context('when the governor share is zero', async () => {
               const governorShare = bn(0)
 
-              itDistributesJurorFeesCorrectly(juror, governorShare, jurorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare, guardianShare)
             })
 
             context('when the governor share is greater than zero', async () => {
               const governorShare = bn(100) // 1%
 
-              itDistributesJurorFeesCorrectly(juror, governorShare, jurorShare)
+              itDistributesGuardianFeesCorrectly(guardian, governorShare, guardianShare)
             })
           })
 
-          context('when the claiming juror was not active yet', async () => {
-            const juror = jurorMidPeriod1
+          context('when the claiming guardian was not active yet', async () => {
+            const guardian = guardianMidPeriod1
 
             beforeEach('execute payments', executePayments)
 
-            it('estimates juror fees correctly', async () => {
-              const fees = await paymentsBook.getJurorFees(periodId, juror, token.address)
+            it('estimates guardian fees correctly', async () => {
+              const fees = await paymentsBook.getGuardianFees(periodId, guardian, token.address)
 
-              assertBn(fees, 0, 'juror fees does not match')
+              assertBn(fees, 0, 'guardian fees does not match')
             })
 
             it('does not transfer any fees', async () => {
               const previousBalance = await token.balanceOf(paymentsBook.address)
 
-              await paymentsBook.claimJurorFees(periodId, token.address, { from: juror })
+              await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardian })
 
               const currentBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentBalance, previousBalance, 'payments book balance does not match')
@@ -384,9 +384,9 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         beforeEach('execute payments', executePayments)
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
 
@@ -396,9 +396,9 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         beforeEach('execute payments', executePayments)
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
     })
@@ -410,7 +410,7 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         it('ignores the request', async () => {
           const previousBalance = await token.balanceOf(paymentsBook.address)
 
-          await paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term1 })
+          await paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term1 })
 
           const currentBalance = await token.balanceOf(paymentsBook.address)
           assertBn(currentBalance, previousBalance, 'payments book balance does not match')
@@ -421,7 +421,7 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         const periodId = 1
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
 
@@ -429,7 +429,7 @@ contract('PaymentsBook', ([_, payer, someone, jurorPeriod0Term1, jurorPeriod0Ter
         const periodId = 2
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimJurorFees(periodId, token.address, { from: jurorPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianFees(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
     })

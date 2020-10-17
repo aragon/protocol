@@ -5,10 +5,10 @@ const { buildHelper } = require('../helpers/wrappers/court')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
 
-const JurorsRegistry = artifacts.require('JurorsRegistry')
+const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('JurorsRegistry', ([_, governor, someone]) => {
+contract('GuardiansRegistry', ([_, governor, someone]) => {
   let controller, registry, ANJ
 
   const MIN_ACTIVE_BALANCE = bigExp(100, 18)
@@ -19,9 +19,9 @@ contract('JurorsRegistry', ([_, governor, someone]) => {
     ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
   })
 
-  beforeEach('create jurors registry module', async () => {
-    registry = await JurorsRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
-    await controller.setJurorsRegistry(registry.address)
+  beforeEach('create guardians registry module', async () => {
+    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    await controller.setGuardiansRegistry(registry.address)
   })
 
   describe('setTotalActiveBalanceLimit', () => {
@@ -33,12 +33,12 @@ contract('JurorsRegistry', ([_, governor, someone]) => {
           it('updates the current total active balance limit', async () => {
             await registry.setTotalActiveBalanceLimit(newTotalActiveBalanceLimit, { from })
 
-            const currentTotalActiveBalanceLimit = await registry.totalJurorsActiveBalanceLimit()
+            const currentTotalActiveBalanceLimit = await registry.totalGuardiansActiveBalanceLimit()
             assertBn(currentTotalActiveBalanceLimit, newTotalActiveBalanceLimit, 'total active balance limit does not match')
           })
 
           it('emits an event', async () => {
-            const previousTotalActiveBalanceLimit = await registry.totalJurorsActiveBalanceLimit()
+            const previousTotalActiveBalanceLimit = await registry.totalGuardiansActiveBalanceLimit()
 
             const receipt = await registry.setTotalActiveBalanceLimit(newTotalActiveBalanceLimit, { from })
 

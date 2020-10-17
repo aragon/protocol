@@ -37,6 +37,14 @@ The following events are emitted by the `Voting`:
     - **Outcome:** Outcome of the vote that has been leaked
     - **Leaker:** Address of the account that has leaked the vote
 
+#### 6.5.1.5. Representative changed
+
+- **Name:** `RepresentativeChanged`
+- **Args:**
+    - **Voter:** Address of the voter principal
+    - **Representative:** Address of the representative 
+    - **Allowed:** Whether the representative is allowed by the voter
+
 ### 6.5.2. Getters
 
 The following functions are state getters provided by the `Voting`:
@@ -110,3 +118,23 @@ The following functions are state getters provided by the `Voting`:
     - Ensure a vote object with that ID exists
 - **Outputs:**
     - **In favor:** List of results to tell whether a voter voted in favor of the given outcome or not
+
+#### 6.5.2.8. Is representative of
+
+- **Inputs:**
+    - **Voter:** Address of the guardian voting on behalf of
+    - **Representative:** Address of the representative being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Allowed:** True if the representative currently represents the voter
+
+#### 6.5.2.9. Is representative allowed
+
+- **Inputs:**
+    - **Vote ID:** Vote identification number
+    - **Voter:** Address of the guardian voting on behalf of
+    - **Representative:** Address of the representative being queried
+    - **Signature:** Message signed by the voter allowing the sender to cast a vote on their behalf for the given vote
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Allowed:** True if the representative was authorized by a voter for the given vote

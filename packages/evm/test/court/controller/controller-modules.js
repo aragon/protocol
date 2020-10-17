@@ -263,7 +263,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             { name: 'DISPUTE_MANAGER', getter: 'getDisputeManager' },
             { name: 'VOTING', getter: 'getVoting' },
             { name: 'TREASURY', getter: 'getTreasury' },
-            { name: 'JURORS_REGISTRY', getter: 'getJurorsRegistry' },
+            { name: 'GUARDIANS_REGISTRY', getter: 'getGuardiansRegistry' },
             { name: 'PAYMENTS_BOOK', getter: 'getPaymentsBook' }
           ]
 

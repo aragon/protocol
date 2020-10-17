@@ -6,11 +6,11 @@ const { CONFIG_EVENTS } = require('../../helpers/utils/events')
 const { assertConfig, buildNewConfig } = require('../../helpers/utils/config')
 const { CLOCK_ERRORS, CONFIG_ERRORS, CONTROLLER_ERRORS } = require('../../helpers/utils/errors')
 
-contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appealTaker, juror500, juror1000, juror3000]) => {
+contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian3000]) => {
   let courtHelper, controller
 
   let initialConfig, feeToken
-  const jurorFee = bigExp(10, 18)
+  const guardianFee = bigExp(10, 18)
   const draftFee = bigExp(30, 18)
   const settleFee = bigExp(40, 18)
   const evidenceTerms = bn(1)
@@ -20,7 +20,7 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
   const appealConfirmTerms = bn(4)
   const penaltyPct = bn(100)
   const finalRoundReduction = bn(3300)
-  const firstRoundJurorsNumber = bn(5)
+  const firstRoundGuardiansNumber = bn(5)
   const appealStepFactor = bn(3)
   const maxRegularAppealRounds = bn(2)
   const finalRoundLockTerms = bn(2)
@@ -34,7 +34,7 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
     feeToken = await artifacts.require('ERC20Mock').new('Court Fee Token', 'CFT', 18)
     initialConfig = {
       feeToken,
-      jurorFee,
+      guardianFee,
       draftFee,
       settleFee,
       evidenceTerms,
@@ -44,7 +44,7 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
       appealConfirmTerms,
       penaltyPct,
       finalRoundReduction,
-      firstRoundJurorsNumber,
+      firstRoundGuardiansNumber,
       appealStepFactor,
       maxRegularAppealRounds,
       finalRoundLockTerms,
@@ -94,8 +94,8 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
         await assertRevert(courtHelper.deploy({ appealConfirmCollateralFactor: bn(0) }), CONFIG_ERRORS.ZERO_COLLATERAL_FACTOR)
       })
 
-      it('cannot use an initial jurors number zero', async () => {
-        await assertRevert(courtHelper.deploy({ firstRoundJurorsNumber: bn(0) }), CONFIG_ERRORS.BAD_INITIAL_JURORS_NUMBER)
+      it('cannot use an initial guardians number zero', async () => {
+        await assertRevert(courtHelper.deploy({ firstRoundGuardiansNumber: bn(0) }), CONFIG_ERRORS.BAD_INITIAL_GUARDIANS_NUMBER)
       })
 
       it('cannot use an appeal step factor zero', async () => {
@@ -176,11 +176,11 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
 
             if (handleDisputes) {
               it('does not affect a dispute during its lifetime', async () => {
-                // activate jurors
+                // activate guardians
                 await courtHelper.activate([
-                  { address: juror3000, initialActiveBalance: bigExp(3000, 18) },
-                  { address: juror500,  initialActiveBalance: bigExp(500, 18) },
-                  { address: juror1000, initialActiveBalance: bigExp(1000, 18) }
+                  { address: guardian3000, initialActiveBalance: bigExp(3000, 18) },
+                  { address: guardian500,  initialActiveBalance: bigExp(500, 18) },
+                  { address: guardian1000, initialActiveBalance: bigExp(1000, 18) }
                 ])
 
                 // move right before the config change and create a dispute
@@ -188,23 +188,23 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
                 const disputeId = await courtHelper.dispute()
 
                 // check dispute config related info
-                const { roundJurorsNumber, jurorFees } = await courtHelper.getRound(disputeId, 0)
-                assertBn(roundJurorsNumber, firstRoundJurorsNumber, 'jurors number does not match')
-                assertBn(jurorFees, firstRoundJurorsNumber.mul(jurorFee), 'jurors fees do not match')
+                const { roundGuardiansNumber, guardianFees } = await courtHelper.getRound(disputeId, 0)
+                assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'guardians number does not match')
+                assertBn(guardianFees, firstRoundGuardiansNumber.mul(guardianFee), 'guardians fees do not match')
 
                 // draft, commit, and reveal
-                const draftedJurors = await courtHelper.draft({ disputeId, drafter })
-                await courtHelper.commit({ disputeId, roundId: 0, voters: draftedJurors })
-                await courtHelper.reveal({ disputeId, roundId: 0, voters: draftedJurors })
+                const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+                await courtHelper.commit({ disputeId, roundId: 0, voters: draftedGuardians })
+                await courtHelper.reveal({ disputeId, roundId: 0, voters: draftedGuardians })
 
                 // appeal and confirm
                 await courtHelper.appeal({ disputeId, roundId: 0, appealMaker })
                 await courtHelper.confirmAppeal({ disputeId, roundId: 0, appealTaker })
 
                 // check dispute config related info
-                const { roundJurorsNumber: appealJurorsNumber, jurorFees: appealJurorFees } = await courtHelper.getRound(disputeId, 1)
-                assertBn(appealJurorsNumber, firstRoundJurorsNumber.mul(appealStepFactor), 'jurors Number does not match')
-                assertBn(appealJurorFees, appealJurorsNumber.mul(jurorFee), 'jurors Fees do not match')
+                const { roundGuardiansNumber: appealGuardiansNumber, guardianFees: appealGuardianFees } = await courtHelper.getRound(disputeId, 1)
+                assertBn(appealGuardiansNumber, firstRoundGuardiansNumber.mul(appealStepFactor), 'guardians Number does not match')
+                assertBn(appealGuardianFees, appealGuardiansNumber.mul(guardianFee), 'guardians Fees do not match')
               })
             }
           })
@@ -230,9 +230,9 @@ contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appea
               await assertRevert(courtHelper.setConfig(configChangeTermId, newConfig, { from }), CONFIG_ERRORS.ZERO_COLLATERAL_FACTOR)
             })
 
-            it('cannot use an initial jurors number zero', async () => {
-              newConfig.firstRoundJurorsNumber = bn(0)
-              await assertRevert(courtHelper.setConfig(configChangeTermId, newConfig, { from }), CONFIG_ERRORS.BAD_INITIAL_JURORS_NUMBER)
+            it('cannot use an initial guardians number zero', async () => {
+              newConfig.firstRoundGuardiansNumber = bn(0)
+              await assertRevert(courtHelper.setConfig(configChangeTermId, newConfig, { from }), CONFIG_ERRORS.BAD_INITIAL_GUARDIANS_NUMBER)
             })
 
             it('cannot use an appeal step factor zero', async () => {

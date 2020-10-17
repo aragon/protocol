@@ -8,7 +8,7 @@ import "../lib/os/TimeHelpers.sol";
 
 import "./IPaymentsBook.sol";
 import "../lib/PctHelpers.sol";
-import "../registry/IJurorsRegistry.sol";
+import "../registry/IGuardiansRegistry.sol";
 import "../court/controller/Controller.sol";
 import "../court/controller/ControlledRecoverable.sol";
 
@@ -28,23 +28,23 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
-    string private constant ERROR_JUROR_FEES_ALREADY_CLAIMED = "PB_JUROR_FEES_ALREADY_CLAIMED";
+    string private constant ERROR_GUARDIAN_FEES_ALREADY_CLAIMED = "PB_GUARDIAN_FEES_ALREADY_CLAIMED";
     string private constant ERROR_OVERRATED_GOVERNOR_SHARE_PCT = "PB_OVERRATED_GOVERNOR_SHARE_PCT";
 
-    // Term 0 is for jurors on-boarding
+    // Term 0 is for guardians on-boarding
     uint64 internal constant START_TERM_ID = 1;
 
     struct Period {
-        // Court term ID of a period used to fetch the total active balance of the jurors registry
+        // Court term ID of a period used to fetch the total active balance of the guardians registry
         uint64 balanceCheckpoint;
-        // Total amount of juror tokens active in the Court at the corresponding period checkpoint
+        // Total amount of guardian tokens active in the Court at the corresponding period checkpoint
         uint256 totalActiveBalance;
-        // List of collected juror fees indexed by token address
-        mapping (address => uint256) jurorFees;
+        // List of collected guardian fees indexed by token address
+        mapping (address => uint256) guardianFees;
         // List of collected governor fees indexed by token address
         mapping (address => uint256) governorFees;
-        // List of jurors that have claimed fees during a period, indexed by juror and token addresses
-        mapping (address => mapping (address => bool)) claimedJurorFees;
+        // List of guardians that have claimed fees during a period, indexed by guardian and token addresses
+        mapping (address => mapping (address => bool)) claimedGuardianFees;
     }
 
     // Duration of a payment period in Court terms
@@ -57,7 +57,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     mapping (uint256 => Period) internal periods;
 
     event PaymentReceived(uint256 indexed periodId, address indexed payer, address indexed token, uint256 amount, address sender, bytes data);
-    event JurorFeesClaimed(uint256 indexed periodId, address indexed juror, address indexed token, uint256 amount);
+    event GuardianFeesClaimed(uint256 indexed periodId, address indexed guardian, address indexed token, uint256 amount);
     event GovernorFeesTransferred(uint256 indexed periodId, address indexed token, uint256 amount);
     event GovernorSharePctChanged(uint16 previousGovernorSharePct, uint16 currentGovernorSharePct);
 
@@ -93,9 +93,9 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         uint256 governorFees = _amount.pct(governorSharePct);
         period.governorFees[_token] = period.governorFees[_token].add(governorFees);
 
-        // Update collected fees for the jurors
-        uint256 jurorFees = _amount.sub(governorFees);
-        period.jurorFees[_token] = period.jurorFees[_token].add(jurorFees);
+        // Update collected fees for the guardians
+        uint256 guardianFees = _amount.sub(governorFees);
+        period.guardianFees[_token] = period.guardianFees[_token].add(guardianFees);
 
         // Deposit tokens from sender to this contract
         _deposit(msg.sender, _token, _amount);
@@ -103,41 +103,41 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @notice Claim jurors fees for period #`_periodId` owed to `msg.sender`
+    * @notice Claim guardians fees for period #`_periodId` owed to `msg.sender`
     * @param _periodId Identification number of the period which fees are claimed for
     * @param _token Address of the token to be claimed
     */
-    function claimJurorFees(uint256 _periodId, address _token) external {
+    function claimGuardianFees(uint256 _periodId, address _token) external {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
-        require(!_hasClaimedJurorFees(period, msg.sender, _token), ERROR_JUROR_FEES_ALREADY_CLAIMED);
+        require(!_hasClaimedGuardianFees(period, msg.sender, _token), ERROR_GUARDIAN_FEES_ALREADY_CLAIMED);
 
         (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) = _ensurePeriodBalanceDetails(period, _periodId);
-        uint256 jurorActiveBalance = _getJurorActiveBalance(msg.sender, periodBalanceCheckpoint);
-        uint256 amount = _getJurorFees(period, _token, jurorActiveBalance, totalActiveBalance);
-        _claimJurorFees(period, _periodId, msg.sender, _token, amount);
+        uint256 guardianActiveBalance = _getGuardianActiveBalance(msg.sender, periodBalanceCheckpoint);
+        uint256 amount = _getGuardianFees(period, _token, guardianActiveBalance, totalActiveBalance);
+        _claimGuardianFees(period, _periodId, msg.sender, _token, amount);
     }
 
     /**
-    * @notice Claim juror fees for period #`_periodId` owed to `msg.sender`
+    * @notice Claim guardian fees for period #`_periodId` owed to `msg.sender`
     * @dev It will ignore tokens that were already claimed without reverting
     * @param _periodId Identification number of the period which fees are claimed for
     * @param _tokens List of token addresses to be claimed
     */
-    function claimManyJurorFees(uint256 _periodId, address[] calldata _tokens) external {
+    function claimManyGuardianFees(uint256 _periodId, address[] calldata _tokens) external {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
         (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) = _ensurePeriodBalanceDetails(period, _periodId);
-        uint256 jurorActiveBalance = _getJurorActiveBalance(msg.sender, periodBalanceCheckpoint);
+        uint256 guardianActiveBalance = _getGuardianActiveBalance(msg.sender, periodBalanceCheckpoint);
 
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            if (!_hasClaimedJurorFees(period, msg.sender, token)) {
-                uint256 amount = _getJurorFees(period, token, jurorActiveBalance, totalActiveBalance);
-                _claimJurorFees(period, _periodId, msg.sender, token, amount);
+            if (!_hasClaimedGuardianFees(period, msg.sender, token)) {
+                uint256 amount = _getGuardianFees(period, token, guardianActiveBalance, totalActiveBalance);
+                _claimGuardianFees(period, _periodId, msg.sender, token, amount);
             }
         }
     }
@@ -175,8 +175,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     /**
     * @notice Make sure that the balance details of a certain period have been computed
     * @param _periodId Identification number of the period being ensured
-    * @return periodBalanceCheckpoint Court term ID used to fetch the total active balance of the jurors registry
-    * @return totalActiveBalance Total amount of juror tokens active in the Court at the corresponding used checkpoint
+    * @return periodBalanceCheckpoint Court term ID used to fetch the total active balance of the guardians registry
+    * @return totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding used checkpoint
     */
     function ensurePeriodBalanceDetails(uint256 _periodId) external returns (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
@@ -204,24 +204,24 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @dev Get the fee details of a payment period
     * @param _periodId Identification number of the period to be queried
     * @param _token Address of the token querying the fee details for
-    * @return jurorFees Juror fees for the requested period and token
+    * @return guardianFees Guardian fees for the requested period and token
     * @return governorFees Governor fees for the requested period and token
     */
     function getPeriodFees(uint256 _periodId, address _token)
         external
         view
-        returns (uint256 jurorFees, uint256 governorFees)
+        returns (uint256 guardianFees, uint256 governorFees)
     {
         Period storage period = periods[_periodId];
-        jurorFees = period.jurorFees[_token];
+        guardianFees = period.guardianFees[_token];
         governorFees = period.governorFees[_token];
     }
 
     /**
     * @dev Get the balance details of a payment period
     * @param _periodId Identification number of the period to be queried
-    * @return balanceCheckpoint Court term ID of a period used to fetch the total active balance of the jurors registry
-    * @return totalActiveBalance Total amount of juror tokens active in the Court at the corresponding period checkpoint
+    * @return balanceCheckpoint Court term ID of a period used to fetch the total active balance of the guardians registry
+    * @return totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding period checkpoint
     */
     function getPeriodBalanceDetails(uint256 _periodId)
         external
@@ -234,31 +234,35 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Tell the fees corresponding to a juror for a certain period
+    * @dev Tell the fees corresponding to a guardian for a certain period
     * @param _periodId Identification number of the period being queried
-    * @param _juror Address of the juror querying the owed fees of
+    * @param _guardian Address of the guardian querying the owed fees of
     * @param _token Address of the token to be queried
-    * @return Token amount corresponding to the juror
+    * @return Token amount corresponding to the guardian
     */
-    function getJurorFees(uint256 _periodId, address _juror, address _token) external view returns (uint256) {
+    function getGuardianFees(uint256 _periodId, address _guardian, address _token) external view returns (uint256) {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
         uint256 totalActiveBalance = period.totalActiveBalance;
         require(totalActiveBalance != 0, ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED);
 
-        uint256 jurorActiveBalance = _getJurorActiveBalance(_juror, period.balanceCheckpoint);
-        return _getJurorFees(period, _token, jurorActiveBalance, totalActiveBalance);
+        uint256 guardianActiveBalance = _getGuardianActiveBalance(_guardian, period.balanceCheckpoint);
+        return _getGuardianFees(period, _token, guardianActiveBalance, totalActiveBalance);
     }
 
     /**
-    * @dev Tell the fees corresponding to a juror for a certain period
+    * @dev Tell the fees corresponding to a guardian for a certain period
     * @param _periodId Identification number of the period being queried
-    * @param _juror Address of the juror querying the owed fees of
+    * @param _guardian Address of the guardian querying the owed fees of
     * @param _tokens List of token addresses to be queried
-    * @return List of token amounts corresponding to the juror
+    * @return List of token amounts corresponding to the guardian
     */
-    function getManyJurorFees(uint256 _periodId, address _juror, address[] calldata _tokens) external view returns (uint256[] memory amounts) {
+    function getManyGuardianFees(uint256 _periodId, address _guardian, address[] calldata _tokens)
+        external
+        view
+        returns (uint256[] memory amounts)
+    {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
@@ -266,42 +270,46 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         require(totalActiveBalance != 0, ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED);
 
         amounts = new uint256[](_tokens.length);
-        uint256 jurorActiveBalance = _getJurorActiveBalance(_juror, period.balanceCheckpoint);
+        uint256 guardianActiveBalance = _getGuardianActiveBalance(_guardian, period.balanceCheckpoint);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            amounts[i] = _getJurorFees(period, _tokens[i], jurorActiveBalance, totalActiveBalance);
+            amounts[i] = _getGuardianFees(period, _tokens[i], guardianActiveBalance, totalActiveBalance);
         }
     }
 
     /**
-    * @dev Check if a given juror has already claimed the owed fees for a certain period
+    * @dev Check if a given guardian has already claimed the owed fees for a certain period
     * @param _periodId Identification number of the period being queried
-    * @param _juror Address of the juror being queried
+    * @param _guardian Address of the guardian being queried
     * @param _token Address of the token to be queried
-    * @return True if the juror has already claimed the corresponding token fees
+    * @return True if the guardian has already claimed the corresponding token fees
     */
-    function hasJurorClaimed(uint256 _periodId, address _juror, address _token) external view returns (bool) {
+    function hasGuardianClaimed(uint256 _periodId, address _guardian, address _token) external view returns (bool) {
         Period storage period = periods[_periodId];
-        return _hasClaimedJurorFees(period, _juror, _token);
+        return _hasClaimedGuardianFees(period, _guardian, _token);
     }
 
     /**
-    * @dev Check if a given juror has already claimed the owed fees for a certain period
+    * @dev Check if a given guardian has already claimed the owed fees for a certain period
     * @param _periodId Identification number of the period being queried
-    * @param _juror Address of the juror being queried
+    * @param _guardian Address of the guardian being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the juror
+    * @return List of status to tell whether the corresponding token was claimed by the guardian
     */
-    function hasJurorClaimedMany(uint256 _periodId, address _juror, address[] calldata _tokens) external view returns (bool[] memory claimed) {
+    function hasGuardianClaimedMany(uint256 _periodId, address _guardian, address[] calldata _tokens)
+        external
+        view
+        returns (bool[] memory claimed)
+    {
         Period storage period = periods[_periodId];
 
         claimed = new bool[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            claimed[i] = _hasClaimedJurorFees(period, _juror, _tokens[i]);
+            claimed[i] = _hasClaimedGuardianFees(period, _guardian, _tokens[i]);
         }
     }
 
     /**
-    * @dev Tell the fees corresponding to a juror for a certain period
+    * @dev Tell the fees corresponding to a guardian for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _token Address of the token to be queried
     * @return Token amount corresponding to the governor
@@ -312,7 +320,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Tell the fees corresponding to a juror for a certain period
+    * @dev Tell the fees corresponding to a guardian for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _tokens List of token addresses to be queried
     * @return List of token amounts corresponding to the governor
@@ -327,18 +335,18 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Internal function to claim juror fees for a certain period
+    * @dev Internal function to claim guardian fees for a certain period
     * @param _period Period being claimed
     * @param _periodId Identification number of the period claiming fees for
-    * @param _juror Address of the juror claiming the fees
+    * @param _guardian Address of the guardian claiming the fees
     * @param _token Address of the token being claimed
-    * @param _amount Amount of tokens to be transferred to the juror
+    * @param _amount Amount of tokens to be transferred to the guardian
     */
-    function _claimJurorFees(Period storage _period, uint256 _periodId, address payable _juror, address _token, uint256 _amount) internal {
+    function _claimGuardianFees(Period storage _period, uint256 _periodId, address payable _guardian, address _token, uint256 _amount) internal {
         if (_amount > 0) {
-            _period.claimedJurorFees[_juror][_token] = true;
-            _transfer(_juror, _token, _amount);
-            emit JurorFeesClaimed(_periodId, _juror, _token, _amount);
+            _period.claimedGuardianFees[_guardian][_token] = true;
+            _transfer(_guardian, _token, _amount);
+            emit GuardianFeesClaimed(_periodId, _guardian, _token, _amount);
         }
     }
 
@@ -391,8 +399,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     *      period correspond to each other.
     * @param _periodId Identification number of the period being ensured
     * @param _period Period being ensured
-    * @return Court term ID used to fetch the total active balance of the jurors registry
-    * @return Total amount of juror tokens active in the Court at the corresponding used checkpoint
+    * @return Court term ID used to fetch the total active balance of the guardians registry
+    * @return Total amount of guardian tokens active in the Court at the corresponding used checkpoint
     */
     function _ensurePeriodBalanceDetails(Period storage _period, uint256 _periodId) internal returns (uint64, uint256) {
         // Shortcut if the period balance details were already set
@@ -404,22 +412,22 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         uint64 periodStartTermId = _getPeriodStartTermId(_periodId);
         uint64 nextPeriodStartTermId = _getPeriodStartTermId(_periodId.add(1));
 
-        // Pick a random Court term during the next period of the requested one to get the total amount of juror tokens active in the Court
+        // Pick a random Court term during the next period of the requested one to get the total amount of guardian tokens active in the Court
         IClock clock = _clock();
         bytes32 randomness = clock.getTermRandomness(nextPeriodStartTermId);
 
         // The randomness factor for each Court term is computed using the the hash of a block number set during the initialization of the
         // term, to ensure it cannot be known beforehand. Note that the hash function being used only works for the 256 most recent block
         // numbers. Therefore, if that occurs we use the hash of the previous block number. This could be slightly beneficial for the first
-        // juror calling this function, but it's still impossible to predict during the requested period.
+        // guardian calling this function, but it's still impossible to predict during the requested period.
         if (randomness == bytes32(0)) {
             randomness = blockhash(getBlockNumber() - 1);
         }
 
-        // Use randomness to choose a Court term of the requested period and query the total amount of juror tokens active at that term
-        IJurorsRegistry jurorsRegistry = _jurorsRegistry();
+        // Use randomness to choose a Court term of the requested period and query the total amount of guardian tokens active at that term
+        IGuardiansRegistry guardiansRegistry = _guardiansRegistry();
         uint64 periodBalanceCheckpoint = periodStartTermId.add(uint64(uint256(randomness) % periodDuration));
-        totalActiveBalance = jurorsRegistry.totalActiveBalanceAt(periodBalanceCheckpoint);
+        totalActiveBalance = guardiansRegistry.totalActiveBalanceAt(periodBalanceCheckpoint);
 
         _period.balanceCheckpoint = periodBalanceCheckpoint;
         _period.totalActiveBalance = totalActiveBalance;
@@ -475,56 +483,56 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Internal function to tell the active balance of a juror for a certain period
-    * @param _juror Address of the juror querying the owed fees of
+    * @dev Internal function to tell the active balance of a guardian for a certain period
+    * @param _guardian Address of the guardian querying the owed fees of
     * @param _periodBalanceCheckpoint Checkpoint of the period being queried
-    * @return Active balance for a juror based on the period checkpoint
+    * @return Active balance for a guardian based on the period checkpoint
     */
-    function _getJurorActiveBalance(address _juror, uint64 _periodBalanceCheckpoint) internal view returns (uint256) {
-        IJurorsRegistry jurorsRegistry = _jurorsRegistry();
-        return jurorsRegistry.activeBalanceOfAt(_juror, _periodBalanceCheckpoint);
+    function _getGuardianActiveBalance(address _guardian, uint64 _periodBalanceCheckpoint) internal view returns (uint256) {
+        IGuardiansRegistry guardiansRegistry = _guardiansRegistry();
+        return guardiansRegistry.activeBalanceOfAt(_guardian, _periodBalanceCheckpoint);
     }
 
     /**
-    * @dev Internal function to tell the fees corresponding to a juror for a certain period and token
+    * @dev Internal function to tell the fees corresponding to a guardian for a certain period and token
     * @param _period Period being queried
     * @param _token Address of the token being queried
-    * @param _jurorActiveBalance Active balance of a juror at the corresponding period checkpoint
-    * @param _totalActiveBalance Total amount of juror tokens active in the Court at the corresponding period checkpoint
-    * @return Amount of fees owed to the given juror for the requested period and token
+    * @param _guardianActiveBalance Active balance of a guardian at the corresponding period checkpoint
+    * @param _totalActiveBalance Total amount of guardian tokens active in the Court at the corresponding period checkpoint
+    * @return Amount of fees owed to the given guardian for the requested period and token
     */
-    function _getJurorFees(
+    function _getGuardianFees(
         Period storage _period,
         address _token,
-        uint256 _jurorActiveBalance,
+        uint256 _guardianActiveBalance,
         uint256 _totalActiveBalance
     )
         internal
         view
         returns (uint256)
     {
-        if (_jurorActiveBalance == 0) {
+        if (_guardianActiveBalance == 0) {
             return 0;
         }
 
-        // Note that we already checked the juror active balance is greater than zero.
+        // Note that we already checked the guardian active balance is greater than zero.
         // Then, the total active balance must be greater than zero.
-        return _period.jurorFees[_token].mul(_jurorActiveBalance) / _totalActiveBalance;
+        return _period.guardianFees[_token].mul(_guardianActiveBalance) / _totalActiveBalance;
     }
 
     /**
-    * @dev Check if a given juror has already claimed the owed fees for a certain period
+    * @dev Check if a given guardian has already claimed the owed fees for a certain period
     * @param _period Period being queried
-    * @param _juror Address of the juror being queried
+    * @param _guardian Address of the guardian being queried
     * @param _token Address of the token to be queried
-    * @return True if the juror has already claimed the corresponding token fees
+    * @return True if the guardian has already claimed the corresponding token fees
     */
-    function _hasClaimedJurorFees(Period storage _period, address _juror, address _token) internal view returns (bool) {
-        return _period.claimedJurorFees[_juror][_token];
+    function _hasClaimedGuardianFees(Period storage _period, address _guardian, address _token) internal view returns (bool) {
+        return _period.claimedGuardianFees[_guardian][_token];
     }
 
     /**
-    * @dev Tell the fees corresponding to a juror for a certain period
+    * @dev Tell the fees corresponding to a guardian for a certain period
     * @param _period Period being queried
     * @param _token Address of the token to be queried
     * @return Token amount corresponding to the governor

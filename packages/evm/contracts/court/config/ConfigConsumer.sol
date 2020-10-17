@@ -31,7 +31,7 @@ contract ConfigConsumer is CourtConfigData {
 
         config.fees = FeesConfig({
             token: _feeToken,
-            jurorFee: _fees[0],
+            guardianFee: _fees[0],
             draftFee: _fees[1],
             settleFee: _fees[2],
             finalRoundReduction: _pcts[1]
@@ -44,7 +44,7 @@ contract ConfigConsumer is CourtConfigData {
             appealTerms: _roundStateDurations[3],
             appealConfirmTerms: _roundStateDurations[4],
             penaltyPct: _pcts[0],
-            firstRoundJurorsNumber: _roundParams[0],
+            firstRoundGuardiansNumber: _roundParams[0],
             appealStepFactor: _roundParams[1],
             maxRegularAppealRounds: _roundParams[2],
             finalRoundLockTerms: _roundParams[3],
@@ -70,7 +70,7 @@ contract ConfigConsumer is CourtConfigData {
     /**
     * @dev Internal function to get the min active balance config for a given term
     * @param _termId Identification number of the term querying the min active balance config of
-    * @return Minimum amount of juror tokens that can be activated
+    * @return Minimum amount of guardian tokens that can be activated
     */
     function _getMinActiveBalance(uint64 _termId) internal view returns (uint256) {
         return _courtConfig().getMinActiveBalance(_termId);

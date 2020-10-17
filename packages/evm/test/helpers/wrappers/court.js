@@ -3,7 +3,7 @@ const { ONE_DAY, NEXT_WEEK, MAX_UINT64, bn, bigExp, getEvents, getEventArgument,
 
 const { MODULE_IDS } = require('../utils/modules')
 const { advanceBlocks } = require('../utils/blocks')
-const { ACTIVATE_DATA } = require('../utils/jurors')
+const { ACTIVATE_DATA } = require('../utils/guardians')
 const { DISPUTE_MANAGER_EVENTS } = require('../utils/events')
 const { SALT, OUTCOMES, getVoteId, hashVote, oppositeOutcome, outcomeFor } = require('../utils/crvoting')
 
@@ -28,24 +28,24 @@ const DEFAULTS = {
   termDuration:                       bn(ONE_DAY),     //  terms lasts one day
   firstTermStartTime:                 bn(NEXT_WEEK),   //  first term starts one week after mocked timestamp
   skippedDisputes:                    bn(0),           //  number of disputes to be skipped
-  maxJurorsPerDraftBatch:             bn(10),          //  max number of jurors drafted per batch
+  maxGuardiansPerDraftBatch:             bn(10),          //  max number of guardians drafted per batch
   evidenceTerms:                      bn(4),           //  evidence period lasts 4 terms maximum
   commitTerms:                        bn(2),           //  vote commits last 2 terms
   revealTerms:                        bn(2),           //  vote reveals last 2 terms
   appealTerms:                        bn(2),           //  appeals last 2 terms
   appealConfirmTerms:                 bn(2),           //  appeal confirmations last 2 terms
-  jurorFee:                           bigExp(10, 18),  //  10 fee tokens for juror fees
+  guardianFee:                           bigExp(10, 18),  //  10 fee tokens for guardian fees
   draftFee:                           bigExp(30, 18),  //  30 fee tokens for draft fees
   settleFee:                          bigExp(40, 18),  //  40 fee tokens for settle fees
   penaltyPct:                         bn(100),         //  1% (1/10,000)
   finalRoundReduction:                bn(3300),        //  33% (1/10,000)
-  firstRoundJurorsNumber:             bn(3),           //  disputes start with 3 jurors
-  appealStepFactor:                   bn(3),           //  each time a new appeal occurs, the amount of jurors to be drafted will be incremented 3 times
+  firstRoundGuardiansNumber:             bn(3),           //  disputes start with 3 guardians
+  appealStepFactor:                   bn(3),           //  each time a new appeal occurs, the amount of guardians to be drafted will be incremented 3 times
   maxRegularAppealRounds:             bn(2),           //  there can be up to 2 appeals in total per dispute
-  finalRoundLockTerms:                bn(10),          //  coherent jurors in the final round won't be able to withdraw for 10 terms
+  finalRoundLockTerms:                bn(10),          //  coherent guardians in the final round won't be able to withdraw for 10 terms
   appealCollateralFactor:             bn(25000),       //  permyriad multiple of dispute fees required to appeal a preliminary ruling (1/10,000)
   appealConfirmCollateralFactor:      bn(35000),       //  permyriad multiple of dispute fees required to confirm appeal (1/10,000)
-  minActiveBalance:                   bigExp(100, 18), //  100 ANJ is the minimum balance jurors must activate to participate in the Court
+  minActiveBalance:                   bigExp(100, 18), //  100 ANJ is the minimum balance guardians must activate to participate in the Court
   finalRoundWeightPrecision:          bn(1000),        //  use to improve division rounding for final round maths
   paymentPeriodDuration:              bn(10),          //  each payment period lasts 10 terms
   paymentsGovernorSharePct:           bn(0)            //  none payments governor share
@@ -61,7 +61,7 @@ class CourtHelper {
     const { feeToken, fees, roundStateDurations, pcts, roundParams, appealCollateralParams, minActiveBalance } = await this.court.getConfig(termId)
     return {
       feeToken: await this.artifacts.require('ERC20Mock').at(feeToken),
-      jurorFee: fees[0],
+      guardianFee: fees[0],
       draftFee: fees[1],
       settleFee: fees[2],
       evidenceTerms: roundStateDurations[0],
@@ -71,7 +71,7 @@ class CourtHelper {
       appealConfirmTerms: roundStateDurations[4],
       penaltyPct: pcts[0],
       finalRoundReduction: pcts[1],
-      firstRoundJurorsNumber: roundParams[0],
+      firstRoundGuardiansNumber: roundParams[0],
       appealStepFactor: roundParams[1],
       maxRegularAppealRounds: roundParams[2],
       finalRoundLockTerms: roundParams[3],
@@ -87,8 +87,8 @@ class CourtHelper {
   }
 
   async getRound(disputeId, roundId) {
-    const { draftTerm, delayedTerms, jurorsNumber: roundJurorsNumber, selectedJurors, settledPenalties, jurorFees, collectedTokens, coherentJurors, state: roundState } = await this.disputeManager.getRound(disputeId, roundId)
-    return { draftTerm, delayedTerms, roundJurorsNumber, selectedJurors, settledPenalties, jurorFees, collectedTokens, coherentJurors, roundState }
+    const { draftTerm, delayedTerms, guardiansNumber: roundGuardiansNumber, selectedGuardians, settledPenalties, guardianFees, collectedTokens, coherentGuardians, state: roundState } = await this.disputeManager.getRound(disputeId, roundId)
+    return { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, settledPenalties, guardianFees, collectedTokens, coherentGuardians, roundState }
   }
 
   async getAppeal(disputeId, roundId) {
@@ -101,36 +101,36 @@ class CourtHelper {
     return { feeToken, disputeFees: totalFees }
   }
 
-  async getNextRoundJurorsNumber(disputeId, roundId) {
+  async getNextRoundGuardiansNumber(disputeId, roundId) {
     if (roundId < this.maxRegularAppealRounds.toNumber() - 1) {
-      const { roundJurorsNumber } = await this.getRound(disputeId, roundId)
-      let nextRoundJurorsNumber = this.appealStepFactor.mul(roundJurorsNumber)
-      if (nextRoundJurorsNumber.mod(bn(2)).eq(bn(0))) nextRoundJurorsNumber = nextRoundJurorsNumber.add(bn(1))
-      return nextRoundJurorsNumber
+      const { roundGuardiansNumber } = await this.getRound(disputeId, roundId)
+      let nextRoundGuardiansNumber = this.appealStepFactor.mul(roundGuardiansNumber)
+      if (nextRoundGuardiansNumber.mod(bn(2)).eq(bn(0))) nextRoundGuardiansNumber = nextRoundGuardiansNumber.add(bn(1))
+      return nextRoundGuardiansNumber
     } else {
       const finalRoundStartTerm = await this.getNextRoundStartTerm(disputeId, roundId)
-      const totalActiveBalance = await this.jurorsRegistry.totalActiveBalanceAt(finalRoundStartTerm)
+      const totalActiveBalance = await this.guardiansRegistry.totalActiveBalanceAt(finalRoundStartTerm)
       return totalActiveBalance.mul(this.finalRoundWeightPrecision).div(this.minActiveBalance)
     }
   }
 
-  async getNextRoundJurorFees(disputeId, roundId) {
-    const jurorsNumber = await this.getNextRoundJurorsNumber(disputeId, roundId)
-    let jurorFees = this.jurorFee.mul(jurorsNumber)
+  async getNextRoundGuardianFees(disputeId, roundId) {
+    const guardiansNumber = await this.getNextRoundGuardiansNumber(disputeId, roundId)
+    let guardianFees = this.guardianFee.mul(guardiansNumber)
     if (roundId >= this.maxRegularAppealRounds.toNumber() - 1) {
-      jurorFees = jurorFees.div(this.finalRoundWeightPrecision).mul(this.finalRoundReduction).div(PCT_BASE)
+      guardianFees = guardianFees.div(this.finalRoundWeightPrecision).mul(this.finalRoundReduction).div(PCT_BASE)
     }
-    return jurorFees
+    return guardianFees
   }
 
   async getAppealFees(disputeId, roundId) {
-    const nextRoundJurorsNumber = await this.getNextRoundJurorsNumber(disputeId, roundId)
-    const jurorFees = await this.getNextRoundJurorFees(disputeId, roundId)
-    let appealFees = jurorFees
+    const nextRoundGuardiansNumber = await this.getNextRoundGuardiansNumber(disputeId, roundId)
+    const guardianFees = await this.getNextRoundGuardianFees(disputeId, roundId)
+    let appealFees = guardianFees
 
     if (roundId < this.maxRegularAppealRounds.toNumber() - 1) {
-      const draftFees = this.draftFee.mul(nextRoundJurorsNumber)
-      const settleFees = this.settleFee.mul(nextRoundJurorsNumber)
+      const draftFees = this.draftFee.mul(nextRoundGuardiansNumber)
+      const settleFees = this.settleFee.mul(nextRoundGuardiansNumber)
       appealFees = appealFees.add(draftFees).add(settleFees)
     }
 
@@ -144,27 +144,27 @@ class CourtHelper {
     return draftTerm.add(this.commitTerms).add(this.revealTerms).add(this.appealTerms).add(this.appealConfirmTerms)
   }
 
-  async getRoundJuror(disputeId, roundId, juror) {
-    const { weight, rewarded } = await this.disputeManager.getJuror(disputeId, roundId, juror)
+  async getRoundGuardian(disputeId, roundId, guardian) {
+    const { weight, rewarded } = await this.disputeManager.getGuardian(disputeId, roundId, guardian)
     return { weight, rewarded }
   }
 
-  async getRoundLockBalance(disputeId, roundId, juror) {
+  async getRoundLockBalance(disputeId, roundId, guardian) {
     if (roundId < this.maxRegularAppealRounds) {
       const lockPerDraft = this.minActiveBalance.mul(this.penaltyPct).div(PCT_BASE)
-      const { weight } = await this.getRoundJuror(disputeId, roundId, juror)
+      const { weight } = await this.getRoundGuardian(disputeId, roundId, guardian)
       return lockPerDraft.mul(weight)
     } else {
       const { draftTerm } = await this.getRound(disputeId, roundId)
-      const draftActiveBalance = await this.jurorsRegistry.activeBalanceOfAt(juror, draftTerm)
+      const draftActiveBalance = await this.guardiansRegistry.activeBalanceOfAt(guardian, draftTerm)
       if (draftActiveBalance.lt(this.minActiveBalance)) return bn(0)
       return draftActiveBalance.mul(this.penaltyPct).div(PCT_BASE)
     }
   }
 
-  async getFinalRoundWeight(disputeId, roundId, juror) {
+  async getFinalRoundWeight(disputeId, roundId, guardian) {
     const { draftTerm } = await this.getRound(disputeId, roundId)
-    const draftActiveBalance = await this.jurorsRegistry.activeBalanceOfAt(juror, draftTerm)
+    const draftActiveBalance = await this.guardiansRegistry.activeBalanceOfAt(guardian, draftTerm)
     if (draftActiveBalance.lt(this.minActiveBalance)) return bn(0)
     return draftActiveBalance.mul(this.finalRoundWeightPrecision).div(this.minActiveBalance)
   }
@@ -183,10 +183,10 @@ class CourtHelper {
     await this.feeToken.approve(to, amount, { from })
   }
 
-  async activate(jurors) {
-    for (const { address, initialActiveBalance } of jurors) {
-      await this.jurorToken.generateTokens(address, initialActiveBalance)
-      await this.jurorToken.approveAndCall(this.jurorsRegistry.address, initialActiveBalance, ACTIVATE_DATA, { from: address })
+  async activate(guardians) {
+    for (const { address, initialActiveBalance } of guardians) {
+      await this.guardianToken.generateTokens(address, initialActiveBalance)
+      await this.guardianToken.approveAndCall(this.guardiansRegistry.address, initialActiveBalance, ACTIVATE_DATA, { from: address })
     }
   }
 
@@ -214,23 +214,23 @@ class CourtHelper {
     return disputeId
   }
 
-  async draft({ disputeId, draftedJurors = undefined, drafter = undefined }) {
+  async draft({ disputeId, draftedGuardians = undefined, drafter = undefined }) {
     // if no drafter was given pick the third account
     if (!drafter) drafter = await this._getAccount(2)
 
     const { lastRoundId } = await this.getDispute(disputeId)
-    const { draftTerm, roundJurorsNumber } = await this.getRound(disputeId, lastRoundId)
+    const { draftTerm, roundGuardiansNumber } = await this.getRound(disputeId, lastRoundId)
 
-    // mock draft if there was a jurors set to be drafted
-    if (draftedJurors) {
-      const maxJurorsPerDraftBatch = await this.disputeManager.maxJurorsPerDraftBatch()
-      const jurorsToBeDrafted = roundJurorsNumber.lt(maxJurorsPerDraftBatch)
-        ? roundJurorsNumber.toNumber() : maxJurorsPerDraftBatch.toNumber()
-      const totalWeight = draftedJurors.reduce((total, { weight }) => total + weight, 0)
-      if (totalWeight !== jurorsToBeDrafted) throw Error('Given jurors to be drafted do not fit the batch jurors number')
-      const jurors = draftedJurors.map(j => j.address)
-      const weights = draftedJurors.map(j => j.weight)
-      await this.jurorsRegistry.mockNextDraft(jurors, weights)
+    // mock draft if there was a guardians set to be drafted
+    if (draftedGuardians) {
+      const maxGuardiansPerDraftBatch = await this.disputeManager.maxGuardiansPerDraftBatch()
+      const guardiansToBeDrafted = roundGuardiansNumber.lt(maxGuardiansPerDraftBatch)
+        ? roundGuardiansNumber.toNumber() : maxGuardiansPerDraftBatch.toNumber()
+      const totalWeight = draftedGuardians.reduce((total, { weight }) => total + weight, 0)
+      if (totalWeight !== guardiansToBeDrafted) throw Error('Given guardians to be drafted do not fit the batch guardians number')
+      const guardians = draftedGuardians.map(j => j.address)
+      const weights = draftedGuardians.map(j => j.weight)
+      await this.guardiansRegistry.mockNextDraft(guardians, weights)
     }
 
     // move to draft term if needed
@@ -238,13 +238,13 @@ class CourtHelper {
     if (draftTerm.gt(currentTerm)) await this.passTerms(draftTerm.sub(currentTerm))
     else await this.advanceBlocks(2) // to ensure term randomness
 
-    // draft and flat jurors with their weights
+    // draft and flat guardians with their weights
     const receipt = await this.disputeManager.draft(disputeId, { from: drafter })
-    const logs = decodeEvents(receipt, this.artifacts.require('DisputeManager').abi, DISPUTE_MANAGER_EVENTS.JUROR_DRAFTED)
-    const weights = getEvents({ logs }, DISPUTE_MANAGER_EVENTS.JUROR_DRAFTED).reduce((jurors, event) => {
-      const { juror } = event.args
-      jurors[juror] = (jurors[juror] || bn(0)).add(bn(1))
-      return jurors
+    const logs = decodeEvents(receipt, this.artifacts.require('DisputeManager').abi, DISPUTE_MANAGER_EVENTS.GUARDIAN_DRAFTED)
+    const weights = getEvents({ logs }, DISPUTE_MANAGER_EVENTS.GUARDIAN_DRAFTED).reduce((guardians, event) => {
+      const { guardian } = event.args
+      guardians[guardian] = (guardians[guardian] || bn(0)).add(bn(1))
+      return guardians
     }, {})
     return Object.keys(weights).map(address => ({ address, weight: weights[address] }))
   }
@@ -319,9 +319,9 @@ class CourtHelper {
 
   async moveToFinalRound({ disputeId }) {
     for (let roundId = 0; roundId < this.maxRegularAppealRounds.toNumber(); roundId++) {
-      const draftedJurors = await this.draft({ disputeId })
-      await this.commit({ disputeId, roundId, voters: draftedJurors })
-      await this.reveal({ disputeId, roundId, voters: draftedJurors })
+      const draftedGuardians = await this.draft({ disputeId })
+      await this.commit({ disputeId, roundId, voters: draftedGuardians })
+      await this.reveal({ disputeId, roundId, voters: draftedGuardians })
       await this.appeal({ disputeId, roundId })
       await this.confirmAppeal({ disputeId, roundId })
     }
@@ -332,10 +332,10 @@ class CourtHelper {
 
     const {
       feeToken,
-      jurorFee, draftFee, settleFee,
+      guardianFee, draftFee, settleFee,
       evidenceTerms, commitTerms, revealTerms, appealTerms, appealConfirmTerms,
       penaltyPct, finalRoundReduction,
-      firstRoundJurorsNumber, appealStepFactor, maxRegularAppealRounds, finalRoundLockTerms,
+      firstRoundGuardiansNumber, appealStepFactor, maxRegularAppealRounds, finalRoundLockTerms,
       appealCollateralFactor, appealConfirmCollateralFactor,
       minActiveBalance
     } = newConfig
@@ -343,10 +343,10 @@ class CourtHelper {
     return this.court.setConfig(
       termId,
       feeToken.address,
-      [jurorFee, draftFee, settleFee],
+      [guardianFee, draftFee, settleFee],
       [evidenceTerms, commitTerms, revealTerms, appealTerms, appealConfirmTerms],
       [penaltyPct, finalRoundReduction],
-      [firstRoundJurorsNumber, appealStepFactor, maxRegularAppealRounds, finalRoundLockTerms],
+      [firstRoundGuardiansNumber, appealStepFactor, maxRegularAppealRounds, finalRoundLockTerms],
       [appealCollateralFactor, appealConfirmCollateralFactor],
       minActiveBalance,
       txParams
@@ -360,28 +360,28 @@ class CourtHelper {
     if (!this.configGovernor) this.configGovernor = await this._getAccount(0)
     if (!this.modulesGovernor) this.modulesGovernor = await this._getAccount(0)
     if (!this.feeToken) this.feeToken = await this.artifacts.require('ERC20Mock').new('Court Fee Token', 'CFT', 18)
-    if (!this.jurorToken) this.jurorToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Juror Token', 'ANJ', 18)
+    if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANJ', 18)
 
     this.court = await this.artifacts.require('AragonCourtMock').new(
       [this.termDuration, this.firstTermStartTime],
       [this.fundsGovernor, this.configGovernor, this.modulesGovernor],
       this.feeToken.address,
-      [this.jurorFee, this.draftFee, this.settleFee],
+      [this.guardianFee, this.draftFee, this.settleFee],
       [this.evidenceTerms, this.commitTerms, this.revealTerms, this.appealTerms, this.appealConfirmTerms],
       [this.penaltyPct, this.finalRoundReduction],
-      [this.firstRoundJurorsNumber, this.appealStepFactor, this.maxRegularAppealRounds, this.finalRoundLockTerms],
+      [this.firstRoundGuardiansNumber, this.appealStepFactor, this.maxRegularAppealRounds, this.finalRoundLockTerms],
       [this.appealCollateralFactor, this.appealConfirmCollateralFactor],
       this.minActiveBalance
     )
 
-    if (!this.disputeManager) this.disputeManager = await this.artifacts.require('DisputeManager').new(this.court.address, this.maxJurorsPerDraftBatch, this.skippedDisputes)
+    if (!this.disputeManager) this.disputeManager = await this.artifacts.require('DisputeManager').new(this.court.address, this.maxGuardiansPerDraftBatch, this.skippedDisputes)
     if (!this.voting) this.voting = await this.artifacts.require('CRVoting').new(this.court.address)
     if (!this.treasury) this.treasury = await this.artifacts.require('CourtTreasury').new(this.court.address)
 
-    if (!this.jurorsRegistry) {
-      this.jurorsRegistry = await this.artifacts.require('JurorsRegistryMock').new(
+    if (!this.guardiansRegistry) {
+      this.guardiansRegistry = await this.artifacts.require('GuardiansRegistryMock').new(
         this.court.address,
-        this.jurorToken.address,
+        this.guardianToken.address,
         this.minActiveBalance.mul(MAX_UINT64.div(this.finalRoundWeightPrecision))
       )
     }
@@ -395,7 +395,7 @@ class CourtHelper {
     }
 
     const ids = Object.values(MODULE_IDS)
-    const implementations = [this.disputeManager, this.treasury, this.voting, this.jurorsRegistry, this.paymentsBook].map(i => i.address)
+    const implementations = [this.disputeManager, this.treasury, this.voting, this.guardiansRegistry, this.paymentsBook].map(i => i.address)
     await this.court.setModules(ids, implementations, { from: this.modulesGovernor })
     await this.court.cacheModules(implementations, ids, { from: this.modulesGovernor })
 

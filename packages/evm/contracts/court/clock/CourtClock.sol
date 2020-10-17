@@ -59,7 +59,7 @@ contract CourtClock is IClock, TimeHelpers {
     * @dev Constructor function
     * @param _termParams Array containing:
     *        0. _termDuration Duration in seconds per term
-    *        1. _firstTermStartTime Timestamp in seconds when the court will open (to give time for juror on-boarding)
+    *        1. _firstTermStartTime Timestamp in seconds when the court will open (to give time for guardian on-boarding)
     */
     constructor(uint64[2] memory _termParams) public {
         uint64 _termDuration = _termParams[0];
@@ -214,7 +214,7 @@ contract CourtClock is IClock, TimeHelpers {
             // equally long terms, regardless of heartbeats.
             currentTerm.startTime = previousTerm.startTime.add(termDuration);
 
-            // In order to draft a random number of jurors in a term, we use a randomness factor for each term based on a
+            // In order to draft a random number of guardians in a term, we use a randomness factor for each term based on a
             // block number that is set once the term has started. Note that this information could not be known beforehand.
             currentTerm.randomnessBN = blockNumber + 1;
         }
@@ -279,7 +279,7 @@ contract CourtClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Internal function to compute the randomness that will be used to draft jurors for the given term. This
+    * @dev Internal function to compute the randomness that will be used to draft guardians for the given term. This
     *      function assumes the given term exists. To determine the randomness factor for a term we use the hash of a
     *      block number that is set once the term has started to ensure it cannot be known beforehand. Note that the
     *      hash function being used only works for the 256 most recent block numbers.

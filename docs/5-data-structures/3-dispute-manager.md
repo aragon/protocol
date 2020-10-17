@@ -7,7 +7,7 @@ The following objects are the data-structures used by the `DisputeManager`:
 The dispute object includes the following fields:
 
 - **Subject:** Arbitrable instance associated to a dispute
-- **Possible rulings:** Number of possible rulings jurors can vote for each dispute
+- **Possible rulings:** Number of possible rulings guardians can vote for each dispute
 - **Creation term ID:** Identification number when the dispute was created
 - **Final ruling:** Winning ruling of a dispute
 - **Dispute state:** State of a dispute: pre-draft, adjudicating, or ruled
@@ -17,25 +17,25 @@ The dispute object includes the following fields:
 
 The adjudication round object includes the following fields:
 
-- **Draft term ID:** Term from which the jurors of a round can be drafted
-- **Jurors number:** Number of jurors drafted for a round
+- **Draft term ID:** Term from which the guardians of a round can be drafted
+- **Guardians number:** Number of guardians drafted for a round
 - **Settled penalties:** Whether or not penalties have been settled for a round
-- **Juror fees:** Total amount of fees to be distributed between the winning jurors of a round
-- **Jurors:** List of jurors drafted for a round
-- **Jurors states:** List of states for each drafted juror indexed by address
+- **Guardian fees:** Total amount of fees to be distributed between the winning guardians of a round
+- **Guardians:** List of guardians drafted for a round
+- **Guardians states:** List of states for each drafted guardian indexed by address
 - **Delayed terms:** Number of terms a round was delayed based on its requested draft term id
-- **Selected jurors:** Number of jurors selected for a round, to allow drafts to be batched
-- **Coherent jurors:** Number of drafted jurors that voted in favor of the dispute final ruling
-- **Settled jurors:** Number of jurors whose rewards were already settled
-- **Collected tokens:** Total amount of tokens collected from losing jurors
+- **Selected guardians:** Number of guardians selected for a round, to allow drafts to be batched
+- **Coherent guardians:** Number of drafted guardians that voted in favor of the dispute final ruling
+- **Settled guardians:** Number of guardians whose rewards were already settled
+- **Collected tokens:** Total amount of tokens collected from losing guardians
 - **Appeal:** Appeal-related information of a round
 
-### 5.3.3. Juror state
+### 5.3.3. Guardian state
 
-The juror state object includes the following fields:
+The guardian state object includes the following fields:
 
-- **Weight:** Weight computed for a juror on a round
-- **Rewarded:** Whether or not a drafted juror was rewarded
+- **Weight:** Weight computed for a guardian on a round
+- **Rewarded:** Whether or not a drafted guardian was rewarded
 
 ### 5.3.4. Appeal
 

@@ -10,7 +10,7 @@ The `Controller` has four main responsibilities:
 - Court terms ("clock") management
 - Court configuration management
 
-The Court protocol relies on five main modules: `DisputeManager`, `Voting`, `JurorsRegistry`, `Treasury`, and `PaymentsBook`.
+The Court protocol relies on five main modules: `DisputeManager`, `Voting`, `GuardiansRegistry`, `Treasury`, and `PaymentsBook`.
 Each of these modules are only referenced by the `Controller`; centralizing them allows us to be able to plug or unplug modules easily.
 
 The Court terms management and reference is held in `Clock`. Almost every functionality of the protocol needs to ensure the current Court term is up-to-date.
@@ -58,43 +58,43 @@ Detailed information about `AragonCourt` can be found in [section 4](../4-entry-
 
 ## 2.5. Migration Strategies
 
-| Module           |                          Ongoing disputes                         |                              No disputes                          |                      
-|------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
-| Dispute Manager  | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting cache                 |
-| Voting           | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute manager cache        |    
-| Treasury         | Deploy new Dispute Manager and point to new Treasury instance (*) | Disable previous instance and update Dispute manager cache        |
-| PaymentsBook     | Leave the previous instance active until all funds are claimed                                                                        |  
-| Jurors Registry  | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |  
+| Module             |                          Ongoing disputes                         |                              No disputes                          |                      
+|--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
+| Dispute Manager    | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting cache                 |
+| Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute manager cache        |    
+| Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | Disable previous instance and update Dispute manager cache        |
+| PaymentsBook       | Leave the previous instance active until all funds are claimed                                                                        |  
+| Guardians Registry | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |  
 
 (*) Assuming there is no easy way to migrate/replicate the current status of the existing module to the new one 
 
-(**) If the Jurors Registry status cannot be migrated it would be similar to deploying a new entire protocol
+(**) If the Guardians Registry status cannot be migrated it would be similar to deploying a new entire protocol
 
 ### 2.5.1. Dispute Manager
 
-| Relies on module |           On           |    Expected behavior      |
-|------------------|------------------------|---------------------------|
-| Treasury         | `createDispute`        | The Dispute Manager needs to access the same Treasury instance during a dispute lifecycle |
-| Treasury         | `createAppeal`         | " |
-| Treasury         | `confirmAppeal`        | " |
-| Treasury         | `draft`                | " |
-| Treasury         | `settleReward`         | " |
-| Treasury         | `settlePenalties`      | " |
-| Treasury         | `settleAppealDeposit`  | " |
-| Voting           | `createDispute`        | The Dispute Manager needs to access the same Voting instance during a dispute lifecycle |
-| Voting           | `ensureCanCommit`      | " | 
-| Voting           | `createAppeal`         | " |
-| Voting           | `confirmAppeal`        | " |
-| Voting           | `settleReward`         | " |
-| Voting           | `settlePenalties`      | " |
-| JurorsRegistry   | `draft`                | The Dispute Manager needs to access the same Jurors Registry instance during a dispute lifecycle |
-| JurorsRegistry   | `ensureCanCommit`      | " |
-| JurorsRegistry   | `getJuror`             | " |
-| JurorsRegistry   | `createAppeal`         | " |
-| JurorsRegistry   | `confirmAppeal`        | " |
-| JurorsRegistry   | `settleReward`         | " |
-| JurorsRegistry   | `settlePenalties`      | " |
-| JurorsRegistry   | `settleAppealDeposit`  | " |
+| Relies on module    |           On           |    Expected behavior      |
+|---------------------|------------------------|---------------------------|
+| Treasury            | `createDispute`        | The Dispute Manager needs to access the same Treasury instance during a dispute lifecycle |
+| Treasury            | `createAppeal`         | " |
+| Treasury            | `confirmAppeal`        | " |
+| Treasury            | `draft`                | " |
+| Treasury            | `settleReward`         | " |
+| Treasury            | `settlePenalties`      | " |
+| Treasury            | `settleAppealDeposit`  | " |
+| Voting              | `createDispute`        | The Dispute Manager needs to access the same Voting instance during a dispute lifecycle |
+| Voting              | `ensureCanCommit`      | " | 
+| Voting              | `createAppeal`         | " |
+| Voting              | `confirmAppeal`        | " |
+| Voting              | `settleReward`         | " |
+| Voting              | `settlePenalties`      | " |
+| GuardiansRegistry   | `draft`                | The Dispute Manager needs to access the same Guardians Registry instance during a dispute lifecycle |
+| GuardiansRegistry   | `ensureCanCommit`      | " |
+| GuardiansRegistry   | `getGuardian`          | " |
+| GuardiansRegistry   | `createAppeal`         | " |
+| GuardiansRegistry   | `confirmAppeal`        | " |
+| GuardiansRegistry   | `settleReward`         | " |
+| GuardiansRegistry   | `settlePenalties`      | " |
+| GuardiansRegistry   | `settleAppealDeposit`  | " |
 
 Notes: 
 - If there are no ongoing disputes any of the three dependencies can be swapped 
@@ -125,30 +125,30 @@ Notes:
 - The Treasury module shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
 
 
-### 2.5.4. Jurors Registry
+### 2.5.4. Guardians Registry
 
 | Relies on module |           On           |    Expected behavior     |
 |------------------|------------------------|--------------------------|
-| DisputesManager  | `assignTokens`         | Any active Dispute Manager should be able to manage juror tokens |
-| DisputesManager  | `burnTokens`           | Any active Dispute Manager should be able to manage juror tokens |
-| DisputesManager  | `draft`                | Any active Dispute Manager should be able to manage juror tokens |
-| DisputesManager  | `clashOrUnlock`        | Any active Dispute Manager should be able to manage juror tokens |
-| DisputesManager  | `collectTokens`        | Any active Dispute Manager should be able to manage juror tokens |
-| DisputesManager  | `lockWithdrawals`      | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `assignTokens`         | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `burnTokens`           | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `draft`                | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `clashOrUnlock`        | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `collectTokens`        | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `lockWithdrawals`      | Any active Dispute Manager should be able to manage guardian tokens |
 
 Notes:
-- The Jurors Registry shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
+- The Guardians Registry shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
 
 
 ### 2.5.5. PaymentsBook
 
-| Relies on module |           On           |    Expected behavior     |
-|------------------|------------------------|--------------------------|
-| JurorsRegistry   | `getJuror`             | Each period should work always with the same Jurors Registry instance |
-| JurorsRegistry   | `getJurorShare`        | " |
-| JurorsRegistry   | `claimFees`            | " |
-| JurorsRegistry   | `ensurePeriodBalance`  | " |
+| Relies on module    |           On           |    Expected behavior     |
+|---------------------|------------------------|--------------------------|
+| GuardiansRegistry   | `getGuardian`             | Each period should work always with the same Guardians Registry instance |
+| GuardiansRegistry   | `getGuardianShare`        | " |
+| GuardiansRegistry   | `claimFees`            | " |
+| GuardiansRegistry   | `ensurePeriodBalance`  | " |
 
 Notes:
-- The PaymentsBook module could checkpoint the Jurors Registry instance per period
-- Otherwise, it can trust that the Jurors Registry always reflects the same status among all its versions
+- The PaymentsBook module could checkpoint the Guardians Registry instance per period
+- Otherwise, it can trust that the Guardians Registry always reflects the same status among all its versions

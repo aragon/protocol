@@ -17,7 +17,7 @@ contract CourtConfig is IConfig, CourtConfigData {
     string private constant ERROR_INVALID_FINAL_ROUND_REDUCTION_PCT = "CONF_INVALID_FINAL_ROUND_RED_PCT";
     string private constant ERROR_INVALID_MAX_APPEAL_ROUNDS = "CONF_INVALID_MAX_APPEAL_ROUNDS";
     string private constant ERROR_LARGE_ROUND_PHASE_DURATION = "CONF_LARGE_ROUND_PHASE_DURATION";
-    string private constant ERROR_BAD_INITIAL_JURORS_NUMBER = "CONF_BAD_INITIAL_JURORS_NUMBER";
+    string private constant ERROR_BAD_INITIAL_GUARDIANS_NUMBER = "CONF_BAD_INITIAL_GUARDIANS_NUMBER";
     string private constant ERROR_BAD_APPEAL_STEP_FACTOR = "CONF_BAD_APPEAL_STEP_FACTOR";
     string private constant ERROR_ZERO_COLLATERAL_FACTOR = "CONF_ZERO_COLLATERAL_FACTOR";
     string private constant ERROR_ZERO_MIN_ACTIVE_BALANCE = "CONF_ZERO_MIN_ACTIVE_BALANCE";
@@ -47,9 +47,9 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @dev Constructor function
     * @param _feeToken Address of the token contract that is used to pay for fees
     * @param _fees Array containing:
-    *        0. jurorFee Amount of fee tokens that is paid per juror per dispute
-    *        1. draftFee Amount of fee tokens per juror to cover the drafting cost
-    *        2. settleFee Amount of fee tokens per juror to cover round settlement cost
+    *        0. guardianFee Amount of fee tokens that is paid per guardian per dispute
+    *        1. draftFee Amount of fee tokens per guardian to cover the drafting cost
+    *        2. settleFee Amount of fee tokens per guardian to cover round settlement cost
     * @param _roundStateDurations Array containing the durations in terms of the different phases of a dispute:
     *        0. evidenceTerms Max submitting evidence period duration in terms
     *        1. commitTerms Commit period duration in terms
@@ -57,17 +57,17 @@ contract CourtConfig is IConfig, CourtConfigData {
     *        3. appealTerms Appeal period duration in terms
     *        4. appealConfirmationTerms Appeal confirmation period duration in terms
     * @param _pcts Array containing:
-    *        0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    *        0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     *        1. finalRoundReduction Permyriad of fee reduction for the last appeal round (‱ - 1/10,000)
     * @param _roundParams Array containing params for rounds:
-    *        0. firstRoundJurorsNumber Number of jurors to be drafted for the first round of disputes
-    *        1. appealStepFactor Increasing factor for the number of jurors of each round of a dispute
+    *        0. firstRoundGuardiansNumber Number of guardians to be drafted for the first round of disputes
+    *        1. appealStepFactor Increasing factor for the number of guardians of each round of a dispute
     *        2. maxRegularAppealRounds Number of regular appeal rounds before the final round is triggered
-    *        3. finalRoundLockTerms Number of terms that a coherent juror in a final round is disallowed to withdraw (to prevent 51% attacks)
+    *        3. finalRoundLockTerms Number of terms that a coherent guardian in a final round is disallowed to withdraw (to prevent 51% attacks)
     * @param _appealCollateralParams Array containing params for appeal collateral:
     *        0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *        1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @param _minActiveBalance Minimum amount of juror tokens that can be activated
+    * @param _minActiveBalance Minimum amount of guardian tokens that can be activated
     */
     constructor(
         ERC20 _feeToken,
@@ -109,9 +109,9 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @param _termId Identification number of the term querying the Court config of
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
-    *         0. jurorFee Amount of fee tokens that is paid per juror per dispute
-    *         1. draftFee Amount of fee tokens per juror to cover the drafting cost
-    *         2. settleFee Amount of fee tokens per juror to cover round settlement cost
+    *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
+    *         1. draftFee Amount of fee tokens per guardian to cover the drafting cost
+    *         2. settleFee Amount of fee tokens per guardian to cover round settlement cost
     * @return roundStateDurations Array containing the durations in terms of the different phases of a dispute:
     *         0. evidenceTerms Max submitting evidence period duration in terms
     *         1. commitTerms Commit period duration in terms
@@ -119,16 +119,16 @@ contract CourtConfig is IConfig, CourtConfigData {
     *         3. appealTerms Appeal period duration in terms
     *         4. appealConfirmationTerms Appeal confirmation period duration in terms
     * @return pcts Array containing:
-    *         0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    *         0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     *         1. finalRoundReduction Permyriad of fee reduction for the last appeal round (‱ - 1/10,000)
     * @return roundParams Array containing params for rounds:
-    *         0. firstRoundJurorsNumber Number of jurors to be drafted for the first round of disputes
-    *         1. appealStepFactor Increasing factor for the number of jurors of each round of a dispute
+    *         0. firstRoundGuardiansNumber Number of guardians to be drafted for the first round of disputes
+    *         1. appealStepFactor Increasing factor for the number of guardians of each round of a dispute
     *         2. maxRegularAppealRounds Number of regular appeal rounds before the final round is triggered
     * @return appealCollateralParams Array containing params for appeal collateral:
     *         0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *         1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @return minActiveBalance Minimum amount of tokens jurors have to activate to participate in the Court
+    * @return minActiveBalance Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getConfig(uint64 _termId) external view
         returns (
@@ -145,15 +145,15 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @dev Tell the draft config at a certain term
     * @param _termId Identification number of the term querying the draft config of
     * @return feeToken Address of the token used to pay for fees
-    * @return draftFee Amount of fee tokens per juror to cover the drafting cost
-    * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
+    * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
     function getDraftConfig(uint64 _termId) external view returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct);
 
     /**
     * @dev Tell the min active balance config at a certain term
     * @param _termId Term querying the min active balance config of
-    * @return Minimum amount of tokens jurors have to activate to participate in the Court
+    * @return Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
 
@@ -193,9 +193,9 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @param _fromTermId Identification number of the term in which the config will be effective at
     * @param _feeToken Address of the token contract that is used to pay for fees.
     * @param _fees Array containing:
-    *        0. jurorFee Amount of fee tokens that is paid per juror per dispute
-    *        1. draftFee Amount of fee tokens per juror to cover the drafting cost
-    *        2. settleFee Amount of fee tokens per juror to cover round settlement cost
+    *        0. guardianFee Amount of fee tokens that is paid per guardian per dispute
+    *        1. draftFee Amount of fee tokens per guardian to cover the drafting cost
+    *        2. settleFee Amount of fee tokens per guardian to cover round settlement cost
     * @param _roundStateDurations Array containing the durations in terms of the different phases of a dispute:
     *        0. evidenceTerms Max submitting evidence period duration in terms
     *        1. commitTerms Commit period duration in terms
@@ -203,17 +203,17 @@ contract CourtConfig is IConfig, CourtConfigData {
     *        3. appealTerms Appeal period duration in terms
     *        4. appealConfirmationTerms Appeal confirmation period duration in terms
     * @param _pcts Array containing:
-    *        0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    *        0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     *        1. finalRoundReduction Permyriad of fee reduction for the last appeal round (‱ - 1/10,000)
     * @param _roundParams Array containing params for rounds:
-    *        0. firstRoundJurorsNumber Number of jurors to be drafted for the first round of disputes
-    *        1. appealStepFactor Increasing factor for the number of jurors of each round of a dispute
+    *        0. firstRoundGuardiansNumber Number of guardians to be drafted for the first round of disputes
+    *        1. appealStepFactor Increasing factor for the number of guardians of each round of a dispute
     *        2. maxRegularAppealRounds Number of regular appeal rounds before the final round is triggered
-    *        3. finalRoundLockTerms Number of terms that a coherent juror in a final round is disallowed to withdraw (to prevent 51% attacks)
+    *        3. finalRoundLockTerms Number of terms that a coherent guardian in a final round is disallowed to withdraw (to prevent 51% attacks)
     * @param _appealCollateralParams Array containing params for appeal collateral:
     *        0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *        1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @param _minActiveBalance Minimum amount of juror tokens that can be activated
+    * @param _minActiveBalance Minimum amount of guardian tokens that can be activated
     */
     function _setConfig(
         uint64 _termId,
@@ -239,10 +239,10 @@ contract CourtConfig is IConfig, CourtConfigData {
         require(PctHelpers.isValid(_pcts[0]), ERROR_INVALID_PENALTY_PCT);
         require(PctHelpers.isValid(_pcts[1]), ERROR_INVALID_FINAL_ROUND_REDUCTION_PCT);
 
-        // Disputes must request at least one juror to be drafted initially
-        require(_roundParams[0] > 0, ERROR_BAD_INITIAL_JURORS_NUMBER);
+        // Disputes must request at least one guardian to be drafted initially
+        require(_roundParams[0] > 0, ERROR_BAD_INITIAL_GUARDIANS_NUMBER);
 
-        // Prevent that further rounds have zero jurors
+        // Prevent that further rounds have zero guardians
         require(_roundParams[1] > 0, ERROR_BAD_APPEAL_STEP_FACTOR);
 
         // Make sure the max number of appeals allowed does not reach the limit
@@ -271,7 +271,7 @@ contract CourtConfig is IConfig, CourtConfigData {
 
         config.fees = FeesConfig({
             token: _feeToken,
-            jurorFee: _fees[0],
+            guardianFee: _fees[0],
             draftFee: _fees[1],
             settleFee: _fees[2],
             finalRoundReduction: _pcts[1]
@@ -284,7 +284,7 @@ contract CourtConfig is IConfig, CourtConfigData {
             appealTerms: _roundStateDurations[3],
             appealConfirmTerms: _roundStateDurations[4],
             penaltyPct: _pcts[0],
-            firstRoundJurorsNumber: _roundParams[0],
+            firstRoundGuardiansNumber: _roundParams[0],
             appealStepFactor: _roundParams[1],
             maxRegularAppealRounds: _maxRegularAppealRounds,
             finalRoundLockTerms: _roundParams[3],
@@ -306,9 +306,9 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
-    *         0. jurorFee Amount of fee tokens that is paid per juror per dispute
-    *         1. draftFee Amount of fee tokens per juror to cover the drafting cost
-    *         2. settleFee Amount of fee tokens per juror to cover round settlement cost
+    *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
+    *         1. draftFee Amount of fee tokens per guardian to cover the drafting cost
+    *         2. settleFee Amount of fee tokens per guardian to cover round settlement cost
     * @return roundStateDurations Array containing the durations in terms of the different phases of a dispute:
     *         0. evidenceTerms Max submitting evidence period duration in terms
     *         1. commitTerms Commit period duration in terms
@@ -316,17 +316,17 @@ contract CourtConfig is IConfig, CourtConfigData {
     *         3. appealTerms Appeal period duration in terms
     *         4. appealConfirmationTerms Appeal confirmation period duration in terms
     * @return pcts Array containing:
-    *         0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    *         0. penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     *         1. finalRoundReduction Permyriad of fee reduction for the last appeal round (‱ - 1/10,000)
     * @return roundParams Array containing params for rounds:
-    *         0. firstRoundJurorsNumber Number of jurors to be drafted for the first round of disputes
-    *         1. appealStepFactor Increasing factor for the number of jurors of each round of a dispute
+    *         0. firstRoundGuardiansNumber Number of guardians to be drafted for the first round of disputes
+    *         1. appealStepFactor Increasing factor for the number of guardians of each round of a dispute
     *         2. maxRegularAppealRounds Number of regular appeal rounds before the final round is triggered
-    *         3. finalRoundLockTerms Number of terms that a coherent juror in a final round is disallowed to withdraw (to prevent 51% attacks)
+    *         3. finalRoundLockTerms Number of terms that a coherent guardian in a final round is disallowed to withdraw (to prevent 51% attacks)
     * @return appealCollateralParams Array containing params for appeal collateral:
     *         0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *         1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @return minActiveBalance Minimum amount of juror tokens that can be activated
+    * @return minActiveBalance Minimum amount of guardian tokens that can be activated
     */
     function _getConfigAt(uint64 _termId, uint64 _lastEnsuredTermId) internal view
         returns (
@@ -343,7 +343,7 @@ contract CourtConfig is IConfig, CourtConfigData {
 
         FeesConfig storage feesConfig = config.fees;
         feeToken = feesConfig.token;
-        fees = [feesConfig.jurorFee, feesConfig.draftFee, feesConfig.settleFee];
+        fees = [feesConfig.guardianFee, feesConfig.draftFee, feesConfig.settleFee];
 
         DisputesConfig storage disputesConfig = config.disputes;
         roundStateDurations = [
@@ -355,7 +355,7 @@ contract CourtConfig is IConfig, CourtConfigData {
         ];
         pcts = [disputesConfig.penaltyPct, feesConfig.finalRoundReduction];
         roundParams = [
-            disputesConfig.firstRoundJurorsNumber,
+            disputesConfig.firstRoundGuardiansNumber,
             disputesConfig.appealStepFactor,
             uint64(disputesConfig.maxRegularAppealRounds),
             disputesConfig.finalRoundLockTerms
@@ -370,8 +370,8 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @param _termId Identification number of the term querying the draft config of
     * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return feeToken Address of the token used to pay for fees
-    * @return draftFee Amount of fee tokens per juror to cover the drafting cost
-    * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
+    * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
     function _getDraftConfig(uint64 _termId,  uint64 _lastEnsuredTermId) internal view
         returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct)
@@ -384,7 +384,7 @@ contract CourtConfig is IConfig, CourtConfigData {
     * @dev Internal function to get the min active balance config for a given term
     * @param _termId Identification number of the term querying the min active balance config of
     * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
-    * @return Minimum amount of juror tokens that can be activated at the given term
+    * @return Minimum amount of guardian tokens that can be activated at the given term
     */
     function _getMinActiveBalance(uint64 _termId, uint64 _lastEnsuredTermId) internal view returns (uint256) {
         Config storage config = _getConfigFor(_termId, _lastEnsuredTermId);

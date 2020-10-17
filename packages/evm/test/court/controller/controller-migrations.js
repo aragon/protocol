@@ -5,7 +5,7 @@ const { MODULE_IDS, getCachedAddress } = require('../../helpers/utils/modules')
 const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS } = require('../../helpers/utils/errors')
 
 const DisputeManager = artifacts.require('DisputeManager')
-const JurorsRegistry = artifacts.require('JurorsRegistry')
+const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const Treasury = artifacts.require('CourtTreasury')
 const Voting = artifacts.require('CRVoting')
 const PaymentsBook = artifacts.require('PaymentsBook')
@@ -54,33 +54,33 @@ contract('Controller', ([_, modulesGovernor]) => {
     })
   })
 
-  context('when migrating the jurors registry', () => {
-    let previousJurorsRegistry, currentJurorsRegistry, moduleId = MODULE_IDS.registry
+  context('when migrating the guardians registry', () => {
+    let previousGuardiansRegistry, currentGuardiansRegistry, moduleId = MODULE_IDS.registry
 
     beforeEach('load dispute managers', async () => {
-      previousJurorsRegistry = courtHelper.jurorsRegistry
-      currentJurorsRegistry = await JurorsRegistry.new(court.address, courtHelper.jurorToken.address, 1)
-      await court.setModule(moduleId, currentJurorsRegistry.address, { from: modulesGovernor })
+      previousGuardiansRegistry = courtHelper.guardiansRegistry
+      currentGuardiansRegistry = await GuardiansRegistry.new(court.address, courtHelper.guardianToken.address, 1)
+      await court.setModule(moduleId, currentGuardiansRegistry.address, { from: modulesGovernor })
     })
 
     it('does not affect modules cache', async () => {
-      assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), previousJurorsRegistry.address, 'registry cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousJurorsRegistry.address, 'registry cached for the jurors registry does not match')
-      assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), previousJurorsRegistry.address, 'registry cached for the treasury module does not match')
-      assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousJurorsRegistry.address, 'registry cached for the voting module does not match')
-      assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousJurorsRegistry.address, 'registry cached for the payments book module does not match')
+      assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), previousGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), previousGuardiansRegistry.address, 'registry cached for the treasury module does not match')
+      assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
+      assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
     })
 
     it('allows to update other modules cache', async () => {
       const targets = [courtHelper.disputeManager.address, courtHelper.treasury.address]
       await court.cacheModules(targets, [moduleId], { from: modulesGovernor })
 
-      assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), currentJurorsRegistry.address, 'registry cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), currentJurorsRegistry.address, 'registry cached for the treasury module does not match')
+      assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), currentGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
+      assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), currentGuardiansRegistry.address, 'registry cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousJurorsRegistry.address, 'registry cached for the jurors registry does not match')
-      assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousJurorsRegistry.address, 'registry cached for the voting module does not match')
-      assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousJurorsRegistry.address, 'registry cached for the payments book module does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
+      assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
     })
   })
 
@@ -95,7 +95,7 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('does not affect modules cache', async () => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), previousPaymentsBook.address, 'payments book cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), previousPaymentsBook.address, 'payments book cached for the treasury module does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
@@ -108,7 +108,7 @@ contract('Controller', ([_, modulesGovernor]) => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), currentPaymentsBook.address, 'payments book cached of the dispute manager does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), currentPaymentsBook.address, 'payments book cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
     })
@@ -125,7 +125,7 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('does not affect modules cache', async () => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), previousVoting.address, 'voting cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousVoting.address, 'voting cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), previousVoting.address, 'voting cached for the treasury module does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousVoting.address, 'voting cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
@@ -138,7 +138,7 @@ contract('Controller', ([_, modulesGovernor]) => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), currentVoting.address, 'voting cached of the dispute manager does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), currentVoting.address, 'voting cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousVoting.address, 'voting cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousVoting.address, 'voting cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
     })
@@ -155,7 +155,7 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('does not affect modules cache', async () => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), previousTreasury.address, 'treasury cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousTreasury.address, 'treasury cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), previousTreasury.address, 'treasury cached for the treasury module does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
@@ -168,7 +168,7 @@ contract('Controller', ([_, modulesGovernor]) => {
       assert.equal(await getCachedAddress(courtHelper.disputeManager, moduleId), currentTreasury.address, 'treasury cached of the dispute manager does not match')
       assert.equal(await getCachedAddress(courtHelper.treasury, moduleId), currentTreasury.address, 'treasury cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(courtHelper.jurorsRegistry, moduleId), previousTreasury.address, 'treasury cached for the jurors registry does not match')
+      assert.equal(await getCachedAddress(courtHelper.guardiansRegistry, moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
       assert.equal(await getCachedAddress(courtHelper.voting, moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
       assert.equal(await getCachedAddress(courtHelper.paymentsBook, moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
     })

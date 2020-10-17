@@ -5,7 +5,7 @@ const ARBITRABLE_EVENTS = {
 const DISPUTE_MANAGER_EVENTS = {
   DISPUTE_STATE_CHANGED: 'DisputeStateChanged',
   NEW_DISPUTE: 'NewDispute',
-  JUROR_DRAFTED: 'JurorDrafted',
+  GUARDIAN_DRAFTED: 'GuardianDrafted',
   EVIDENCE_PERIOD_CLOSED: 'EvidencePeriodClosed',
   RULING_APPEALED: 'RulingAppealed',
   RULING_APPEAL_CONFIRMED: 'RulingAppealConfirmed',
@@ -13,7 +13,7 @@ const DISPUTE_MANAGER_EVENTS = {
   PENALTIES_SETTLED: 'PenaltiesSettled',
   REWARD_SETTLED: 'RewardSettled',
   APPEAL_DEPOSIT_SETTLED: 'AppealDepositSettled',
-  MAX_JURORS_PER_DRAFT_BATCH_CHANGED: 'MaxJurorsPerDraftBatchChanged'
+  MAX_GUARDIANS_PER_DRAFT_BATCH_CHANGED: 'MaxGuardiansPerDraftBatchChanged'
 }
 
 const VOTING_EVENTS = {
@@ -28,16 +28,16 @@ const REGISTRY_EVENTS = {
   UNSTAKED: 'Unstaked',
   SLASHED: 'Slashed',
   COLLECTED: 'Collected',
-  JUROR_ACTIVATED: 'JurorActivated',
-  JUROR_DEACTIVATION_REQUESTED: 'JurorDeactivationRequested',
-  JUROR_DEACTIVATION_PROCESSED: 'JurorDeactivationProcessed',
-  JUROR_DEACTIVATION_UPDATED: 'JurorDeactivationUpdated',
-  JUROR_BALANCE_LOCKED: 'JurorBalanceLocked',
-  JUROR_BALANCE_UNLOCKED: 'JurorBalanceUnlocked',
-  JUROR_SLASHED: 'JurorSlashed',
-  JUROR_TOKENS_BURNED: 'JurorTokensBurned',
-  JUROR_TOKENS_ASSIGNED: 'JurorTokensAssigned',
-  JUROR_TOKENS_COLLECTED: 'JurorTokensCollected',
+  GUARDIAN_ACTIVATED: 'GuardianActivated',
+  GUARDIAN_DEACTIVATION_REQUESTED: 'GuardianDeactivationRequested',
+  GUARDIAN_DEACTIVATION_PROCESSED: 'GuardianDeactivationProcessed',
+  GUARDIAN_DEACTIVATION_UPDATED: 'GuardianDeactivationUpdated',
+  GUARDIAN_BALANCE_LOCKED: 'GuardianBalanceLocked',
+  GUARDIAN_BALANCE_UNLOCKED: 'GuardianBalanceUnlocked',
+  GUARDIAN_SLASHED: 'GuardianSlashed',
+  GUARDIAN_TOKENS_BURNED: 'GuardianTokensBurned',
+  GUARDIAN_TOKENS_ASSIGNED: 'GuardianTokensAssigned',
+  GUARDIAN_TOKENS_COLLECTED: 'GuardianTokensCollected',
   TOTAL_ACTIVE_BALANCE_LIMIT_CHANGED: 'TotalActiveBalanceLimitChanged'
 }
 
@@ -48,7 +48,7 @@ const TREASURY_EVENTS = {
 
 const PAYMENTS_BOOK_EVENTS = {
   PAYMENT_RECEIVED: 'PaymentReceived',
-  JUROR_FEES_CLAIMED: 'JurorFeesClaimed',
+  GUARDIAN_FEES_CLAIMED: 'GuardianFeesClaimed',
   GOVERNOR_FEES_TRANSFERRED: 'GovernorFeesTransferred',
   GOVERNOR_SHARE_PCT_CHANGED: 'GovernorSharePctChanged'
 }

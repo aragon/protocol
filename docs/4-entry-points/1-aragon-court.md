@@ -16,24 +16,24 @@ To read more information about its responsibilities and how the whole architectu
         - **Modules governor:** Address of the governor allowed to manipulate module's addresses
     - **Settings:** Object containing
         - **Fee token:** Address of the token contract that is used to pay for the fees
-        - **Juror fee:** Amount of fee tokens paid per drafted juror per dispute
+        - **Guardian fee:** Amount of fee tokens paid per drafted guardian per dispute
         - **Heartbeat fee:** Amount of fee tokens per dispute to cover terms update costs
-        - **Draft fee:**  Amount of fee tokens per juror to cover the drafting costs
-        - **Settle fee:** Amount of fee tokens per juror to cover round settlement costs
+        - **Draft fee:**  Amount of fee tokens per guardian to cover the drafting costs
+        - **Settle fee:** Amount of fee tokens per guardian to cover round settlement costs
         - **Evidence terms:** Max submitting evidence period duration in Court terms
         - **Commit terms:** Duration of the commit phase in Court terms
         - **Reveal terms:** Duration of the reveal phase in Court terms
         - **Appeal terms:** Duration of the appeal phase in Court terms
         - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Court terms
-        - **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted juror (1/10,000)
+        - **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted guardian (1/10,000)
         - **Final-round reduction:** ‱ of fee reduction for the last appeal round (1/10,000)
-        - **First-round jurors number:** Number of jurors to be drafted for the first round of a dispute
-        - **Appeal step factor:** Increasing factor for the number of jurors of each dispute round
+        - **First-round guardians number:** Number of guardians to be drafted for the first round of a dispute
+        - **Appeal step factor:** Increasing factor for the number of guardians of each dispute round
         - **Max regular appeal rounds:** Number of regular appeal rounds before the final round is triggered
-        - **Final round lock terms:** Number of terms that a coherent juror in a final round is disallowed to withdraw
-        - **Appeal collateral factor:** ‱ multiple of dispute fees (jurors, draft, and settlements) required to appeal a preliminary ruling (1/10,000)
-        - **Appeal confirmation collateral factor:** ‱ multiple of dispute fees (jurors, draft, and settlements) required to confirm an appeal (1/10,000)
-        - **Min active balance:** Minimum amount of juror tokens that can be activated
+        - **Final round lock terms:** Number of terms that a coherent guardian in a final round is disallowed to withdraw
+        - **Appeal collateral factor:** ‱ multiple of dispute fees (guardians, draft, and settlements) required to appeal a preliminary ruling (1/10,000)
+        - **Appeal confirmation collateral factor:** ‱ multiple of dispute fees (guardians, draft, and settlements) required to confirm an appeal (1/10,000)
+        - **Min active balance:** Minimum amount of guardian tokens that can be activated
 - **Authentication:** Open
 - **Pre-flight checks:** None
 - **State transitions:**

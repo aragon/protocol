@@ -15,15 +15,15 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
 
   const termDuration = bn(ONE_DAY)
   const firstTermStartTime = bn(NEXT_WEEK)
-  const jurorFee = bigExp(10, 18)
+  const guardianFee = bigExp(10, 18)
   const draftFee = bigExp(30, 18)
   const settleFee = bigExp(40, 18)
-  const firstRoundJurorsNumber = 5
+  const firstRoundGuardiansNumber = 5
 
   beforeEach('create court', async () => {
     courtHelper = buildHelper()
     feeToken = await ERC20.new('Court Fee Token', 'CFT', 18)
-    court = await courtHelper.deploy({ firstTermStartTime, termDuration, feeToken, jurorFee, draftFee, settleFee, firstRoundJurorsNumber })
+    court = await courtHelper.deploy({ firstTermStartTime, termDuration, feeToken, guardianFee, draftFee, settleFee, firstRoundGuardiansNumber })
     disputeManager = courtHelper.disputeManager
   })
 
@@ -57,7 +57,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
 
               const logs = decodeEvents(receipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
               assertAmountOfEvents({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
-              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, jurorsNumber: firstRoundJurorsNumber, metadata } })
+              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, guardiansNumber: firstRoundGuardiansNumber, metadata } })
 
               const { subject, possibleRulings: rulings, state, finalRuling, createTermId } = await courtHelper.getDispute(0)
               assert.equal(subject, arbitrable.address, 'dispute subject does not match')
@@ -71,13 +71,13 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
               // move forward to the term before the desired start one for the dispute
               await arbitrable.createDispute(possibleRulings, metadata)
 
-              const { draftTerm, delayedTerms, roundJurorsNumber, selectedJurors, jurorFees, settledPenalties, collectedTokens } = await courtHelper.getRound(0, 0)
+              const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, settledPenalties, collectedTokens } = await courtHelper.getRound(0, 0)
 
               assertBn(draftTerm, draftTermId, 'round draft term does not match')
               assertBn(delayedTerms, 0, 'round delay term does not match')
-              assertBn(roundJurorsNumber, firstRoundJurorsNumber, 'round jurors number does not match')
-              assertBn(selectedJurors, 0, 'round selected jurors number does not match')
-              assertBn(jurorFees, courtHelper.jurorFee.mul(bn(firstRoundJurorsNumber)), 'round juror fees do not match')
+              assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'round guardians number does not match')
+              assertBn(selectedGuardians, 0, 'round selected guardians number does not match')
+              assertBn(guardianFees, courtHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
               assertBn(collectedTokens, 0, 'round collected tokens should be zero')
               assert.equal(settledPenalties, false, 'round penalties should not be settled')
             })
@@ -223,13 +223,13 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
 
       context('when the given round is valid', async () => {
         it('returns the requested round', async () => {
-          const { draftTerm, delayedTerms, roundJurorsNumber, selectedJurors, jurorFees, settledPenalties, collectedTokens } = await courtHelper.getRound(0, 0)
+          const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, settledPenalties, collectedTokens } = await courtHelper.getRound(0, 0)
 
           assertBn(draftTerm, draftTermId, 'round draft term does not match')
           assertBn(delayedTerms, 0, 'round delay term does not match')
-          assertBn(roundJurorsNumber, firstRoundJurorsNumber, 'round jurors number does not match')
-          assertBn(selectedJurors, 0, 'round selected jurors number does not match')
-          assertBn(jurorFees, courtHelper.jurorFee.mul(bn(firstRoundJurorsNumber)), 'round juror fees do not match')
+          assertBn(roundGuardiansNumber, firstRoundGuardiansNumber, 'round guardians number does not match')
+          assertBn(selectedGuardians, 0, 'round selected guardians number does not match')
+          assertBn(guardianFees, courtHelper.guardianFee.mul(bn(firstRoundGuardiansNumber)), 'round guardian fees do not match')
           assertBn(collectedTokens, 0, 'round collected tokens should be zero')
           assert.equal(settledPenalties, false, 'round penalties should not be settled')
         })

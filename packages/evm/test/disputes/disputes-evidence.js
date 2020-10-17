@@ -8,20 +8,20 @@ const { ARAGON_COURT_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = requi
 const Arbitrable = artifacts.require('ArbitrableMock')
 const DisputeManager = artifacts.require('DisputeManager')
 
-contract('DisputeManager', ([_, juror500, juror1000, juror1500, fakeArbitrable]) => {
+contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArbitrable]) => {
   let courtHelper, court, disputeManager, arbitrable, disputeId
 
-  const jurors = [
-    { address: juror500, initialActiveBalance: bigExp(500, 18) },
-    { address: juror1000, initialActiveBalance: bigExp(1000, 18) },
-    { address: juror1500, initialActiveBalance: bigExp(1500, 18) }
+  const guardians = [
+    { address: guardian500, initialActiveBalance: bigExp(500, 18) },
+    { address: guardian1000, initialActiveBalance: bigExp(1000, 18) },
+    { address: guardian1500, initialActiveBalance: bigExp(1500, 18) }
   ]
 
-  before('create base contracts and activate jurors', async () => {
+  before('create base contracts and activate guardians', async () => {
     courtHelper = buildHelper()
     court = await courtHelper.deploy()
     disputeManager = courtHelper.disputeManager
-    await courtHelper.activate(jurors)
+    await courtHelper.activate(guardians)
   })
 
   beforeEach('create dispute', async () => {
@@ -34,10 +34,10 @@ contract('DisputeManager', ([_, juror500, juror1000, juror1500, fakeArbitrable])
       context('when the given dispute exists', () => {
         const itCanBeDrafted = () => {
           it('can be drafted', async () => {
-            const draftedJurors = await courtHelper.draft({ disputeId })
+            const draftedGuardians = await courtHelper.draft({ disputeId })
 
-            const totalWeight = draftedJurors.reduce((total, { weight }) => total.add(weight), bn(0))
-            assertBn(totalWeight, DEFAULTS.firstRoundJurorsNumber, 'number of drafted jurors does not match')
+            const totalWeight = draftedGuardians.reduce((total, { weight }) => total.add(weight), bn(0))
+            assertBn(totalWeight, DEFAULTS.firstRoundGuardiansNumber, 'number of drafted guardians does not match')
           })
         }
 
@@ -130,7 +130,7 @@ contract('DisputeManager', ([_, juror500, juror1000, juror1500, fakeArbitrable])
 
     context('when the sender is not the arbitrable of the dispute', () => {
       it('reverts', async () => {
-        await assertRevert(court.submitEvidence(disputeId, juror500, '0x', { from: fakeArbitrable }), ARAGON_COURT_ERRORS.ERROR_SENDER_NOT_DISPUTE_SUBJECT)
+        await assertRevert(court.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), ARAGON_COURT_ERRORS.ERROR_SENDER_NOT_DISPUTE_SUBJECT)
       })
     })
 

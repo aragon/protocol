@@ -15,14 +15,14 @@ The following events are emitted by the `PaymentsBook}`:
     - **Sender:** Address paying the token amount
     - **Data:** Arbitrary data
 
-#### 6.6.1.2. Juror fees claimed
+#### 6.6.1.2. Guardian fees claimed
 
-- **Name:** `JurorFeesClaimed`
+- **Name:** `GuardianFeesClaimed`
 - **Args:**
-    - **Period ID:** Identification number of the payment period claimed by the juror
-    - **Juror:** Address of the juror whose fees have been claimed
+    - **Period ID:** Identification number of the payment period claimed by the guardian
+    - **Guardian:** Address of the guardian whose fees have been claimed
     - **Token:** Address of the token used for the fees
-    - **Amount:** Amount of tokens the juror received for the requested period
+    - **Amount:** Amount of tokens the guardian received for the requested period
 
 #### 6.6.1.3. Governor fees transferred
 
@@ -72,7 +72,7 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Juror fees:** Total amount of fees collected for the jurors during a period
+    - **Guardian fees:** Total amount of fees collected for the guardians during a period
     - **Governor fees:** Total amount of fees collected for the governor during a period
 
 #### 6.6.2.5. Period balance details
@@ -81,29 +81,29 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Period ID:** Identification number of the period being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Balance checkpoint:** Court term ID of a period used to fetch the total active balance of the jurors registry
-    - **Total active balance:** Total amount of juror tokens active in the Court at the corresponding period checkpoint
+    - **Balance checkpoint:** Court term ID of a period used to fetch the total active balance of the guardians registry
+    - **Total active balance:** Total amount of guardian tokens active in the Court at the corresponding period checkpoint
 
-#### 6.6.2.6. Juror fees
+#### 6.6.2.6. Guardian fees
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
-    - **Juror:** Address of the juror querying the owed shared fees of
+    - **Guardian:** Address of the guardian querying the owed shared fees of
     - **Token:** Address of the token being queried
 - **Pre-flight checks:**
     - Ensure that the balance details of the requested period have been ensured
 - **Outputs:**
-    - **Amount:** Amount of token fees owed to the given juror for the requested period
+    - **Amount:** Amount of token fees owed to the given guardian for the requested period
 
-#### 6.6.2.7. Has juror claimed
+#### 6.6.2.7. Has guardian claimed
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
-    - **Juror:** Address of the juror querying the owed shared fees of
+    - **Guardian:** Address of the guardian querying the owed shared fees of
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Claimed:** True if the juror fees have already been claimed for the given period and token, false otherwise
+    - **Claimed:** True if the guardian fees have already been claimed for the given period and token, false otherwise
 
 #### 6.6.2.8. Governor fees
 

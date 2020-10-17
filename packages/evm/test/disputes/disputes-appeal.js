@@ -6,33 +6,33 @@ const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
 const { getVoteId, oppositeOutcome, outcomeFor, OUTCOMES } = require('../helpers/utils/crvoting')
 const { buildHelper, ROUND_STATES, DISPUTE_STATES, DEFAULTS } = require('../helpers/wrappers/court')
 
-contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, juror1000, juror1500, juror2000, juror2500, juror3000, juror3500, juror4000]) => {
+contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000]) => {
   let courtHelper, disputeManager, voting
 
-  const jurors = [
-    { address: juror3000, initialActiveBalance: bigExp(3000, 18) },
-    { address: juror500,  initialActiveBalance: bigExp(500,  18) },
-    { address: juror1000, initialActiveBalance: bigExp(1000, 18) },
-    { address: juror2000, initialActiveBalance: bigExp(2000, 18) },
-    { address: juror4000, initialActiveBalance: bigExp(4000, 18) },
-    { address: juror1500, initialActiveBalance: bigExp(1500, 18) },
-    { address: juror3500, initialActiveBalance: bigExp(3500, 18) },
-    { address: juror2500, initialActiveBalance: bigExp(2500, 18) }
+  const guardians = [
+    { address: guardian3000, initialActiveBalance: bigExp(3000, 18) },
+    { address: guardian500,  initialActiveBalance: bigExp(500,  18) },
+    { address: guardian1000, initialActiveBalance: bigExp(1000, 18) },
+    { address: guardian2000, initialActiveBalance: bigExp(2000, 18) },
+    { address: guardian4000, initialActiveBalance: bigExp(4000, 18) },
+    { address: guardian1500, initialActiveBalance: bigExp(1500, 18) },
+    { address: guardian3500, initialActiveBalance: bigExp(3500, 18) },
+    { address: guardian2500, initialActiveBalance: bigExp(2500, 18) }
   ]
 
-  before('create base contracts and activate jurors', async () => {
+  before('create base contracts and activate guardians', async () => {
     courtHelper = buildHelper()
     await courtHelper.deploy()
     voting = courtHelper.voting
     disputeManager = courtHelper.disputeManager
-    await courtHelper.activate(jurors)
+    await courtHelper.activate(guardians)
   })
 
   describe('createAppeal', () => {
     context('when the given dispute exists', () => {
       let disputeId
 
-      beforeEach('activate jurors and create dispute', async () => {
+      beforeEach('activate guardians and create dispute', async () => {
         disputeId = await courtHelper.dispute()
       })
 
@@ -53,17 +53,17 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         }
 
         context('for a regular round', () => {
-          let draftedJurors
+          let draftedGuardians
           const roundId = 0
 
           beforeEach('draft round', async () => {
-            draftedJurors = await courtHelper.draft({ disputeId, drafter })
+            draftedGuardians = await courtHelper.draft({ disputeId, drafter })
           })
 
           beforeEach('define a group of voters', async () => {
             voteId = getVoteId(disputeId, roundId)
-            // pick the first 3 drafted jurors to vote
-            voters = draftedJurors.slice(0, 3)
+            // pick the first 3 drafted guardians to vote
+            voters = draftedGuardians.slice(0, 3)
             voters.forEach((voter, i) => voter.outcome = outcomeFor(i))
           })
 
@@ -155,12 +155,12 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                     await disputeManager.createAppeal(disputeId, roundId, appealMakerRuling, { from: appealMaker })
 
-                    const { draftTerm, delayedTerms, roundJurorsNumber, selectedJurors, jurorFees, settledPenalties, collectedTokens } = await courtHelper.getRound(disputeId, roundId)
+                    const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, settledPenalties, collectedTokens } = await courtHelper.getRound(disputeId, roundId)
                     assertBn(draftTerm, previousDraftTerm, 'current round draft term does not match')
                     assertBn(delayedTerms, 0, 'current round delay term does not match')
-                    assertBn(roundJurorsNumber, DEFAULTS.firstRoundJurorsNumber, 'current round jurors number does not match')
-                    assertBn(selectedJurors, DEFAULTS.firstRoundJurorsNumber, 'current round selected jurors number does not match')
-                    assertBn(jurorFees, courtHelper.jurorFee.mul(bn(DEFAULTS.firstRoundJurorsNumber)), 'current round juror fees do not match')
+                    assertBn(roundGuardiansNumber, DEFAULTS.firstRoundGuardiansNumber, 'current round guardians number does not match')
+                    assertBn(selectedGuardians, DEFAULTS.firstRoundGuardiansNumber, 'current round selected guardians number does not match')
+                    assertBn(guardianFees, courtHelper.guardianFee.mul(bn(DEFAULTS.firstRoundGuardiansNumber)), 'current round guardian fees do not match')
                     assert.equal(settledPenalties, false, 'current round penalties should not be settled')
                     assertBn(collectedTokens, 0, 'current round collected tokens should be zero')
                   })
@@ -284,10 +284,10 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
           beforeEach('define a group of voters', async () => {
             voteId = getVoteId(disputeId, roundId)
             voters = [
-              { address: juror1000, outcome: OUTCOMES.LOW },
-              { address: juror4000, outcome: OUTCOMES.LOW },
-              { address: juror2000, outcome: OUTCOMES.HIGH },
-              { address: juror1500, outcome: OUTCOMES.REFUSED }
+              { address: guardian1000, outcome: OUTCOMES.LOW },
+              { address: guardian4000, outcome: OUTCOMES.LOW },
+              { address: guardian2000, outcome: OUTCOMES.HIGH },
+              { address: guardian1500, outcome: OUTCOMES.REFUSED }
             ]
           })
 

@@ -9,7 +9,7 @@ import "../clock/IClock.sol";
 import "../config/ConfigConsumer.sol";
 import "../../voting/ICRVoting.sol";
 import "../../treasury/ITreasury.sol";
-import "../../registry/IJurorsRegistry.sol";
+import "../../registry/IGuardiansRegistry.sol";
 import "../../disputes/IDisputeManager.sol";
 import "../../payments/IPaymentsBook.sol";
 
@@ -179,11 +179,11 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the address of the JurorRegistry module implementation
-    * @return Address of the JurorRegistry module implementation
+    * @dev Internal function to fetch the address of the GuardianRegistry module implementation
+    * @return Address of the GuardianRegistry module implementation
     */
-    function _jurorsRegistry() internal view returns (IJurorsRegistry) {
-        return IJurorsRegistry(_getModuleCache(JURORS_REGISTRY));
+    function _guardiansRegistry() internal view returns (IGuardiansRegistry) {
+        return IGuardiansRegistry(_getModuleCache(GUARDIANS_REGISTRY));
     }
 
     /**

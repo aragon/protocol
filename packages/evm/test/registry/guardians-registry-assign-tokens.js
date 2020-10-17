@@ -5,11 +5,11 @@ const { buildHelper } = require('../helpers/wrappers/court')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { MATH_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
-const JurorsRegistry = artifacts.require('JurorsRegistry')
+const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('JurorsRegistry', ([_, juror, someone]) => {
+contract('GuardiansRegistry', ([_, guardian, someone]) => {
   let controller, registry, disputeManager, ANJ
 
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
@@ -22,9 +22,9 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
     ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
   })
 
-  beforeEach('create jurors registry module', async () => {
-    registry = await JurorsRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
-    await controller.setJurorsRegistry(registry.address)
+  beforeEach('create guardians registry module', async () => {
+    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    await controller.setGuardiansRegistry(registry.address)
   })
 
   const itHandlesZeroTokenAssignmentsProperly = (assignmentCall, recipient) => {
@@ -47,35 +47,35 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
 
     it('does not affect the staked balance', async () => {
       const previousTotalStake = await registry.totalStaked()
-      const previousJurorStake = await registry.totalStakedFor(recipient)
+      const previousGuardianStake = await registry.totalStakedFor(recipient)
 
       await assignmentCall()
 
       const currentTotalStake = await registry.totalStaked()
       assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
 
-      const currentJurorStake = await registry.totalStakedFor(recipient)
-      assertBn(previousJurorStake, currentJurorStake, 'recipient stake amounts do not match')
+      const currentGuardianStake = await registry.totalStakedFor(recipient)
+      assertBn(previousGuardianStake, currentGuardianStake, 'recipient stake amounts do not match')
     })
 
     it('does not affect the token balances', async () => {
-      const previousJurorBalance = await ANJ.balanceOf(recipient)
+      const previousGuardianBalance = await ANJ.balanceOf(recipient)
       const previousRegistryBalance = await ANJ.balanceOf(registry.address)
 
       await assignmentCall()
 
       const currentSenderBalance = await ANJ.balanceOf(recipient)
-      assertBn(previousJurorBalance, currentSenderBalance, 'recipient balances do not match')
+      assertBn(previousGuardianBalance, currentSenderBalance, 'recipient balances do not match')
 
       const currentRegistryBalance = await ANJ.balanceOf(registry.address)
       assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
     })
 
-    it('does not emit a juror rewarded event', async () => {
+    it('does not emit a guardian rewarded event', async () => {
       const receipt = await assignmentCall()
-      const logs = decodeEvents(receipt, JurorsRegistry.abi, REGISTRY_EVENTS.JUROR_TOKENS_ASSIGNED)
+      const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.GUARDIAN_TOKENS_ASSIGNED)
 
-      assertAmountOfEvents({ logs }, REGISTRY_EVENTS.JUROR_TOKENS_ASSIGNED, { expectedAmount: 0 })
+      assertAmountOfEvents({ logs }, REGISTRY_EVENTS.GUARDIAN_TOKENS_ASSIGNED, { expectedAmount: 0 })
     })
   }
 
@@ -105,25 +105,25 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
 
     it('increments the staked balance for the recipient', async () => {
       const previousTotalStake = await registry.totalStaked()
-      const previousJurorStake = await registry.totalStakedFor(recipient)
+      const previousGuardianStake = await registry.totalStakedFor(recipient)
 
       await assignmentCall()
 
       const currentTotalStake = await registry.totalStaked()
       assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
 
-      const currentJurorStake = await registry.totalStakedFor(recipient)
-      assertBn(previousJurorStake.add(amount), currentJurorStake, 'recipient stake amounts do not match')
+      const currentGuardianStake = await registry.totalStakedFor(recipient)
+      assertBn(previousGuardianStake.add(amount), currentGuardianStake, 'recipient stake amounts do not match')
     })
 
     it('does not affect the token balances', async () => {
-      const previousJurorBalance = await ANJ.balanceOf(recipient)
+      const previousGuardianBalance = await ANJ.balanceOf(recipient)
       const previousRegistryBalance = await ANJ.balanceOf(registry.address)
 
       await assignmentCall()
 
       const currentSenderBalance = await ANJ.balanceOf(recipient)
-      assertBn(previousJurorBalance, currentSenderBalance, 'recipient balances do not match')
+      assertBn(previousGuardianBalance, currentSenderBalance, 'recipient balances do not match')
 
       const currentRegistryBalance = await ANJ.balanceOf(registry.address)
       assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
@@ -135,46 +135,46 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
       context('when the given amount is zero', () => {
         const amount = bn(0)
 
-        itHandlesZeroTokenAssignmentsProperly(() => disputeManager.assignTokens(juror, amount), juror)
+        itHandlesZeroTokenAssignmentsProperly(() => disputeManager.assignTokens(guardian, amount), guardian)
       })
 
       context('when the given amount is greater than zero', () => {
-        const itEmitsAJurorTokensAssignedEvent = (assignmentCall, recipient, amount) => {
-          it('emits a juror rewarded event', async () => {
+        const itEmitsAGuardianTokensAssignedEvent = (assignmentCall, recipient, amount) => {
+          it('emits a guardian rewarded event', async () => {
             const receipt = await assignmentCall()
-            const logs = decodeEvents(receipt, JurorsRegistry.abi, REGISTRY_EVENTS.JUROR_TOKENS_ASSIGNED)
+            const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.GUARDIAN_TOKENS_ASSIGNED)
 
-            assertAmountOfEvents({ logs }, REGISTRY_EVENTS.JUROR_TOKENS_ASSIGNED)
-            assertEvent({ logs }, REGISTRY_EVENTS.JUROR_TOKENS_ASSIGNED, { expectedArgs: { juror: recipient, amount } })
+            assertAmountOfEvents({ logs }, REGISTRY_EVENTS.GUARDIAN_TOKENS_ASSIGNED)
+            assertEvent({ logs }, REGISTRY_EVENTS.GUARDIAN_TOKENS_ASSIGNED, { expectedArgs: { guardian: recipient, amount } })
           })
         }
 
-        context('when the juror did not have balance', () => {
+        context('when the guardian did not have balance', () => {
           const amount = bigExp(100, 18)
 
-          itHandlesTokenAssignmentsProperly(() => disputeManager.assignTokens(juror, amount), juror, amount)
-          itEmitsAJurorTokensAssignedEvent(() => disputeManager.assignTokens(juror, amount), juror, amount)
+          itHandlesTokenAssignmentsProperly(() => disputeManager.assignTokens(guardian, amount), guardian, amount)
+          itEmitsAGuardianTokensAssignedEvent(() => disputeManager.assignTokens(guardian, amount), guardian, amount)
         })
 
-        context('when the juror already had some balance', () => {
+        context('when the guardian already had some balance', () => {
           beforeEach('stake some balance', async () => {
             const initialBalance = bigExp(50, 18)
-            await ANJ.generateTokens(juror, initialBalance)
-            await ANJ.approveAndCall(registry.address, initialBalance, '0x', { from: juror })
+            await ANJ.generateTokens(guardian, initialBalance)
+            await ANJ.approveAndCall(registry.address, initialBalance, '0x', { from: guardian })
           })
 
           context('when the given amount does not overflow', () => {
             const amount = bigExp(100, 18)
 
-            itHandlesTokenAssignmentsProperly(() => disputeManager.assignTokens(juror, amount), juror, amount)
-            itEmitsAJurorTokensAssignedEvent(() => disputeManager.assignTokens(juror, amount), juror, amount)
+            itHandlesTokenAssignmentsProperly(() => disputeManager.assignTokens(guardian, amount), guardian, amount)
+            itEmitsAGuardianTokensAssignedEvent(() => disputeManager.assignTokens(guardian, amount), guardian, amount)
           })
 
           context('when the given amount does overflow', () => {
             const amount = MAX_UINT256
 
             it('reverts', async () => {
-              await assertRevert(disputeManager.assignTokens(juror, amount), MATH_ERRORS.ADD_OVERFLOW)
+              await assertRevert(disputeManager.assignTokens(guardian, amount), MATH_ERRORS.ADD_OVERFLOW)
             })
           })
         })
@@ -185,7 +185,7 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(registry.assignTokens(juror, bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
+        await assertRevert(registry.assignTokens(guardian, bigExp(100, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })
@@ -199,21 +199,21 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
       })
 
       context('when the given amount is greater than zero', () => {
-        const itEmitsAJurorTokensBurnedEvent = (assignmentCall, amount) => {
+        const itEmitsAGuardianTokensBurnedEvent = (assignmentCall, amount) => {
           it('emits a burned tokens event', async () => {
             const receipt = await assignmentCall()
-            const logs = decodeEvents(receipt, JurorsRegistry.abi, REGISTRY_EVENTS.JUROR_TOKENS_BURNED)
+            const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.GUARDIAN_TOKENS_BURNED)
 
-            assertAmountOfEvents({ logs }, REGISTRY_EVENTS.JUROR_TOKENS_BURNED)
-            assertEvent({ logs }, REGISTRY_EVENTS.JUROR_TOKENS_BURNED, { expectedArgs: { amount } })
+            assertAmountOfEvents({ logs }, REGISTRY_EVENTS.GUARDIAN_TOKENS_BURNED)
+            assertEvent({ logs }, REGISTRY_EVENTS.GUARDIAN_TOKENS_BURNED, { expectedArgs: { amount } })
           })
         }
 
-        context('when the juror did not have balance', () => {
+        context('when the guardian did not have balance', () => {
           const amount = bigExp(100, 18)
 
           itHandlesTokenAssignmentsProperly(() => disputeManager.burnTokens(amount), BURN_ADDRESS, amount)
-          itEmitsAJurorTokensBurnedEvent(() => disputeManager.burnTokens(amount), amount)
+          itEmitsAGuardianTokensBurnedEvent(() => disputeManager.burnTokens(amount), amount)
         })
 
         context('when the burn address already had some balance', () => {
@@ -225,7 +225,7 @@ contract('JurorsRegistry', ([_, juror, someone]) => {
             const amount = bigExp(100, 18)
 
             itHandlesTokenAssignmentsProperly(() => disputeManager.burnTokens(amount), BURN_ADDRESS, amount)
-            itEmitsAJurorTokensBurnedEvent(() => disputeManager.burnTokens(amount), amount)
+            itEmitsAGuardianTokensBurnedEvent(() => disputeManager.burnTokens(amount), amount)
           })
 
           context('when the given amount does overflow', () => {
