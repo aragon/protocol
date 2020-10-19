@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "../../core/controller/Controlled.sol";
 import "../../core/controller/Controller.sol";

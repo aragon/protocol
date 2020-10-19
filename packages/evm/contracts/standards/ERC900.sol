@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 
 // Interface for ERC900: https://eips.ethereum.org/EIPS/eip-900
