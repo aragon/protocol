@@ -11,8 +11,8 @@ module.exports = {
     tokens: [
       {
         symbol:   'ANT',
-        address:  '0x5CbDc338f71888A93323C922cAaba84402dB1193',       // ANJ address in Staging
-        period:   ONE_WEEK,                                           // The ANJ quota period lasts 1 week
+        address:  '0x5CbDc338f71888A93323C922cAaba84402dB1193',       // ANT address in Staging
+        period:   ONE_WEEK,                                           // The ANT quota period lasts 1 week
         amount:   bigExp(10000, 18),                                  // Accounts will be allowed to withdraw 10,000 ANT per week maximum
         donation: bigExp(1000000, 18)                                 // Donate an initial amount of 1,000,000 ANT
       },
