@@ -12,6 +12,8 @@
     ],
     "nohoist": [
       "**/@aragon/contract-helpers-test",
+      "**/@aragon/protocol-evm",
+      "**/@aragonone/erc20-faucet",
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**",
       "**/@graphprotocol/graph-cli",
