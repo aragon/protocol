@@ -3,10 +3,8 @@ const { usePlugin } = require('@nomiclabs/buidler/config')
 usePlugin("@nomiclabs/buidler-ganache")
 usePlugin('@nomiclabs/buidler-truffle5')
 usePlugin('buidler-gas-reporter')
+usePlugin('buidler-local-networks-config-plugin')
 usePlugin('solidity-coverage')
-
-const ACCOUNTS = (process.env.ETH_KEYS ? process.env.ETH_KEYS.split(',') : [])
-  .map(key => key.trim())
 
 module.exports = {
   networks: {
@@ -28,12 +26,10 @@ module.exports = {
     // Mainnet network configured with Aragon node.
     mainnet: {
       url: 'https://mainnet.eth.aragon.network',
-      accounts: ACCOUNTS,
     },
     // Rinkeby network configured with Aragon node.
     rinkeby: {
       url: 'https://rinkeby.eth.aragon.network',
-      accounts: ACCOUNTS,
     },
     // Network configured to interact with Frame wallet. Requires
     // to have Frame running on your machine. Download it from:
