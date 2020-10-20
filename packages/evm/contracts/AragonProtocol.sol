@@ -115,9 +115,10 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return subject Arbitrable instance associated to the dispute
     * @return ruling Ruling number computed for the given dispute
     */
-    function rule(uint256 _disputeId) external returns (IArbitrable subject, uint256 ruling) {
+    function rule(uint256 _disputeId) external returns (address subject, uint256 ruling) {
         IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
-        (subject, ruling) = disputeManager.computeRuling(_disputeId);
+        (IArbitrable _subject, uint8 _ruling) = disputeManager.computeRuling(_disputeId);
+        return (address(_subject), uint256(_ruling));
     }
 
     /**
