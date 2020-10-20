@@ -84,9 +84,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         bytes32 termRandomness;                     // Randomness seed to be used for the draft
         uint256 disputeId;                          // ID of the dispute being drafted
         uint64 termId;                              // Term ID of the dispute's draft term
-        uint256 selectedGuardians;                     // Number of guardians already selected for the draft
-        uint256 batchRequestedGuardians;               // Number of guardians to be selected in the given batch of the draft
-        uint256 roundRequestedGuardians;               // Total number of guardians requested to be drafted
+        uint256 selectedGuardians;                  // Number of guardians already selected for the draft
+        uint256 batchRequestedGuardians;            // Number of guardians to be selected in the given batch of the draft
+        uint256 roundRequestedGuardians;            // Total number of guardians requested to be drafted
         uint256 draftLockAmount;                    // Amount of tokens to be locked to each drafted guardian
         uint256 iteration;                          // Sortition iteration number
     }
