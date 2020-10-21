@@ -12,15 +12,8 @@ if [[ -z "${GRAPHKEY}" ]]; then
   exit 1
 fi
 
-# Use custom subgraph name based on target network
-if [[ "$NETWORK" != "mainnet" ]]; then
-  SUBGRAPH_EXT="-${NETWORK}"
-else
-  SUBGRAPH_EXT=""
-fi
-
 # Select IPFS and The Graph nodes
-if [[ "$NETWORK" = "rpc" ]]; then
+if [[ "$NETWORK" = "ganache" ]]; then
   IPFS_NODE="http://localhost:5001"
   GRAPH_NODE="http://127.0.0.1:8020"
 else
@@ -30,13 +23,13 @@ fi
 
 # Create subgraph if missing
 {
-  graph create aragon/aragon-court${SUBGRAPH_EXT} --node ${GRAPH_NODE}
+  graph create aragon/aragon-protocol-${NETWORK} --node ${GRAPH_NODE}
 } || {
   echo 'Subgraph was already created'
 }
 
 # Deploy subgraph
-graph deploy aragon/aragon-court${SUBGRAPH_EXT} \
+graph deploy aragon/aragon-protocol-${NETWORK} \
   --ipfs ${IPFS_NODE} \
   --node ${GRAPH_NODE} \
   --access-token "$GRAPHKEY" > deploy-output.txt
@@ -49,7 +42,7 @@ if [[ -z "$SUBGRAPH_ID" ]]; then
   echo "Could not find subgraph ID in deploy output, cannot deploy to Aragon infra."
 else
   echo "Deploying subgraph ${SUBGRAPH_ID} to Aragon infra..."
-  kubectl exec graph-shell -- create aragon/aragon-court${SUBGRAPH_EXT}
-  kubectl exec graph-shell -- deploy aragon/aragon-court${SUBGRAPH_EXT} ${SUBGRAPH_ID} graph_index_node_0
-  kubectl exec graph-shell -- reassign aragon/aragon-court${SUBGRAPH_EXT} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell -- create aragon/aragon-protocol-${NETWORK}
+  kubectl exec graph-shell -- deploy aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell -- reassign aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
 fi

@@ -73,7 +73,7 @@ npx ganache-cli -i 15 --port 8545 --gasLimit 8000000 --deterministic
 Then, open a separate terminal in the same directory of the scripts repo and deploy a local instance by running the following command:
 
 ```bash
-npm run deploy:protocol:rpc
+npm run deploy:protocol --network ganache
 ```
 
 This command will output the addresses of all the deployed modules of Aragon Protocol including the main entry point (the `AragonProtocol` contract).

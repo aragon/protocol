@@ -18,14 +18,14 @@ Even though Aragon Protocol could theoretically resolve any type of binary dispu
 
 Simply clone this monorepo and install dependencies:
 
-```sh
-git clone git@github.com:aragon/protocol.git 
+```bash
+git clone git@github.com:aragon/protocol.git
+cd protocol 
 yarn
 ```
 
 As a sanity check you can run the tests to make sure everything work as expected:
 
-```sh
-cd packages/evm
+```bash
 yarn test
 ```

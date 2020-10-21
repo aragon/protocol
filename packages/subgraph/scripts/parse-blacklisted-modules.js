@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 
 const network = process.argv[2]
-const blacklistedModules = require('../blacklisted-modules')[network]
+const blacklistedModules = require('../blacklisted-modules')[network] || []
 
 console.log(`Blacklisting modules: ${blacklistedModules}`)
 const outputPath = path.join(process.cwd(), 'helpers/blacklisted-modules.ts')

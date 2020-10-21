@@ -6,8 +6,7 @@
   "license": "GPL-3.0",
   "scripts": {
     "help": "buidler help",
-    "node": "buidler node",
-    "console": "buidler console",
+    "ganache": "ganache-cli -h 0.0.0.0 -i 15 --gasLimit 8000000 --deterministic",
     "deploy-protocol": "buidler deploy-protocol",
     "deploy-faucet": "buidler deploy-faucet"
   },
@@ -23,6 +22,6 @@
     "web3": "^1.2.11"
   },
   "devDependencies": {
-    "@nomiclabs/buidler-ganache": "^1.3.3"
+    "ganache-cli": "^6.11.0"
   }
 }

@@ -3,7 +3,7 @@ const { bigExp } = require('@aragon/contract-helpers-test')
 const ONE_WEEK = 60 * 60 * 24 * 7
 
 module.exports = {
-  localhost: {
+  ganache: {
     tokens: [],                                                       // No tokens set for local env
   },
   staging: {

@@ -6,11 +6,16 @@
   "license": "GPL-3.0",
   "dependencies": {},
   "devDependencies": {},
+  "scripts": {
+    "start": "./scripts/start.sh",
+    "test": "yarn workspace @aragon/protocol-evm test"
+  },
   "workspaces": {
     "packages": [
       "packages/*"
     ],
     "nohoist": [
+      "**/@aragon/protocol-evm",
       "**/@aragon/contract-helpers-test",
       "**/@aragon/protocol-evm",
       "**/@aragonone/erc20-faucet",
