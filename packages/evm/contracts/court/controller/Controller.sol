@@ -497,12 +497,12 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Tell the current address of the current Subscriptions module
-    * @return addr Current a of the Subscriptions module
+    * @dev Tell the current address of the current PaymentsBook module
+    * @return addr Current a of the PaymentsBook module
     * @return disabled Whether the module has been disabled
     */
-    function getSubscriptions() external view returns (address addr, bool disabled) {
-        return _getModule(SUBSCRIPTIONS);
+    function getPaymentsBook() external view returns (address addr, bool disabled) {
+        return _getModule(PAYMENTS_BOOK);
     }
 
     /**
@@ -582,10 +582,10 @@ contract Controller is IsContract, Modules, CourtClock, CourtConfig {
     }
 
     /**
-    * @dev Internal function to tell the address of the current Subscriptions module
-    * @return Current address of the Subscriptions module
+    * @dev Internal function to tell the address of the current PaymentsBook module
+    * @return Current address of the PaymentsBook module
     */
-    function _getSubscriptions() internal view returns (address) {
-        return currentModules[SUBSCRIPTIONS];
+    function _getPaymentsBook() internal view returns (address) {
+        return currentModules[PAYMENTS_BOOK];
     }
 }

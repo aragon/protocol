@@ -6,13 +6,12 @@ import "./controller/Controller.sol";
 import "../arbitration/IArbitrator.sol";
 import "../arbitration/IArbitrable.sol";
 import "../disputes/IDisputeManager.sol";
-import "../subscriptions/ISubscriptions.sol";
+import "../payments/IPaymentsBook.sol";
 
 
 contract AragonCourt is Controller, IArbitrator {
     using Uint256Helpers for uint256;
 
-    string private constant ERROR_SUBSCRIPTION_NOT_PAID = "AC_SUBSCRIPTION_NOT_PAID";
     string private constant ERROR_SENDER_NOT_DISPUTE_SUBJECT = "AC_SENDER_NOT_DISPUTE_SUBJECT";
 
     /**
@@ -83,9 +82,6 @@ contract AragonCourt is Controller, IArbitrator {
     */
     function createDispute(uint256 _possibleRulings, bytes calldata _metadata) external returns (uint256) {
         IArbitrable subject = IArbitrable(msg.sender);
-        ISubscriptions subscriptions = ISubscriptions(_getSubscriptions());
-        require(subscriptions.isUpToDate(address(subject)), ERROR_SUBSCRIPTION_NOT_PAID);
-
         IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
         return disputeManager.createDispute(subject, _possibleRulings.toUint8(), _metadata);
     }
@@ -137,15 +133,10 @@ contract AragonCourt is Controller, IArbitrator {
     }
 
     /**
-    * @dev Tell the subscription fees information for a subscriber to be up-to-date
-    * @param _subscriber Address of the account paying the subscription fees for
-    * @return recipient Address where the corresponding subscriptions fees must be transferred to
-    * @return feeToken ERC20 token used for the subscription fees
-    * @return feeAmount Total amount of fees that must be allowed to the recipient
+    * @dev Tell the payments recipient address
+    * @return Address of the payments recipient module
     */
-    function getSubscriptionFees(address _subscriber) external view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
-        recipient = _getSubscriptions();
-        ISubscriptions subscriptions = ISubscriptions(recipient);
-        (feeToken, feeAmount,) = subscriptions.getOwedFeesDetails(_subscriber);
+    function getPaymentsRecipient() external view returns (address) {
+        return _getPaymentsBook();
     }
 }

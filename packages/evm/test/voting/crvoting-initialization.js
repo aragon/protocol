@@ -18,7 +18,7 @@ contract('CRVoting', ([_, someone]) => {
       it('initializes voting correctly', async () => {
         const voting = await CRVoting.new(controller.address)
 
-        assert.equal(await voting.getController(), controller.address, 'subscriptions controller does not match')
+        assert.equal(await voting.getController(), controller.address, 'voting controller does not match')
       })
     })
 

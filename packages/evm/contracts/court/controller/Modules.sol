@@ -14,6 +14,6 @@ contract Modules {
     // JurorsRegistry module ID - keccak256(abi.encodePacked("JURORS_REGISTRY"))
     bytes32 internal constant JURORS_REGISTRY = 0x3b21d36b36308c830e6c4053fb40a3b6d79dde78947fbf6b0accd30720ab5370;
 
-    // Subscriptions module ID - keccak256(abi.encodePacked("SUBSCRIPTIONS"))
-    bytes32 internal constant SUBSCRIPTIONS = 0x2bfa3327fe52344390da94c32a346eeb1b65a8b583e4335a419b9471e88c1365;
+    // PaymentsBook module ID - keccak256(abi.encodePacked("PAYMENTS_BOOK"))
+    bytes32 internal constant PAYMENTS_BOOK = 0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5ac0d1892b418;
 }

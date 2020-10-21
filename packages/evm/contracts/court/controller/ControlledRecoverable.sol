@@ -13,7 +13,7 @@ contract ControlledRecoverable is Controlled {
     string private constant ERROR_INSUFFICIENT_RECOVER_FUNDS = "CTD_INSUFFICIENT_RECOVER_FUNDS";
     string private constant ERROR_RECOVER_TOKEN_FUNDS_FAILED = "CTD_RECOVER_TOKEN_FUNDS_FAILED";
 
-    event RecoverFunds(ERC20 token, address recipient, uint256 balance);
+    event RecoverFunds(address token, address recipient, uint256 balance);
 
     /**
     * @dev Ensure the msg.sender is the controller's funds governor
@@ -33,13 +33,22 @@ contract ControlledRecoverable is Controlled {
 
     /**
     * @notice Transfer all `_token` tokens to `_to`
-    * @param _token ERC20 token to be recovered
+    * @param _token Address of the token to be recovered
     * @param _to Address of the recipient that will be receive all the funds of the requested token
     */
-    function recoverFunds(ERC20 _token, address _to) external onlyFundsGovernor {
-        uint256 balance = _token.balanceOf(address(this));
-        require(balance > 0, ERROR_INSUFFICIENT_RECOVER_FUNDS);
-        require(_token.safeTransfer(_to, balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
+    function recoverFunds(address _token, address payable _to) external payable onlyFundsGovernor {
+        uint256 balance;
+
+        if (_token == address(0)) {
+            balance = address(this).balance;
+            // solium-disable-next-line security/no-send
+            require(_to.send(balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
+        } else {
+            balance = ERC20(_token).balanceOf(address(this));
+            require(balance > 0, ERROR_INSUFFICIENT_RECOVER_FUNDS);
+            require(ERC20(_token).safeTransfer(_to, balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
+        }
+
         emit RecoverFunds(_token, _to, balance);
     }
 }

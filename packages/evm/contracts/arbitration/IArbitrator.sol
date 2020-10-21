@@ -2,6 +2,7 @@ pragma solidity ^0.5.8;
 
 import "./IArbitrable.sol";
 import "../lib/os/ERC20.sol";
+import "../payments/IPaymentsBook.sol";
 
 
 interface IArbitrator {
@@ -52,11 +53,8 @@ interface IArbitrator {
     function getDisputeFees() external view returns (address recipient, ERC20 feeToken, uint256 feeAmount);
 
     /**
-    * @dev Tell the subscription fees information for a subscriber to be up-to-date
-    * @param _subscriber Address of the account paying the subscription fees for
-    * @return recipient Address where the corresponding subscriptions fees must be transferred to
-    * @return feeToken ERC20 token used for the subscription fees
-    * @return feeAmount Total amount of fees that must be allowed to the recipient
+    * @dev Tell the payments recipient address
+    * @return Address of the payments recipient module
     */
-    function getSubscriptionFees(address _subscriber) external view returns (address recipient, ERC20 feeToken, uint256 feeAmount);
+    function getPaymentsRecipient() external view returns (address);
 }

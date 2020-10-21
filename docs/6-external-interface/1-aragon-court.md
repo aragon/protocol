@@ -17,12 +17,9 @@ The following functions are state getters provided by `AragonCourt`:
     **Fee token:** ERC20 token used for the fees
     **Fee amount:** Total amount of fees that must be allowed to the recipient
 
-#### 6.1.2.2. Subscription fees
+#### 6.1.2.2. Payments recipient
 
-- **Inputs:**
-    **Subscriber:** Address of the account paying the subscription fees for
+- **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    **Recipient:** Address where the corresponding subscriptions fees must be transferred to
-    **Fee token:** ERC20 token used for the subscription fees
-    **Fee amount:** Total amount of fees that must be allowed to the recipient
+    **Recipient:** Address where the payment fees must be transferred to

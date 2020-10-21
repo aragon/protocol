@@ -126,7 +126,7 @@ jobs:
     - name: Voting
       run : yarn workspace @aragon/protocol-evm test:voting
 
-  subscriptions:
+  payments:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -136,8 +136,8 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Subscriptions
-      run: yarn workspace @aragon/protocol-evm test:subscriptions
+    - name: Payments
+      run: yarn workspace @aragon/protocol-evm test:payments
 
   treasury:
     runs-on: ubuntu-latest

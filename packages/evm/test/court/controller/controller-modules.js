@@ -264,7 +264,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             { name: 'VOTING', getter: 'getVoting' },
             { name: 'TREASURY', getter: 'getTreasury' },
             { name: 'JURORS_REGISTRY', getter: 'getJurorsRegistry' },
-            { name: 'SUBSCRIPTIONS', getter: 'getSubscriptions' }
+            { name: 'PAYMENTS_BOOK', getter: 'getPaymentsBook' }
           ]
 
           for (const { name, getter } of modules) {
