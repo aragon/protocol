@@ -18,7 +18,7 @@ Aragon Protocol is therefore a Schelling game. An easy example of a Schelling ga
 
 When designing a permissionless protocol, that is one in which any participants can come and go without asking anyone's authorization, one has to assume that any given entity can have multiple identities at the same time.
 
-Aragon Protocol was designed with this in mind and assumes participants can [Sybil 'attack](https://www.geeksforgeeks.org/sybil-attack/)' the system without it being an issue for the integrity of the protocol. The amount of active tokens of Aragon Protocol's native token (ANJ for Aragon Network's deployment) act as the weight for someone's impact. If someone has 50 ANJ, it should be equally or more preferable to have all the tokens active under in one identity, than say 10 ANJ across five different identities.
+Aragon Protocol was designed with this in mind and assumes participants can [Sybil 'attack](https://www.geeksforgeeks.org/sybil-attack/)' the system without it being an issue for the integrity of the protocol. The amount of active tokens of Aragon Protocol's native token (ANT for Aragon Network's deployment) act as the weight for someone's impact. If someone has 50 ANT, it should be equally or more preferable to have all the tokens active under in one identity, than say 10 ANT across five different identities.
 
 As in most subjective systems in which consensus decisions are weighted by stake, the integrity of the system can be attacked by a cartel with influence over the decisions of more than 50% of the active stake.
 

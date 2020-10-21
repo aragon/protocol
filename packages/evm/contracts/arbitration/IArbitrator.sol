@@ -1,6 +1,5 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
-import "./IArbitrable.sol";
 import "../lib/os/ERC20.sol";
 import "../payments/IPaymentsBook.sol";
 
@@ -39,10 +38,10 @@ interface IArbitrator {
     /**
     * @notice Rule dispute #`_disputeId` if ready
     * @param _disputeId Identification number of the dispute to be ruled
-    * @return subject Arbitrable instance associated to the dispute
+    * @return subject Subject associated to the dispute
     * @return ruling Ruling number computed for the given dispute
     */
-    function rule(uint256 _disputeId) external returns (IArbitrable subject, uint256 ruling);
+    function rule(uint256 _disputeId) external returns (address subject, uint256 ruling);
 
     /**
     * @dev Tell the dispute fees information to create a dispute

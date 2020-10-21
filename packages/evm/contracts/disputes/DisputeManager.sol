@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "../lib/os/ERC20.sol";
 import "../lib/os/SafeERC20.sol";
@@ -754,7 +754,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         // Create new vote for the new round
         ICRVoting voting = _voting();
         uint256 voteId = _getVoteId(_disputeId, roundId);
-        voting.create(voteId, dispute.possibleRulings);
+        voting.createVote(voteId, dispute.possibleRulings);
         return roundId;
     }
 

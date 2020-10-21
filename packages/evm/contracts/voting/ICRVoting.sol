@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "./ICRVotingOwner.sol";
 
@@ -10,7 +10,7 @@ interface ICRVoting {
     * @param _voteId ID of the new vote instance to be created
     * @param _possibleOutcomes Number of possible outcomes for the new vote instance to be created
     */
-    function create(uint256 _voteId, uint8 _possibleOutcomes) external;
+    function createVote(uint256 _voteId, uint8 _possibleOutcomes) external;
 
     /**
     * @dev Get the winning outcome of a vote instance

@@ -9,18 +9,18 @@ const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, governor, someone]) => {
-  let controller, registry, ANJ
+  let controller, registry, ANT
 
   const MIN_ACTIVE_BALANCE = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
   before('create base contracts', async () => {
     controller = await buildHelper().deploy({ configGovernor: governor, minActiveBalance: MIN_ACTIVE_BALANCE })
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
   })
 
   beforeEach('create guardians registry module', async () => {
-    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(registry.address)
   })
 

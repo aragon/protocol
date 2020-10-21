@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "../../voting/ICRVoting.sol";
 import "../../voting/ICRVotingOwner.sol";
@@ -25,7 +25,7 @@ contract DisputeManagerMockForVoting is ICRVotingOwner, Controlled {
     }
 
     function create(uint256 _voteId, uint8 _ruling) external {
-        _voting().create(_voteId, _ruling);
+        _voting().createVote(_voteId, _ruling);
     }
 
     function ensureCanCommit(uint256 /* _voteId */) external {

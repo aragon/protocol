@@ -4,9 +4,9 @@
 
 The Aragon Protocol is a dispute resolution protocol designed to handle subjective disputes which cannot be arbitrated by smart contracts. At a high level, this is achieved by drafting a random set of guardians for each dispute over which a ruling is voted over. Aragon Protocol is one of the core components of the [Aragon Network](https://aragon.org/network/).
 
-A separate ANJ token will be created for the canonical Aragon Protocol, and Ethereum accounts (including contracts) will sign up to be guardians by staking this ANJ token to the Protocol. The more tokens a guardian has staked and activated, the higher their chance of being drafted. ANJ will be directly convertable to ANT via a bonding curve, through a [Aragon Fundraising](https://blog.aragon.org/introducing-aragon-fundraising/) organization deployed alongside the Protocol.
+Ethereum accounts (including contracts) will sign up to be guardians by staking ANT tokens into the Protocol. The more tokens a guardian has staked and activated, the higher their chance of being drafted.
 
-Based on the concept of a [Schelling point](https://en.wikipedia.org/wiki/Focal_point_(game_theory)), guardians are asked to vote on the ruling they think their fellow guardians are most likely to vote on. Every time a guardian is drafted for a dispute, a portion of their staked (TODO: should this be activated?) tokens are locked until the dispute is finalized. To incentivize consensus, guardians that don’t vote in favor of the consensus ruling have their locked tokens slashed. Guardians that vote in favor of the consensus ruling are rewarded with ruling fees and a portion of the tokens slashed from the minority-voting guardians.
+Based on the concept of a [Schelling point](https://en.wikipedia.org/wiki/Focal_point_(game_theory)), guardians are asked to vote on the ruling they think their fellow guardians are most likely to vote on. Every time a guardian is drafted for a dispute, a portion of their active tokens are locked until the dispute is finalized. To incentivize consensus, guardians that don’t vote in favor of the consensus ruling have their locked tokens slashed. Guardians that vote in favor of the consensus ruling are rewarded with ruling fees and a portion of the tokens slashed from the minority-voting guardians.
 
 Once a ruling has been decided for a dispute, there is a time period where anyone is allowed to appeal said ruling by putting some collateral at stake to initiate a new dispute round. If this occurs, a new set of guardians will be drafted and a new ruling will be voted on. Rulings can be appealed multiple times until the final round is reached. To mitigate 51% attacks, all active guardian accounts can opt into voting during the final round. For future versions of the Protocol, we are considering using [futarchy decision markets](https://blog.aragon.one/futarchy-protocols/) for the final dispute round instead.
 
@@ -16,11 +16,11 @@ Even though the Aragon Protocol could theoretically resolve any type of binary d
 
 ### 1.2. High-level flow
 
-- Guardians deposit ANT into a bonding curve to generate ANJ tokens.
-- Guardians stake ANJ to the Protocol contract and schedule their activation and deactivation for the time period in which they can be drafted to rule on disputes.
+- Guardians deposit ANT into a bonding curve to generate ANT tokens.
+- Guardians stake ANT to the Protocol contract and schedule their activation and deactivation for the time period in which they can be drafted to rule on disputes.
 - Protocol fees and configuration parameters are controlled by a governor (eventually the Aragon Network), but can only be modified for future terms to ensure that parameters can’t change for ongoing disputes.
 - The creator of a dispute must pay fees to cover the maintenance gas costs of the Protocol and the guardians that will adjudicate their dispute. The governor of the Protocol receives a share of all fees paid to the Protocol.
-- Guardians are randomly drafted to adjudicate disputes, where the chance to be drafted is proportional to the amount of ANJ they have activated.
+- Guardians are randomly drafted to adjudicate disputes, where the chance to be drafted is proportional to the amount of ANT they have activated.
 - When drafted, each guardian must commit and reveal their vote for the ruling. Failure to commit or reveal results in a penalty for the guardian.
 - After a ruling is decided, it can be appealed by anyone a certain number of times, after which all active guardians will vote on the last appeal (an unappealable ruling).
 - When the final ruling is decided, all the adjudication rounds for the dispute can be settled, taking into account the final ruling for rewards and penalties.

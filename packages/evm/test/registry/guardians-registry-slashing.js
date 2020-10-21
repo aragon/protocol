@@ -11,7 +11,7 @@ const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyone]) => {
-  let controller, registry, disputeManager, ANJ
+  let controller, registry, disputeManager, ANT
 
   const EMPTY_RANDOMNESS = ZERO_BYTES32
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
@@ -23,11 +23,11 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
     controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
   })
 
   beforeEach('create guardians registry module', async () => {
-    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(registry.address)
   })
 
@@ -35,16 +35,16 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
     context('when the sender is the dispute manager', () => {
       beforeEach('activate guardians', async () => {
         const firstGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(10))
-        await ANJ.generateTokens(guardian, firstGuardianBalance)
-        await ANJ.approveAndCall(registry.address, firstGuardianBalance, ACTIVATE_DATA, { from: guardian })
+        await ANT.generateTokens(guardian, firstGuardianBalance)
+        await ANT.approveAndCall(registry.address, firstGuardianBalance, ACTIVATE_DATA, { from: guardian })
 
         const secondGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(5))
-        await ANJ.generateTokens(secondGuardian, secondGuardianBalance)
-        await ANJ.approveAndCall(registry.address, secondGuardianBalance, ACTIVATE_DATA, { from: secondGuardian })
+        await ANT.generateTokens(secondGuardian, secondGuardianBalance)
+        await ANT.approveAndCall(registry.address, secondGuardianBalance, ACTIVATE_DATA, { from: secondGuardian })
 
         const thirdGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(20))
-        await ANJ.generateTokens(thirdGuardian, thirdGuardianBalance)
-        await ANJ.approveAndCall(registry.address, thirdGuardianBalance, ACTIVATE_DATA, { from: thirdGuardian })
+        await ANT.generateTokens(thirdGuardian, thirdGuardianBalance)
+        await ANT.approveAndCall(registry.address, thirdGuardianBalance, ACTIVATE_DATA, { from: thirdGuardian })
 
         await controller.mockIncreaseTerm()
       })
@@ -294,15 +294,15 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         })
 
         it('does not affect the token balances', async () => {
-          const previousGuardianBalance = await ANJ.balanceOf(guardian)
-          const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+          const previousGuardianBalance = await ANT.balanceOf(guardian)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
           await disputeManager.collect(guardian, amount)
 
-          const currentSenderBalance = await ANJ.balanceOf(guardian)
+          const currentSenderBalance = await ANT.balanceOf(guardian)
           assertBn(previousGuardianBalance, currentSenderBalance, 'guardian balances do not match')
 
-          const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
         })
 
@@ -363,8 +363,8 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         const stakedBalance = MIN_ACTIVE_AMOUNT.mul(bn(5))
 
         beforeEach('stake some tokens', async () => {
-          await ANJ.generateTokens(guardian, stakedBalance)
-          await ANJ.approveAndCall(registry.address, stakedBalance, '0x', { from: guardian })
+          await ANT.generateTokens(guardian, stakedBalance)
+          await ANT.approveAndCall(registry.address, stakedBalance, '0x', { from: guardian })
         })
 
         context('when the guardian did not activate any tokens yet', () => {

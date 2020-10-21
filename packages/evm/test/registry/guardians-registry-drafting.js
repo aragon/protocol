@@ -13,7 +13,7 @@ const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000]) => {
-  let controller, registry, disputeManager, ANJ
+  let controller, registry, disputeManager, ANT
 
   const DRAFT_LOCK_PCT = bn(2000) // 20%
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
@@ -51,8 +51,8 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
   beforeEach('create base contracts', async () => {
     controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT })
 
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
-    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
+    registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(registry.address)
 
     disputeManager = await DisputeManager.new(controller.address)
@@ -135,9 +135,9 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
       assertBn(locked, active.sub(leftUnlockedAmount), 'guardian locked balance does not match')
     }
 
-    beforeEach('initialize registry and mint ANJ for guardians', async () => {
+    beforeEach('initialize registry and mint ANT for guardians', async () => {
       for (let i = 0; i < guardians.length; i++) {
-        await ANJ.generateTokens(guardians[i].address, guardians[i].initialActiveBalance)
+        await ANT.generateTokens(guardians[i].address, guardians[i].initialActiveBalance)
       }
     })
 
@@ -309,7 +309,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
       context('when there are some activated guardians', () => {
         context('when there is only one guardian activated', () => {
           beforeEach('activate', async () => {
-            await ANJ.approveAndCall(registry.address, bigExp(500, 18), ACTIVATE_DATA, { from: guardian500 })
+            await ANT.approveAndCall(registry.address, bigExp(500, 18), ACTIVATE_DATA, { from: guardian500 })
           })
 
           context('when no guardians were requested', () => {
@@ -401,7 +401,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
         context('when there are many guardians activated', () => {
           beforeEach('activate', async () => {
             for (let i = 0; i < guardians.length; i++) {
-              await ANJ.approveAndCall(registry.address, guardians[i].initialActiveBalance, ACTIVATE_DATA, { from: guardians[i].address })
+              await ANT.approveAndCall(registry.address, guardians[i].initialActiveBalance, ACTIVATE_DATA, { from: guardians[i].address })
             }
           })
 

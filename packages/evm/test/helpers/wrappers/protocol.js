@@ -28,24 +28,24 @@ const DEFAULTS = {
   termDuration:                       bn(ONE_DAY),     //  terms lasts one day
   firstTermStartTime:                 bn(NEXT_WEEK),   //  first term starts one week after mocked timestamp
   skippedDisputes:                    bn(0),           //  number of disputes to be skipped
-  maxGuardiansPerDraftBatch:             bn(10),          //  max number of guardians drafted per batch
+  maxGuardiansPerDraftBatch:          bn(10),          //  max number of guardians drafted per batch
   evidenceTerms:                      bn(4),           //  evidence period lasts 4 terms maximum
   commitTerms:                        bn(2),           //  vote commits last 2 terms
   revealTerms:                        bn(2),           //  vote reveals last 2 terms
   appealTerms:                        bn(2),           //  appeals last 2 terms
   appealConfirmTerms:                 bn(2),           //  appeal confirmations last 2 terms
-  guardianFee:                           bigExp(10, 18),  //  10 fee tokens for guardian fees
+  guardianFee:                        bigExp(10, 18),  //  10 fee tokens for guardian fees
   draftFee:                           bigExp(30, 18),  //  30 fee tokens for draft fees
   settleFee:                          bigExp(40, 18),  //  40 fee tokens for settle fees
   penaltyPct:                         bn(100),         //  1% (1/10,000)
   finalRoundReduction:                bn(3300),        //  33% (1/10,000)
-  firstRoundGuardiansNumber:             bn(3),           //  disputes start with 3 guardians
+  firstRoundGuardiansNumber:          bn(3),           //  disputes start with 3 guardians
   appealStepFactor:                   bn(3),           //  each time a new appeal occurs, the amount of guardians to be drafted will be incremented 3 times
   maxRegularAppealRounds:             bn(2),           //  there can be up to 2 appeals in total per dispute
   finalRoundLockTerms:                bn(10),          //  coherent guardians in the final round won't be able to withdraw for 10 terms
   appealCollateralFactor:             bn(25000),       //  permyriad multiple of dispute fees required to appeal a preliminary ruling (1/10,000)
   appealConfirmCollateralFactor:      bn(35000),       //  permyriad multiple of dispute fees required to confirm appeal (1/10,000)
-  minActiveBalance:                   bigExp(100, 18), //  100 ANJ is the minimum balance guardians must activate to participate in the Protocol
+  minActiveBalance:                   bigExp(100, 18), //  100 ANT is the minimum balance guardians must activate to participate in the Protocol
   finalRoundWeightPrecision:          bn(1000),        //  use to improve division rounding for final round maths
   paymentPeriodDuration:              bn(10),          //  each payment period lasts 10 terms
   paymentsGovernorSharePct:           bn(0)            //  none payments governor share
@@ -360,7 +360,7 @@ class ProtocolHelper {
     if (!this.configGovernor) this.configGovernor = await this._getAccount(0)
     if (!this.modulesGovernor) this.modulesGovernor = await this._getAccount(0)
     if (!this.feeToken) this.feeToken = await this.artifacts.require('ERC20Mock').new('Protocol Fee Token', 'CFT', 18)
-    if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANJ', 18)
+    if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANT', 18)
 
     this.protocol = await this.artifacts.require('AragonProtocolMock').new(
       [this.termDuration, this.firstTermStartTime],

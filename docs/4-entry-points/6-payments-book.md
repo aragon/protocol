@@ -43,7 +43,7 @@ The payments module does not enforce users of Aragon Protocol to pay on-chain. T
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Token:** Address of the token being claimed
-- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANJ tokens activated during the requested period can call this function
+- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
     - Ensure that the sender has not claimed their fees for the requested period before
@@ -75,7 +75,7 @@ The payments module does not enforce users of Aragon Protocol to pay on-chain. T
 - **Pre-flight checks:**
     - Ensure that all the terms corresponding to the requested period were already been initialized for the Protocol
 - **State transitions:**
-    - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANJ active balance in the `GuardiansRegistry` at that term for the requested period
+    - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANT active balance in the `GuardiansRegistry` at that term for the requested period
 
 ### 4.6.12. Set governor share permyriad
 

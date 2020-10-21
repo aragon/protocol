@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "../AragonProtocol.sol";
 import "./lib/TimeHelpersMock.sol";

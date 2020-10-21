@@ -103,7 +103,7 @@ The following functions are state getters provided by the `Controller`:
     - **Draft fee:** Amount of fee tokens per guardian to cover the drafting cost
     - **Penalty pct:** Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
 
-#### 6.2.2.5. Minimum ANJ active balance
+#### 6.2.2.5. Minimum ANT active balance
 
 - **Inputs:**
     - **Term ID:** Identification number of the term querying the Protocol min active balance of

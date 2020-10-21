@@ -1,7 +1,7 @@
 ## 4.4. Guardians Registry
 
 The `GuardiansRegistry` module is in charge of handling the guardians activity and mainly the different states of their staked balances.
-This module is in the one handling all the staking/unstaking logic for the guardians, all the ANJ staked into the Protocol is held by the registry.
+This module is in the one handling all the staking/unstaking logic for the guardians, all the ANT staked into the Protocol is held by the registry.
 
 ### 4.4.1. Constructor
 
@@ -99,13 +99,13 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.7. Receive approval
 
-- **Actor:** ANJ token contract
+- **Actor:** ANT token contract
 - **Inputs:**
     - **From:** Address making the transfer
     - **Amount:** Amount of tokens to transfer
     - **Token:** Address of token contract calling the function
     - **Data:** Optional data that can be used to request the activation of the transferred tokens
-- **Authentication:** Open. Implicitly, only the ANJ token contract
+- **Authentication:** Open. Implicitly, only the ANT token contract
 - **Pre-flight checks:**
     - Ensure that the given amount is greater than zero
 - **State transitions:**

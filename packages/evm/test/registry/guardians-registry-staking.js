@@ -11,7 +11,7 @@ const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
 contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
-  let controller, registry, disputeManager, ANJ
+  let controller, registry, disputeManager, ANT
 
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
@@ -20,11 +20,11 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
     controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
-    ANJ = await ERC20.new('ANJ Token', 'ANJ', 18)
+    ANT = await ERC20.new('ANT Token', 'ANT', 18)
   })
 
   beforeEach('create guardians registry module', async () => {
-    registry = await GuardiansRegistry.new(controller.address, ANJ.address, TOTAL_ACTIVE_BALANCE_LIMIT)
+    registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
     await controller.setGuardiansRegistry(registry.address)
   })
 
@@ -37,8 +37,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       const itHandlesStakesProperlyFor = (amount, data) => {
         context('when the guardian has enough token balance', () => {
           beforeEach('mint and approve tokens', async () => {
-            await ANJ.generateTokens(from, amount)
-            await ANJ.approve(registry.address, amount, { from })
+            await ANT.generateTokens(from, amount)
+            await ANT.approve(registry.address, amount, { from })
           })
 
           it('adds the staked amount to the available balance of the guardian', async () => {
@@ -93,15 +93,15 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           })
 
           it('transfers the tokens to the registry', async () => {
-            const previousSenderBalance = await ANJ.balanceOf(from)
-            const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+            const previousSenderBalance = await ANT.balanceOf(from)
+            const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
             await registry.stake(amount, data, { from })
 
-            const currentSenderBalance = await ANJ.balanceOf(from)
+            const currentSenderBalance = await ANT.balanceOf(from)
             assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-            const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+            const currentRegistryBalance = await ANT.balanceOf(registry.address)
             assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
           })
 
@@ -151,8 +151,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       context('when the guardian has already staked some tokens before', () => {
         beforeEach('stake some tokens', async () => {
           const initialAmount = bigExp(50, 18)
-          await ANJ.generateTokens(from, initialAmount)
-          await ANJ.approve(registry.address, initialAmount, { from })
+          await ANT.generateTokens(from, initialAmount)
+          await ANT.approve(registry.address, initialAmount, { from })
           await registry.stake(initialAmount, '0x', { from })
         })
 
@@ -216,15 +216,15 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         })
 
         it('transfers the tokens to the registry', async () => {
-          const previousSenderBalance = await ANJ.balanceOf(from)
-          const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+          const previousSenderBalance = await ANT.balanceOf(from)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
           await registry.stake(amount, data, { from })
 
-          const currentSenderBalance = await ANJ.balanceOf(from)
+          const currentSenderBalance = await ANT.balanceOf(from)
           assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-          const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
         })
 
@@ -261,8 +261,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
           context('when the guardian has enough token balance', () => {
             beforeEach('mint and approve tokens', async () => {
-              await ANJ.generateTokens(from, amount)
-              await ANJ.approve(registry.address, amount, { from })
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
             })
 
             it('reverts', async () => {
@@ -282,8 +282,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
           context('when the guardian has enough token balance', () => {
             beforeEach('mint and approve tokens', async () => {
-              await ANJ.generateTokens(from, amount)
-              await ANJ.approve(registry.address, amount, { from })
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
             })
 
             itHandlesStakesProperlyFor(amount, data)
@@ -304,8 +304,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       context('when the guardian has already staked some tokens before', () => {
         beforeEach('stake some tokens', async () => {
           const initialAmount = bigExp(50, 18)
-          await ANJ.generateTokens(from, initialAmount)
-          await ANJ.approve(registry.address, initialAmount, { from })
+          await ANT.generateTokens(from, initialAmount)
+          await ANT.approve(registry.address, initialAmount, { from })
           await registry.stake(initialAmount, '0x', { from })
         })
 
@@ -320,8 +320,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
     const itHandlesStakesWithoutActivationProperlyFor = (recipient, amount, data) => {
       context('when the guardian has enough token balance', () => {
         beforeEach('mint and approve tokens', async () => {
-          await ANJ.generateTokens(from, amount)
-          await ANJ.approve(registry.address, amount, { from })
+          await ANT.generateTokens(from, amount)
+          await ANT.approve(registry.address, amount, { from })
         })
 
         it('adds the staked amount to the available balance of the recipient', async () => {
@@ -402,20 +402,20 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         })
 
         it('transfers the tokens to the registry', async () => {
-          const previousSenderBalance = await ANJ.balanceOf(from)
-          const previousRegistryBalance = await ANJ.balanceOf(registry.address)
-          const previousRecipientBalance = await ANJ.balanceOf(recipient)
+          const previousSenderBalance = await ANT.balanceOf(from)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
+          const previousRecipientBalance = await ANT.balanceOf(recipient)
 
           await registry.stakeFor(recipient, amount, data, { from })
 
-          const currentSenderBalance = await ANJ.balanceOf(from)
+          const currentSenderBalance = await ANT.balanceOf(from)
           assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-          const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
 
           if (recipient !== from) {
-            const currentRecipientBalance = await ANJ.balanceOf(recipient)
+            const currentRecipientBalance = await ANT.balanceOf(recipient)
             assertBn(previousRecipientBalance, currentRecipientBalance, 'recipient balances do not match')
           }
         })
@@ -489,8 +489,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       context('when the guardian has already staked some tokens before', () => {
         beforeEach('stake some tokens', async () => {
           const initialAmount = bigExp(50, 18)
-          await ANJ.generateTokens(from, initialAmount)
-          await ANJ.approve(registry.address, initialAmount, { from })
+          await ANT.generateTokens(from, initialAmount)
+          await ANT.approve(registry.address, initialAmount, { from })
           await registry.stake(initialAmount, '0x', { from })
         })
 
@@ -580,20 +580,20 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         })
 
         it('transfers the tokens to the registry', async () => {
-          const previousSenderBalance = await ANJ.balanceOf(from)
-          const previousRegistryBalance = await ANJ.balanceOf(registry.address)
-          const previousRecipientBalance = await ANJ.balanceOf(recipient)
+          const previousSenderBalance = await ANT.balanceOf(from)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
+          const previousRecipientBalance = await ANT.balanceOf(recipient)
 
           await registry.stakeFor(recipient, amount, data, { from })
 
-          const currentSenderBalance = await ANJ.balanceOf(from)
+          const currentSenderBalance = await ANT.balanceOf(from)
           assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-          const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
 
           if (recipient !== from) {
-            const currentRecipientBalance = await ANJ.balanceOf(recipient)
+            const currentRecipientBalance = await ANT.balanceOf(recipient)
             assertBn(previousRecipientBalance, currentRecipientBalance, 'recipient balances do not match')
           }
         })
@@ -631,8 +631,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
           context('when the guardian has enough token balance', () => {
             beforeEach('mint and approve tokens', async () => {
-              await ANJ.generateTokens(from, amount)
-              await ANJ.approve(registry.address, amount, { from })
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
             })
 
             it('reverts', async () => {
@@ -652,8 +652,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
           context('when the guardian has enough token balance', () => {
             beforeEach('mint and approve tokens', async () => {
-              await ANJ.generateTokens(from, amount)
-              await ANJ.approve(registry.address, amount, { from })
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
             })
 
             itHandlesStakesWithActivationProperlyFor(recipient, amount, data)
@@ -694,8 +694,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       context('when the guardian has already staked some tokens before', () => {
         beforeEach('stake some tokens', async () => {
           const initialAmount = bigExp(50, 18)
-          await ANJ.generateTokens(from, initialAmount)
-          await ANJ.approve(registry.address, initialAmount, { from })
+          await ANT.generateTokens(from, initialAmount)
+          await ANT.approve(registry.address, initialAmount, { from })
           await registry.stake(initialAmount, '0x', { from })
         })
 
@@ -707,20 +707,20 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
   describe('approve and call', () => {
     const from = guardian
 
-    context('when the calling contract is ANJ', () => {
+    context('when the calling contract is ANT', () => {
       context('when the guardian does not request to activate the tokens', () => {
         const data = '0xabcdef0123456789'
 
         const itHandlesStakesProperlyFor = (amount, data) => {
           context('when the guardian has enough token balance', () => {
             beforeEach('mint', async () => {
-              await ANJ.generateTokens(from, amount)
+              await ANT.generateTokens(from, amount)
             })
 
             it('adds the staked amount to the available balance of the guardian', async () => {
               const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-              await ANJ.approveAndCall(registry.address, amount, data, { from })
+              await ANT.approveAndCall(registry.address, amount, data, { from })
 
               const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
               assertBn(previousAvailableBalance.add(amount), currentAvailableBalance, 'available balances do not match')
@@ -733,7 +733,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
             it('does not affect the unlocked balance of the guardian', async () => {
               const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-              await ANJ.approveAndCall(registry.address, amount, data, { from })
+              await ANT.approveAndCall(registry.address, amount, data, { from })
 
               await controller.mockIncreaseTerm()
               const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
@@ -743,7 +743,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
             it('updates the total staked for the guardian', async () => {
               const previousTotalStake = await registry.totalStakedFor(guardian)
 
-              await ANJ.approveAndCall(registry.address, amount, data, { from })
+              await ANT.approveAndCall(registry.address, amount, data, { from })
 
               const currentTotalStake = await registry.totalStakedFor(guardian)
               assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
@@ -752,29 +752,29 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
             it('updates the total staked', async () => {
               const previousTotalStake = await registry.totalStaked()
 
-              await ANJ.approveAndCall(registry.address, amount, data, { from })
+              await ANT.approveAndCall(registry.address, amount, data, { from })
 
               const currentTotalStake = await registry.totalStaked()
               assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
             })
 
             it('transfers the tokens to the registry', async () => {
-              const previousSenderBalance = await ANJ.balanceOf(from)
-              const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+              const previousSenderBalance = await ANT.balanceOf(from)
+              const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
-              await ANJ.approveAndCall(registry.address, amount, data, { from })
+              await ANT.approveAndCall(registry.address, amount, data, { from })
 
-              const currentSenderBalance = await ANJ.balanceOf(from)
+              const currentSenderBalance = await ANT.balanceOf(from)
               assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-              const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+              const currentRegistryBalance = await ANT.balanceOf(registry.address)
               assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
             })
 
             it('emits a stake event', async () => {
               const previousTotalStake = await registry.totalStakedFor(guardian)
 
-              const receipt = await ANJ.approveAndCall(registry.address, amount, data, { from })
+              const receipt = await ANT.approveAndCall(registry.address, amount, data, { from })
               const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.STAKED)
 
               assertAmountOfEvents({ logs }, REGISTRY_EVENTS.STAKED)
@@ -818,8 +818,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         context('when the guardian has already staked some tokens before', () => {
           beforeEach('stake some tokens', async () => {
             const initialAmount = bigExp(50, 18)
-            await ANJ.generateTokens(from, initialAmount)
-            await ANJ.approveAndCall(registry.address, initialAmount, '0x', { from })
+            await ANT.generateTokens(from, initialAmount)
+            await ANT.approveAndCall(registry.address, initialAmount, '0x', { from })
           })
 
           itHandlesStakesProperlyForDifferentAmounts(data)
@@ -833,7 +833,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           it('adds the staked amount to the active balance of the guardian', async () => {
             const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
             const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
             assertBn(previousActiveBalance.add(amount), currentActiveBalance, 'active balances do not match')
@@ -847,7 +847,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
             const termId = await controller.getLastEnsuredTermId()
             const currentTermPreviousBalance = await registry.activeBalanceOfAt(from, termId)
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
             const currentTermCurrentBalance = await registry.activeBalanceOfAt(from, termId)
             assertBn(currentTermPreviousBalance, currentTermCurrentBalance, 'current term active balances do not match')
@@ -856,7 +856,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           it('updates the unlocked balance of the guardian', async () => {
             const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
             await controller.mockIncreaseTerm()
             const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
@@ -866,7 +866,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           it('updates the total staked for the guardian', async () => {
             const previousTotalStake = await registry.totalStakedFor(guardian)
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
             const currentTotalStake = await registry.totalStakedFor(guardian)
             assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
@@ -875,29 +875,29 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           it('updates the total staked', async () => {
             const previousTotalStake = await registry.totalStaked()
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
             const currentTotalStake = await registry.totalStaked()
             assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
           })
 
           it('transfers the tokens to the registry', async () => {
-            const previousSenderBalance = await ANJ.balanceOf(from)
-            const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+            const previousSenderBalance = await ANT.balanceOf(from)
+            const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
-            await ANJ.approveAndCall(registry.address, amount, data, { from })
+            await ANT.approveAndCall(registry.address, amount, data, { from })
 
-            const currentSenderBalance = await ANJ.balanceOf(from)
+            const currentSenderBalance = await ANT.balanceOf(from)
             assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
 
-            const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+            const currentRegistryBalance = await ANT.balanceOf(registry.address)
             assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
           })
 
           it('emits a stake event', async () => {
             const previousTotalStake = await registry.totalStakedFor(guardian)
 
-            const receipt = await ANJ.approveAndCall(registry.address, amount, data, { from })
+            const receipt = await ANT.approveAndCall(registry.address, amount, data, { from })
             const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.STAKED)
 
             assertAmountOfEvents({ logs }, REGISTRY_EVENTS.STAKED)
@@ -907,7 +907,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           it('emits an activation event', async () => {
             const termId = await controller.getCurrentTermId()
 
-            const receipt = await ANJ.approveAndCall(registry.address, amount, data, { from })
+            const receipt = await ANT.approveAndCall(registry.address, amount, data, { from })
             const logs = decodeEvents(receipt, GuardiansRegistry.abi, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
 
             assertAmountOfEvents({ logs }, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
@@ -929,7 +929,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
             context('when the guardian has enough token balance', () => {
               beforeEach('mint tokens', async () => {
-                await ANJ.generateTokens(from, amount)
+                await ANT.generateTokens(from, amount)
               })
 
               it('reverts', async () => {
@@ -949,7 +949,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
 
             context('when the guardian has enough token balance', () => {
               beforeEach('mint tokens', async () => {
-                await ANJ.generateTokens(from, amount)
+                await ANT.generateTokens(from, amount)
               })
 
               itHandlesStakesProperlyFor(amount, data)
@@ -970,8 +970,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         context('when the guardian has already staked some tokens before', () => {
           beforeEach('stake some tokens', async () => {
             const initialAmount = bigExp(50, 18)
-            await ANJ.generateTokens(from, initialAmount)
-            await ANJ.approveAndCall(registry.address, initialAmount, '0x', { from })
+            await ANT.generateTokens(from, initialAmount)
+            await ANT.approveAndCall(registry.address, initialAmount, '0x', { from })
           })
 
           itHandlesStakesProperlyForDifferentAmounts(data)
@@ -1028,8 +1028,8 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
       const stakedBalance = MIN_ACTIVE_AMOUNT
 
       beforeEach('stake some tokens', async () => {
-        await ANJ.generateTokens(from, stakedBalance)
-        await ANJ.approve(registry.address, stakedBalance, { from })
+        await ANT.generateTokens(from, stakedBalance)
+        await ANT.approve(registry.address, stakedBalance, { from })
         await registry.stake(stakedBalance, '0x', { from })
       })
 
@@ -1075,15 +1075,15 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
         })
 
         it('transfers the tokens to the guardian', async () => {
-          const previousSenderBalance = await ANJ.balanceOf(from)
-          const previousRegistryBalance = await ANJ.balanceOf(registry.address)
+          const previousSenderBalance = await ANT.balanceOf(from)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
           await registry.unstake(amount, data, { from })
 
-          const currentSenderBalance = await ANJ.balanceOf(from)
+          const currentSenderBalance = await ANT.balanceOf(from)
           assertBn(previousSenderBalance.add(amount), currentSenderBalance, 'sender balances do not match')
 
-          const currentRegistryBalance = await ANJ.balanceOf(registry.address)
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance.sub(amount), currentRegistryBalance, 'registry balances do not match')
         })
 
