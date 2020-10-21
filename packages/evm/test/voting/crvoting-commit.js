@@ -1,7 +1,7 @@
 const { bn } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
 const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS } = require('../helpers/utils/errors')

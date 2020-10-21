@@ -1,5 +1,5 @@
 {
-  "description": "Sample dispute for Aragon Court testing guide",
+  "description": "Sample dispute for Aragon Protocol testing guide",
   "agreementTitle": "Agreement",
   "agreementText": "./agreement.md",
   "plaintiff": "0x59d0b5475AcF30F24EcA10cb66BB5Ed75d3d9016",

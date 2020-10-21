@@ -1,7 +1,7 @@
 ## 4.7. Treasury
 
 The `Treasury` module is in charge of handling the token assets related to the disputes process.
-The ANJ of the jurors and the payments fees of the users are the only assets excluded from the `Treasury`.
+The ANJ of the guardians and the payments fees of the users are the only assets excluded from the `Treasury`.
 Except from those, the rest of the fees, deposits, and collaterals required to back the different adjudication rounds of a dispute, are stored in the `Treasury`.
 
 ### 4.7.1. Constructor
@@ -58,7 +58,7 @@ Except from those, the rest of the fees, deposits, and collaterals required to b
 
 ### 4.7.5. Recover funds
 
-- **Actor:** External entity in charge of maintaining the Court protocol
+- **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `Treasury` module
     - **Recipient:** Address that will receive the funds of the `Treasury` module

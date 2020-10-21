@@ -7,8 +7,8 @@ const PCT_BASE = bn(10000)
 async function buildNewConfig(config, iteration = 1) {
   const artifacts = getArtifacts()
   return {
-    feeToken: await artifacts.require('ERC20Mock').new('Court Fee Token', 'CFT', 18),
-    jurorFee: config.jurorFee.add(bigExp(iteration * 10, 18)),
+    feeToken: await artifacts.require('ERC20Mock').new('Protocol Fee Token', 'CFT', 18),
+    guardianFee: config.guardianFee.add(bigExp(iteration * 10, 18)),
     draftFee: config.draftFee.add(bigExp(iteration * 10, 18)),
     settleFee: config.settleFee.add(bigExp(iteration * 10, 18)),
     evidenceTerms: config.evidenceTerms.add(bn(iteration)),
@@ -18,7 +18,7 @@ async function buildNewConfig(config, iteration = 1) {
     appealConfirmTerms: config.appealConfirmTerms.add(bn(iteration)),
     penaltyPct: config.penaltyPct.add(bn(iteration * 100)),
     finalRoundReduction: config.finalRoundReduction.add(bn(iteration * 100)),
-    firstRoundJurorsNumber: config.firstRoundJurorsNumber.add(bn(iteration)),
+    firstRoundGuardiansNumber: config.firstRoundGuardiansNumber.add(bn(iteration)),
     appealStepFactor: config.appealStepFactor.add(bn(iteration)),
     maxRegularAppealRounds: config.maxRegularAppealRounds.add(bn(iteration)),
     finalRoundLockTerms: config.finalRoundLockTerms.add(bn(1)),
@@ -30,7 +30,7 @@ async function buildNewConfig(config, iteration = 1) {
 
 async function assertConfig(actualConfig, expectedConfig) {
   assert.equal(actualConfig.feeToken.address, expectedConfig.feeToken.address, 'fee token does not match')
-  assertBn(actualConfig.jurorFee, expectedConfig.jurorFee, 'juror fee does not match')
+  assertBn(actualConfig.guardianFee, expectedConfig.guardianFee, 'guardian fee does not match')
   assertBn(actualConfig.draftFee, expectedConfig.draftFee, 'draft fee does not match')
   assertBn(actualConfig.settleFee, expectedConfig.settleFee, 'settle fee does not match')
   assertBn(actualConfig.commitTerms, expectedConfig.commitTerms, 'commit terms number does not match')
@@ -39,7 +39,7 @@ async function assertConfig(actualConfig, expectedConfig) {
   assertBn(actualConfig.appealConfirmTerms, expectedConfig.appealConfirmTerms, 'appeal confirmation terms number does not match')
   assertBn(actualConfig.penaltyPct, expectedConfig.penaltyPct, 'penalty permyriad does not match')
   assertBn(actualConfig.finalRoundReduction, expectedConfig.finalRoundReduction, 'final round reduction does not match')
-  assertBn(actualConfig.firstRoundJurorsNumber, expectedConfig.firstRoundJurorsNumber, 'first round jurors number does not match')
+  assertBn(actualConfig.firstRoundGuardiansNumber, expectedConfig.firstRoundGuardiansNumber, 'first round guardians number does not match')
   assertBn(actualConfig.appealStepFactor, expectedConfig.appealStepFactor, 'appeal step factor does not match')
   assertBn(actualConfig.maxRegularAppealRounds, expectedConfig.maxRegularAppealRounds, 'number of max regular appeal rounds does not match')
   assertBn(actualConfig.finalRoundLockTerms, expectedConfig.finalRoundLockTerms, 'number of final round lock terms does not match')

@@ -1,11 +1,11 @@
 const { bn } = require('@aragon/contract-helpers-test')
 const { soliditySha3, toBN } = require('web3-utils')
 
-const expectedBounds = ({ selectedJurors, batchRequestedJurors, balances, totalRequestedJurors }) => {
+const expectedBounds = ({ selectedGuardians, batchRequestedGuardians, balances, totalRequestedGuardians }) => {
   const totalBalance = balances.reduce((total, balance) => total.add(balance), bn(0))
 
-  const expectedLowBound = bn(selectedJurors).mul(bn(totalBalance)).div(bn(totalRequestedJurors))
-  const expectedHighBound = bn(selectedJurors).add(bn(batchRequestedJurors)).mul(bn(totalBalance)).div(bn(totalRequestedJurors))
+  const expectedLowBound = bn(selectedGuardians).mul(bn(totalBalance)).div(bn(totalRequestedGuardians))
+  const expectedHighBound = bn(selectedGuardians).add(bn(batchRequestedGuardians)).mul(bn(totalBalance)).div(bn(totalRequestedGuardians))
   return { expectedLowBound, expectedHighBound }
 }
 
@@ -13,13 +13,13 @@ const simulateComputeSearchRandomBalances = ({
   termRandomness,
   disputeId,
   sortitionIteration,
-  batchRequestedJurors,
+  batchRequestedGuardians,
   lowActiveBalanceBatchBound,
   highActiveBalanceBatchBound
 }) => {
   let expectedSumTreeBalances = []
   const interval = highActiveBalanceBatchBound.sub(lowActiveBalanceBatchBound)
-  for (let i = 0; i < batchRequestedJurors; i++) {
+  for (let i = 0; i < batchRequestedGuardians; i++) {
     if (interval.eq(bn(0))) expectedSumTreeBalances.push(lowActiveBalanceBatchBound)
     else {
       const seed = soliditySha3(termRandomness, disputeId, sortitionIteration, i)
@@ -34,30 +34,30 @@ const simulateComputeSearchRandomBalances = ({
 const simulateBatchedRandomSearch = ({
   termRandomness,
   disputeId,
-  selectedJurors,
-  batchRequestedJurors,
-  roundRequestedJurors,
+  selectedGuardians,
+  batchRequestedGuardians,
+  roundRequestedGuardians,
   sortitionIteration,
   balances,
   getTreeKey
 }) => {
   const { expectedLowBound, expectedHighBound } = expectedBounds({
-    selectedJurors,
-    batchRequestedJurors,
+    selectedGuardians,
+    batchRequestedGuardians,
     balances,
-    totalRequestedJurors: roundRequestedJurors
+    totalRequestedGuardians: roundRequestedGuardians
   })
 
   const expectedSumTreeBalances = simulateComputeSearchRandomBalances({
     termRandomness,
     disputeId,
     sortitionIteration,
-    batchRequestedJurors,
+    batchRequestedGuardians,
     lowActiveBalanceBatchBound: expectedLowBound,
     highActiveBalanceBatchBound: expectedHighBound
   })
 
-  // as jurors balances are sequential 0 to n, ids and values are the same
+  // as guardians balances are sequential 0 to n, ids and values are the same
   return expectedSumTreeBalances
     .map(balance => getTreeKey(balances, balance))
     .filter(key => key !== undefined)
@@ -66,49 +66,49 @@ const simulateBatchedRandomSearch = ({
 const simulateDraft = ({
   termRandomness,
   disputeId,
-  selectedJurors,
-  batchRequestedJurors,
-  roundRequestedJurors,
+  selectedGuardians,
+  batchRequestedGuardians,
+  roundRequestedGuardians,
   sortitionIteration,
-  jurors,
+  guardians,
   draftLockAmount,
   getTreeKey
 }) => {
-  const balances = jurors.map(juror => juror.activeBalance)
+  const balances = guardians.map(guardian => guardian.activeBalance)
 
   const MAX_ITERATIONS = 10
   let draftedKeys = []
   let iteration = sortitionIteration
-  let jurorsLeft = batchRequestedJurors
+  let guardiansLeft = batchRequestedGuardians
 
-  while (jurorsLeft > 0 && iteration < MAX_ITERATIONS) {
+  while (guardiansLeft > 0 && iteration < MAX_ITERATIONS) {
     const iterationDraftedKeys = simulateBatchedRandomSearch({
       termRandomness,
       disputeId,
-      selectedJurors,
-      batchRequestedJurors,
-      roundRequestedJurors,
+      selectedGuardians,
+      batchRequestedGuardians,
+      roundRequestedGuardians,
       sortitionIteration: iteration,
       balances,
       getTreeKey
     })
 
-    // remove locked jurors
+    // remove locked guardians
     const filteredIterationDraftedKeys = iterationDraftedKeys
       .filter(key => {
-        const { unlockedActiveBalance } = jurors[key]
+        const { unlockedActiveBalance } = guardians[key]
         const enoughBalance = unlockedActiveBalance.gte(draftLockAmount)
-        if (enoughBalance) jurors[key].unlockedActiveBalance = unlockedActiveBalance.sub(draftLockAmount)
+        if (enoughBalance) guardians[key].unlockedActiveBalance = unlockedActiveBalance.sub(draftLockAmount)
         return enoughBalance
       })
-      .slice(0, jurorsLeft)
+      .slice(0, guardiansLeft)
 
     iteration++
-    jurorsLeft -= filteredIterationDraftedKeys.length
+    guardiansLeft -= filteredIterationDraftedKeys.length
     draftedKeys = draftedKeys.concat(filteredIterationDraftedKeys)
   }
 
-  return draftedKeys.map(key => jurors[key].address)
+  return draftedKeys.map(key => guardians[key].address)
 }
 
 module.exports = {

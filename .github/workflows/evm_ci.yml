@@ -32,7 +32,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Court Controller
+    - name: Controller
       run: yarn workspace @aragon/protocol-evm test:controller
 
   disputes:
@@ -45,7 +45,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Court Disputes
+    - name: Disputes
       run: yarn workspace @aragon/protocol-evm test:disputes
 
   appeals:
@@ -58,7 +58,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Court Appeals
+    - name: Appeals
       run: yarn workspace @aragon/protocol-evm test:appeals
 
   settle_rounds:
@@ -71,7 +71,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Court Settle Rounds
+    - name: Settle Rounds
       run: yarn workspace @aragon/protocol-evm test:settle-rounds
 
   settle_appeals:
@@ -84,7 +84,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Court Settle Appeals
+    - name: Settle Appeals
       run: yarn workspace @aragon/protocol-evm test:settle-appeals
 
   registry:

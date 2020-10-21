@@ -5,7 +5,7 @@ const MODULE_IDS = {
   disputes: sha3('DISPUTE_MANAGER'),
   treasury: sha3('TREASURY'),
   voting: sha3('VOTING'),
-  registry: sha3('JURORS_REGISTRY'),
+  registry: sha3('GUARDIANS_REGISTRY'),
   payments: sha3('PAYMENTS_BOOK')
 }
 

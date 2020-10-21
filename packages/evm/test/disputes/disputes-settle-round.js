@@ -3,57 +3,57 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { getVoteId, oppositeOutcome, OUTCOMES } = require('../helpers/utils/crvoting')
 const { DISPUTE_MANAGER_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
-const { filterJurors, filterWinningJurors, ACTIVATE_DATA } = require('../helpers/utils/jurors')
-const { buildHelper, ROUND_STATES, DISPUTE_STATES, DEFAULTS } = require('../helpers/wrappers/court')
+const { filterGuardians, filterWinningGuardians, ACTIVATE_DATA } = require('../helpers/utils/guardians')
+const { buildHelper, ROUND_STATES, DISPUTE_STATES, DEFAULTS } = require('../helpers/wrappers/protocol')
 const { ARBITRABLE_EVENTS, DISPUTE_MANAGER_EVENTS, REGISTRY_EVENTS } = require('../helpers/utils/events')
 
 const DisputeManager = artifacts.require('DisputeManager')
 const Arbitrable = artifacts.require('ArbitrableMock')
 
-contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, juror1000, juror1500, juror2000, juror2500, juror3000, juror3500, juror4000, anyone]) => {
-  let courtHelper, court, disputeManager, voting
+contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000, anyone]) => {
+  let protocolHelper, protocol, disputeManager, voting
   const maxRegularAppealRounds = bn(2)
 
-  const jurors = [
-    { address: juror3000, initialActiveBalance: bigExp(3000, 18) },
-    { address: juror500,  initialActiveBalance: bigExp(500,  18) },
-    { address: juror1000, initialActiveBalance: bigExp(1000, 18) },
-    { address: juror2000, initialActiveBalance: bigExp(2000, 18) },
-    { address: juror4000, initialActiveBalance: bigExp(4000, 18) },
-    { address: juror1500, initialActiveBalance: bigExp(1500, 18) },
-    { address: juror3500, initialActiveBalance: bigExp(3500, 18) },
-    { address: juror2500, initialActiveBalance: bigExp(2500, 18) }
+  const guardians = [
+    { address: guardian3000, initialActiveBalance: bigExp(3000, 18) },
+    { address: guardian500,  initialActiveBalance: bigExp(500,  18) },
+    { address: guardian1000, initialActiveBalance: bigExp(1000, 18) },
+    { address: guardian2000, initialActiveBalance: bigExp(2000, 18) },
+    { address: guardian4000, initialActiveBalance: bigExp(4000, 18) },
+    { address: guardian1500, initialActiveBalance: bigExp(1500, 18) },
+    { address: guardian3500, initialActiveBalance: bigExp(3500, 18) },
+    { address: guardian2500, initialActiveBalance: bigExp(2500, 18) }
   ]
 
   const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
 
-  before('create court and activate jurors', async () => {
-    courtHelper = buildHelper()
-    court = await courtHelper.deploy({ maxRegularAppealRounds })
-    voting = courtHelper.voting
-    disputeManager = courtHelper.disputeManager
-    await courtHelper.activate(jurors)
+  before('create protocol and activate guardians', async () => {
+    protocolHelper = buildHelper()
+    protocol = await protocolHelper.deploy({ maxRegularAppealRounds })
+    voting = protocolHelper.voting
+    disputeManager = protocolHelper.disputeManager
+    await protocolHelper.activate(guardians)
   })
 
   describe('settle round', () => {
     context('when the given dispute exists', () => {
       let disputeId, voteId
 
-      beforeEach('activate jurors and create dispute', async () => {
-        disputeId = await courtHelper.dispute()
+      beforeEach('activate guardians and create dispute', async () => {
+        disputeId = await protocolHelper.dispute()
       })
 
       context('when the given round is valid', () => {
         const roundId = 0
         const voters = [
-          { address: juror1000, weight: 1, outcome: OUTCOMES.LEAKED },
-          { address: juror2000, weight: 1, outcome: OUTCOMES.HIGH },
-          { address: juror4000, weight: 1, outcome: OUTCOMES.LOW }
+          { address: guardian1000, weight: 1, outcome: OUTCOMES.LEAKED },
+          { address: guardian2000, weight: 1, outcome: OUTCOMES.HIGH },
+          { address: guardian4000, weight: 1, outcome: OUTCOMES.LOW }
         ]
 
         const itIsAtState = (roundId, state) => {
           it(`round is at state ${state}`, async () => {
-            const { roundState } = await courtHelper.getRound(disputeId, roundId)
+            const { roundState } = await protocolHelper.getRound(disputeId, roundId)
             assertBn(roundState, state, 'round state does not match')
           })
         }
@@ -61,7 +61,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         const itFailsToRuleAndSettleRound = (roundId) => {
           it('fails to compute ruling and settle round', async () => {
             await assertRevert(disputeManager.computeRuling(disputeId), DISPUTE_MANAGER_ERRORS.INVALID_ADJUDICATION_STATE)
-            await assertRevert(disputeManager.settlePenalties(disputeId, roundId, DEFAULTS.firstRoundJurorsNumber), DISPUTE_MANAGER_ERRORS.INVALID_ADJUDICATION_STATE)
+            await assertRevert(disputeManager.settlePenalties(disputeId, roundId, DEFAULTS.firstRoundGuardiansNumber), DISPUTE_MANAGER_ERRORS.INVALID_ADJUDICATION_STATE)
             await assertRevert(disputeManager.settleReward(disputeId, roundId, anyone), DISPUTE_MANAGER_ERRORS.ROUND_PENALTIES_NOT_SETTLED)
           })
         }
@@ -69,76 +69,76 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         const itExecutesFinalRulingProperly = expectedFinalRuling => {
           describe('rule', () => {
             it('marks the dispute ruling as computed but not twice', async () => {
-              const receipt = await court.rule(disputeId)
+              const receipt = await protocol.rule(disputeId)
 
               const logs = decodeEvents(receipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
               assertAmountOfEvents({ logs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
               assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED, { expectedArgs: { disputeId, ruling: expectedFinalRuling } })
 
-              const { possibleRulings, state, finalRuling } = await courtHelper.getDispute(disputeId)
+              const { possibleRulings, state, finalRuling } = await protocolHelper.getDispute(disputeId)
               assertBn(state, DISPUTE_STATES.RULED, 'dispute state does not match')
               assertBn(possibleRulings, 2, 'dispute possible rulings do not match')
               assertBn(finalRuling, expectedFinalRuling, 'dispute final ruling does not match')
 
-              const anotherReceipt = await court.rule(disputeId)
+              const anotherReceipt = await protocol.rule(disputeId)
               const anotherLogs = decodeEvents(anotherReceipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
               assertAmountOfEvents({ logs: anotherLogs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED, { expectedAmount: 0 })
             })
 
             it('executes the final ruling on the arbitrable', async () => {
-              const { subject } = await courtHelper.getDispute(disputeId)
+              const { subject } = await protocolHelper.getDispute(disputeId)
               const arbitrable = await Arbitrable.at(subject)
 
               const receipt = await arbitrable.rule(disputeId)
 
               const logs = decodeEvents(receipt, Arbitrable.abi, ARBITRABLE_EVENTS.RULED)
               assertAmountOfEvents({ logs }, ARBITRABLE_EVENTS.RULED)
-              assertEvent({ logs }, ARBITRABLE_EVENTS.RULED, { expectedArgs: { arbitrator: court.address, disputeId, ruling: expectedFinalRuling } })
+              assertEvent({ logs }, ARBITRABLE_EVENTS.RULED, { expectedArgs: { arbitrator: protocol.address, disputeId, ruling: expectedFinalRuling } })
             })
           })
         }
 
-        const itSettlesPenaltiesAndRewardsProperly = (roundId, expectedWinningJurors, expectedLosingJurors) => {
-          let arbitrable, previousBalances = {}, expectedCoherentJurors, expectedCollectedTokens
+        const itSettlesPenaltiesAndRewardsProperly = (roundId, expectedWinningGuardians, expectedLosingGuardians) => {
+          let arbitrable, previousBalances = {}, expectedCoherentGuardians, expectedCollectedTokens
 
           beforeEach('load previous balances', async () => {
             previousBalances = {}
-            for (const { address } of jurors) {
-              const { active, available, locked } = await courtHelper.jurorsRegistry.balanceOf(address)
+            for (const { address } of guardians) {
+              const { active, available, locked } = await protocolHelper.guardiansRegistry.balanceOf(address)
               previousBalances[address] = { active, available, locked }
             }
 
-            const { active, available, locked } = await courtHelper.jurorsRegistry.balanceOf(BURN_ADDRESS)
+            const { active, available, locked } = await protocolHelper.guardiansRegistry.balanceOf(BURN_ADDRESS)
             previousBalances[BURN_ADDRESS] = { active, available, locked }
 
-            const { feeToken, treasury } = courtHelper
-            arbitrable = (await courtHelper.getDispute(disputeId)).subject
+            const { feeToken, treasury } = protocolHelper
+            arbitrable = (await protocolHelper.getDispute(disputeId)).subject
             previousBalances[arbitrable] = { feeAmount: await treasury.balanceOf(feeToken.address, arbitrable) }
             previousBalances[appealMaker] = { feeAmount: await treasury.balanceOf(feeToken.address, appealMaker) }
             previousBalances[appealTaker] = { feeAmount: await treasury.balanceOf(feeToken.address, appealTaker) }
           })
 
-          beforeEach('load expected coherent jurors', async () => {
+          beforeEach('load expected coherent guardians', async () => {
             // for final rounds compute voter's weight
-            if (roundId >= courtHelper.maxRegularAppealRounds.toNumber()) {
-              for (const juror of expectedWinningJurors) {
-                juror.weight = (await courtHelper.getFinalRoundWeight(disputeId, roundId, juror.address)).toNumber()
+            if (roundId >= protocolHelper.maxRegularAppealRounds.toNumber()) {
+              for (const guardian of expectedWinningGuardians) {
+                guardian.weight = (await protocolHelper.getFinalRoundWeight(disputeId, roundId, guardian.address)).toNumber()
               }
             }
-            expectedCoherentJurors = expectedWinningJurors.reduce((total, { weight }) => total + weight, 0)
+            expectedCoherentGuardians = expectedWinningGuardians.reduce((total, { weight }) => total + weight, 0)
           })
 
           beforeEach('load expected collected tokens', async () => {
             expectedCollectedTokens = bn(0)
-            for (const { address } of expectedLosingJurors) {
-              const roundLockedBalance = await courtHelper.getRoundLockBalance(disputeId, roundId, address)
+            for (const { address } of expectedLosingGuardians) {
+              const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
               expectedCollectedTokens = expectedCollectedTokens.add(roundLockedBalance)
             }
 
-            // for final rounds add winning jurors locked amounts since all voter's tokens are collected before hand
-            if (roundId >= courtHelper.maxRegularAppealRounds.toNumber()) {
-              for (const { address } of expectedWinningJurors) {
-                const roundLockedBalance = await courtHelper.getRoundLockBalance(disputeId, roundId, address)
+            // for final rounds add winning guardians locked amounts since all voter's tokens are collected before hand
+            if (roundId >= protocolHelper.maxRegularAppealRounds.toNumber()) {
+              for (const { address } of expectedWinningGuardians) {
+                const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
                 expectedCollectedTokens = expectedCollectedTokens.add(roundLockedBalance)
               }
             }
@@ -148,58 +148,58 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
             let receipt
 
             const itSettlesPenaltiesProperly = () => {
-              it('unlocks the locked balances of the winning jurors and slashes the losing ones', async () => {
-                for (const { address } of expectedWinningJurors) {
-                  const roundLockedBalance = await courtHelper.getRoundLockBalance(disputeId, roundId, address)
+              it('unlocks the locked balances of the winning guardians and slashes the losing ones', async () => {
+                for (const { address } of expectedWinningGuardians) {
+                  const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
 
                   const { locked: previousLockedBalance, active: previousActiveBalance } = previousBalances[address]
-                  const { active: currentActiveBalance, locked: currentLockedBalance } = await courtHelper.jurorsRegistry.balanceOf(address)
+                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.balanceOf(address)
                   assertBn(currentActiveBalance, previousActiveBalance, 'current active balance does not match')
 
                   // for the final round tokens are slashed before hand, thus they are not considered as locked tokens
-                  const expectedLockedBalance = roundId < courtHelper.maxRegularAppealRounds ? previousLockedBalance.sub(roundLockedBalance) : previousLockedBalance
+                  const expectedLockedBalance = roundId < protocolHelper.maxRegularAppealRounds ? previousLockedBalance.sub(roundLockedBalance) : previousLockedBalance
                   assertBn(currentLockedBalance, expectedLockedBalance, 'current locked balance does not match')
                 }
 
-                for (const { address } of expectedLosingJurors) {
-                  const roundLockedBalance = await courtHelper.getRoundLockBalance(disputeId, roundId, address)
+                for (const { address } of expectedLosingGuardians) {
+                  const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
 
                   const { locked: previousLockedBalance, active: previousActiveBalance } = previousBalances[address]
-                  const { active: currentActiveBalance, locked: currentLockedBalance } = await courtHelper.jurorsRegistry.balanceOf(address)
+                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.balanceOf(address)
 
-                  // for the final round tokens are slashed before hand, thus the active tokens for slashed jurors stays equal
-                  const expectedActiveBalance = roundId < courtHelper.maxRegularAppealRounds
+                  // for the final round tokens are slashed before hand, thus the active tokens for slashed guardians stays equal
+                  const expectedActiveBalance = roundId < protocolHelper.maxRegularAppealRounds
                     ? previousActiveBalance.sub(roundLockedBalance)
                     : previousActiveBalance
                   assertBn(currentActiveBalance, expectedActiveBalance, 'current active balance does not match')
 
                   // for the final round tokens are slashed before hand, thus they are not considered as locked tokens
-                  const expectedLockedBalance = roundId < courtHelper.maxRegularAppealRounds ? previousLockedBalance.sub(roundLockedBalance) : previousLockedBalance
+                  const expectedLockedBalance = roundId < protocolHelper.maxRegularAppealRounds ? previousLockedBalance.sub(roundLockedBalance) : previousLockedBalance
                   assertBn(currentLockedBalance, expectedLockedBalance, 'current locked balance does not match')
                 }
               })
 
               it('burns the collected tokens if necessary', async () => {
                 const { available: previousAvailableBalance } = previousBalances[BURN_ADDRESS]
-                const { available: currentAvailableBalance } = await courtHelper.jurorsRegistry.balanceOf(BURN_ADDRESS)
+                const { available: currentAvailableBalance } = await protocolHelper.guardiansRegistry.balanceOf(BURN_ADDRESS)
 
-                if (expectedCoherentJurors === 0) {
+                if (expectedCoherentGuardians === 0) {
                   assertBn(currentAvailableBalance, previousAvailableBalance.add(expectedCollectedTokens), 'burned balance does not match')
                 } else {
                   assertBn(currentAvailableBalance, previousAvailableBalance, 'burned balance does not match')
                 }
               })
 
-              it('refunds the jurors fees if necessary', async () => {
-                const { jurorFees } = await courtHelper.getRound(disputeId, roundId)
-                const { feeToken, treasury } = courtHelper
+              it('refunds the guardians fees if necessary', async () => {
+                const { guardianFees } = await protocolHelper.getRound(disputeId, roundId)
+                const { feeToken, treasury } = protocolHelper
 
                 if (roundId === 0) {
                   const { feeAmount: previousArbitrableBalance } = previousBalances[arbitrable]
                   const currentArbitrableBalance = await treasury.balanceOf(feeToken.address, arbitrable)
 
-                  expectedCoherentJurors === 0
-                    ? assertBn(currentArbitrableBalance, previousArbitrableBalance.add(jurorFees), 'arbitrable fee balance does not match')
+                  expectedCoherentGuardians === 0
+                    ? assertBn(currentArbitrableBalance, previousArbitrableBalance.add(guardianFees), 'arbitrable fee balance does not match')
                     : assertBn(currentArbitrableBalance, previousArbitrableBalance, 'arbitrable fee balance does not match')
                 } else {
                   const { feeAmount: previousAppealMakerBalance } = previousBalances[appealMaker]
@@ -208,8 +208,8 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   const { feeAmount: previousAppealTakerBalance } = previousBalances[appealTaker]
                   const currentAppealTakerBalance = await treasury.balanceOf(feeToken.address, appealTaker)
 
-                  if (expectedCoherentJurors === 0) {
-                    const refundFees = jurorFees.div(bn(2))
+                  if (expectedCoherentGuardians === 0) {
+                    const refundFees = guardianFees.div(bn(2))
                     assertBn(currentAppealMakerBalance, previousAppealMakerBalance.add(refundFees), 'appeal maker fee balance does not match')
                     assertBn(currentAppealTakerBalance, previousAppealTakerBalance.add(refundFees), 'appeal taker fee balance does not match')
                   } else {
@@ -223,10 +223,10 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                 assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.PENALTIES_SETTLED)
                 assertEvent(receipt, DISPUTE_MANAGER_EVENTS.PENALTIES_SETTLED, { expectedArgs: { disputeId, roundId, collectedTokens: expectedCollectedTokens } })
 
-                const { settledPenalties, collectedTokens, coherentJurors } = await courtHelper.getRound(disputeId, roundId)
+                const { settledPenalties, collectedTokens, coherentGuardians } = await protocolHelper.getRound(disputeId, roundId)
                 assert.equal(settledPenalties, true, 'current round penalties should be settled')
                 assertBn(collectedTokens, expectedCollectedTokens, 'current round collected tokens does not match')
-                assertBn(coherentJurors, expectedCoherentJurors, 'current round coherent jurors does not match')
+                assertBn(coherentGuardians, expectedCoherentGuardians, 'current round coherent guardians does not match')
 
                 await assertRevert(disputeManager.settlePenalties(disputeId, roundId, 0), DISPUTE_MANAGER_ERRORS.ROUND_ALREADY_SETTLED)
               })
@@ -243,7 +243,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
             context('when settling in multiple batches', () => {
               if (roundId < DEFAULTS.maxRegularAppealRounds.toNumber()) {
                 beforeEach('settle penalties', async () => {
-                  const batches = expectedWinningJurors.length + expectedLosingJurors.length
+                  const batches = expectedWinningGuardians.length + expectedLosingGuardians.length
                   for (let batch = 0; batch < batches; batch++) {
                     receipt = await disputeManager.settlePenalties(disputeId, roundId, 1)
                     // assert round is not settle in the middle batches
@@ -268,45 +268,45 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                 await disputeManager.settlePenalties(disputeId, roundId, 0)
               })
 
-              if (expectedWinningJurors.length > 0) {
-                it('emits an event for each juror and cannot be settled twice', async () => {
-                  for (const { address } of expectedWinningJurors) {
+              if (expectedWinningGuardians.length > 0) {
+                it('emits an event for each guardian and cannot be settled twice', async () => {
+                  for (const { address } of expectedWinningGuardians) {
                     const receipt = await disputeManager.settleReward(disputeId, roundId, address)
 
                     assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.REWARD_SETTLED)
-                    assertEvent(receipt, DISPUTE_MANAGER_EVENTS.REWARD_SETTLED, { expectedArgs: { disputeId, roundId, juror: address } })
+                    assertEvent(receipt, DISPUTE_MANAGER_EVENTS.REWARD_SETTLED, { expectedArgs: { disputeId, roundId, guardian: address } })
 
-                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.JUROR_ALREADY_REWARDED)
+                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.GUARDIAN_ALREADY_REWARDED)
                   }
                 })
 
-                it('rewards the winning jurors with juror tokens and fees', async () => {
-                  const { treasury, feeToken } = courtHelper
-                  const { jurorFees } = await courtHelper.getRound(disputeId, roundId)
+                it('rewards the winning guardians with guardian tokens and fees', async () => {
+                  const { treasury, feeToken } = protocolHelper
+                  const { guardianFees } = await protocolHelper.getRound(disputeId, roundId)
 
-                  for (const { address, weight } of expectedWinningJurors) {
-                    const previousJurorBalance = await treasury.balanceOf(feeToken.address, address)
+                  for (const { address, weight } of expectedWinningGuardians) {
+                    const previousGuardianBalance = await treasury.balanceOf(feeToken.address, address)
 
                     await disputeManager.settleReward(disputeId, roundId, address)
 
-                    const { weight: actualWeight, rewarded } = await courtHelper.getRoundJuror(disputeId, roundId, address)
-                    assert.isTrue(rewarded, 'juror should have been rewarded')
-                    assertBn(actualWeight, weight, 'juror weight should not have changed')
+                    const { weight: actualWeight, rewarded } = await protocolHelper.getRoundGuardian(disputeId, roundId, address)
+                    assert.isTrue(rewarded, 'guardian should have been rewarded')
+                    assertBn(actualWeight, weight, 'guardian weight should not have changed')
 
-                    const { available } = await courtHelper.jurorsRegistry.balanceOf(address)
-                    const expectedANJReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentJurors))
+                    const { available } = await protocolHelper.guardiansRegistry.balanceOf(address)
+                    const expectedANJReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
                     const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedANJReward)
                     assertBn(expectedCurrentAvailableBalance, available, 'current available balance does not match')
 
-                    const expectedFeeReward = jurorFees.mul(bn(weight)).div(bn(expectedCoherentJurors))
-                    const currentJurorBalance = await treasury.balanceOf(feeToken.address, address)
-                    assertBn(currentJurorBalance, previousJurorBalance.add(expectedFeeReward), 'juror fee balance does not match')
+                    const expectedFeeReward = guardianFees.mul(bn(weight)).div(bn(expectedCoherentGuardians))
+                    const currentGuardianBalance = await treasury.balanceOf(feeToken.address, address)
+                    assertBn(currentGuardianBalance, previousGuardianBalance.add(expectedFeeReward), 'guardian fee balance does not match')
                   }
                 })
 
-                it('does not allow settling non-winning jurors', async () => {
-                  for (const { address } of expectedLosingJurors) {
-                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_INCOHERENT_JUROR)
+                it('does not allow settling non-winning guardians', async () => {
+                  for (const { address } of expectedLosingGuardians) {
+                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_INCOHERENT_GUARDIAN)
                   }
                 })
 
@@ -315,54 +315,54 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                     const amount = bn(1)
 
                     // settle reward and deactivate
-                    for (const juror of expectedWinningJurors) {
-                      await disputeManager.settleReward(disputeId, roundId, juror.address)
-                      await courtHelper.jurorsRegistry.deactivate(0, { from: juror.address }) // deactivate all
+                    for (const guardian of expectedWinningGuardians) {
+                      await disputeManager.settleReward(disputeId, roundId, guardian.address)
+                      await protocolHelper.guardiansRegistry.deactivate(0, { from: guardian.address }) // deactivate all
                     }
 
                     // fails to withdraw on next term
-                    await courtHelper.passTerms(bn(1))
-                    for (const juror of expectedWinningJurors) {
-                      await assertRevert(courtHelper.jurorsRegistry.unstake(amount, '0x0', { from: juror.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                    await protocolHelper.passTerms(bn(1))
+                    for (const guardian of expectedWinningGuardians) {
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // fails to withdraw on last locked term
                     const { draftTerm } = await disputeManager.getRound(disputeId, roundId)
-                    const lastLockedTermId = draftTerm.add(courtHelper.commitTerms).add(courtHelper.revealTerms).add(courtHelper.finalRoundLockTerms)
-                    await courtHelper.setTerm(lastLockedTermId)
-                    for (const juror of expectedWinningJurors) {
-                      await assertRevert(courtHelper.jurorsRegistry.unstake(amount, '0x0', { from: juror.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                    const lastLockedTermId = draftTerm.add(protocolHelper.commitTerms).add(protocolHelper.revealTerms).add(protocolHelper.finalRoundLockTerms)
+                    await protocolHelper.setTerm(lastLockedTermId)
+                    for (const guardian of expectedWinningGuardians) {
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // succeeds to withdraw after locked term
-                    await courtHelper.passTerms(bn(1))
-                    for (const juror of expectedWinningJurors) {
-                      const receipt = await courtHelper.jurorsRegistry.unstake(amount, '0x0', { from: juror.address })
+                    await protocolHelper.passTerms(bn(1))
+                    for (const guardian of expectedWinningGuardians) {
+                      const receipt = await protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address })
                       assertAmountOfEvents(receipt, REGISTRY_EVENTS.UNSTAKED)
-                      assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { user: juror.address, amount: amount.toString() } })
+                      assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { user: guardian.address, amount: amount.toString() } })
                     }
                   })
                 }
               } else {
-                it('does not allow settling non-winning jurors', async () => {
-                  for (const { address } of expectedLosingJurors) {
-                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_INCOHERENT_JUROR)
+                it('does not allow settling non-winning guardians', async () => {
+                  for (const { address } of expectedLosingGuardians) {
+                    await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_INCOHERENT_GUARDIAN)
                   }
                 })
               }
 
-              it('does not allow settling non-voting jurors', async () => {
-                const nonVoters = filterJurors(jurors, expectedWinningJurors.concat(expectedLosingJurors))
+              it('does not allow settling non-voting guardians', async () => {
+                const nonVoters = filterGuardians(guardians, expectedWinningGuardians.concat(expectedLosingGuardians))
 
                 for (const { address } of nonVoters) {
-                  await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_NON_VOTER_JUROR)
+                  await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.WONT_REWARD_NON_VOTER_GUARDIAN)
                 }
               })
             })
 
             context('when penalties have not been settled yet', () => {
               it('reverts', async () => {
-                for (const { address } of expectedWinningJurors) {
+                for (const { address } of expectedWinningGuardians) {
                   await assertRevert(disputeManager.settleReward(disputeId, roundId, address), DISPUTE_MANAGER_ERRORS.ROUND_PENALTIES_NOT_SETTLED)
                 }
               })
@@ -372,7 +372,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
         beforeEach('mock draft round', async () => {
           voteId = getVoteId(disputeId, roundId)
-          await courtHelper.draft({ disputeId, drafter, draftedJurors: voters })
+          await protocolHelper.draft({ disputeId, drafter, draftedGuardians: voters })
         })
 
         context('during commit period', () => {
@@ -382,7 +382,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
         context('during reveal period', () => {
           beforeEach('commit votes', async () => {
-            await courtHelper.commit({ disputeId, roundId, voters })
+            await protocolHelper.commit({ disputeId, roundId, voters })
           })
 
           itIsAtState(roundId, ROUND_STATES.REVEALING)
@@ -392,7 +392,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         context('during appeal period', () => {
           context('when there were no votes', () => {
             beforeEach('pass commit and reveal periods', async () => {
-              await courtHelper.passTerms(courtHelper.commitTerms.add(courtHelper.revealTerms))
+              await protocolHelper.passTerms(protocolHelper.commitTerms.add(protocolHelper.revealTerms))
             })
 
             itIsAtState(roundId, ROUND_STATES.APPEALING)
@@ -401,8 +401,8 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
           context('when there were some votes', () => {
             beforeEach('commit and reveal votes', async () => {
-              await courtHelper.commit({ disputeId, roundId, voters })
-              await courtHelper.reveal({ disputeId, roundId, voters })
+              await protocolHelper.commit({ disputeId, roundId, voters })
+              await protocolHelper.reveal({ disputeId, roundId, voters })
             })
 
             itIsAtState(roundId, ROUND_STATES.APPEALING)
@@ -413,26 +413,26 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         context('during the appeal confirmation period', () => {
           context('when there were no votes', () => {
             beforeEach('pass commit and reveal periods', async () => {
-              await courtHelper.passTerms(courtHelper.commitTerms.add(courtHelper.revealTerms))
+              await protocolHelper.passTerms(protocolHelper.commitTerms.add(protocolHelper.revealTerms))
             })
 
             context('when the round was not appealed', () => {
               const expectedFinalRuling = OUTCOMES.REFUSED
-              const expectedWinningJurors = []
-              const expectedLosingJurors = voters
+              const expectedWinningGuardians = []
+              const expectedLosingGuardians = voters
 
               beforeEach('pass appeal period', async () => {
-                await courtHelper.passTerms(courtHelper.appealTerms)
+                await protocolHelper.passTerms(protocolHelper.appealTerms)
               })
 
               itIsAtState(roundId, ROUND_STATES.ENDED)
               itExecutesFinalRulingProperly(expectedFinalRuling)
-              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
             })
 
             context('when the round was appealed', () => {
               beforeEach('appeal', async () => {
-                await courtHelper.appeal({ disputeId, roundId, appealMaker, ruling: OUTCOMES.LOW })
+                await protocolHelper.appeal({ disputeId, roundId, appealMaker, ruling: OUTCOMES.LOW })
               })
 
               itIsAtState(roundId, ROUND_STATES.CONFIRMING_APPEAL)
@@ -442,27 +442,27 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
           context('when there were some votes', () => {
             beforeEach('commit and reveal votes', async () => {
-              await courtHelper.commit({ disputeId, roundId, voters })
-              await courtHelper.reveal({ disputeId, roundId, voters })
+              await protocolHelper.commit({ disputeId, roundId, voters })
+              await protocolHelper.reveal({ disputeId, roundId, voters })
             })
 
             context('when the round was not appealed', () => {
               const expectedFinalRuling = OUTCOMES.LOW
-              const expectedWinningJurors = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
-              const expectedLosingJurors = filterJurors(voters, expectedWinningJurors)
+              const expectedWinningGuardians = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
+              const expectedLosingGuardians = filterGuardians(voters, expectedWinningGuardians)
 
               beforeEach('pass appeal period', async () => {
-                await courtHelper.passTerms(courtHelper.appealTerms)
+                await protocolHelper.passTerms(protocolHelper.appealTerms)
               })
 
               itIsAtState(roundId, ROUND_STATES.ENDED)
               itExecutesFinalRulingProperly(expectedFinalRuling)
-              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
             })
 
             context('when the round was appealed', () => {
               beforeEach('appeal', async () => {
-                await courtHelper.appeal({ disputeId, roundId, appealMaker })
+                await protocolHelper.appeal({ disputeId, roundId, appealMaker })
               })
 
               itIsAtState(roundId, ROUND_STATES.CONFIRMING_APPEAL)
@@ -474,47 +474,47 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         context('after the appeal confirmation period', () => {
           context('when there were no votes', () => {
             beforeEach('pass commit and reveal periods', async () => {
-              await courtHelper.passTerms(courtHelper.commitTerms.add(courtHelper.revealTerms))
+              await protocolHelper.passTerms(protocolHelper.commitTerms.add(protocolHelper.revealTerms))
             })
 
             context('when the round was not appealed', () => {
               const expectedFinalRuling = OUTCOMES.REFUSED
-              const expectedWinningJurors = []
-              const expectedLosingJurors = voters
+              const expectedWinningGuardians = []
+              const expectedLosingGuardians = voters
 
               beforeEach('pass appeal and confirmation periods', async () => {
-                await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
+                await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
               })
 
               itIsAtState(roundId, ROUND_STATES.ENDED)
               itExecutesFinalRulingProperly(expectedFinalRuling)
-              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
             })
 
             context('when the round was appealed', () => {
               const appealedRuling = OUTCOMES.HIGH
 
               beforeEach('appeal', async () => {
-                await courtHelper.appeal({ disputeId, roundId, appealMaker, ruling: appealedRuling })
+                await protocolHelper.appeal({ disputeId, roundId, appealMaker, ruling: appealedRuling })
               })
 
               context('when the appeal was not confirmed', () => {
                 const expectedFinalRuling = appealedRuling
-                const expectedWinningJurors = []
-                const expectedLosingJurors = voters
+                const expectedWinningGuardians = []
+                const expectedLosingGuardians = voters
 
                 beforeEach('pass confirmation period', async () => {
-                  await courtHelper.passTerms(courtHelper.appealConfirmTerms)
+                  await protocolHelper.passTerms(protocolHelper.appealConfirmTerms)
                 })
 
                 itIsAtState(roundId, ROUND_STATES.ENDED)
                 itExecutesFinalRulingProperly(expectedFinalRuling)
-                itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+                itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
               })
 
               context('when the appeal was confirmed', () => {
                 beforeEach('confirm appeal', async () => {
-                  await courtHelper.confirmAppeal({ disputeId, roundId, appealTaker })
+                  await protocolHelper.confirmAppeal({ disputeId, roundId, appealTaker })
                 })
 
                 itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -525,48 +525,48 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
           context('when there were some votes', () => {
             beforeEach('commit and reveal votes', async () => {
-              await courtHelper.commit({ disputeId, roundId, voters })
-              await courtHelper.reveal({ disputeId, roundId, voters })
+              await protocolHelper.commit({ disputeId, roundId, voters })
+              await protocolHelper.reveal({ disputeId, roundId, voters })
             })
 
             context('when the round was not appealed', () => {
               const expectedFinalRuling = OUTCOMES.LOW
-              const expectedWinningJurors = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
-              const expectedLosingJurors = filterJurors(voters, expectedWinningJurors)
+              const expectedWinningGuardians = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
+              const expectedLosingGuardians = filterGuardians(voters, expectedWinningGuardians)
 
               beforeEach('pass appeal and confirmation periods', async () => {
-                await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
+                await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
               })
 
               itIsAtState(roundId, ROUND_STATES.ENDED)
               itExecutesFinalRulingProperly(expectedFinalRuling)
-              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+              itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
             })
 
             context('when the round was appealed', () => {
               const appealedRuling = OUTCOMES.HIGH
 
               beforeEach('appeal', async () => {
-                await courtHelper.appeal({ disputeId, roundId, appealMaker, ruling: appealedRuling })
+                await protocolHelper.appeal({ disputeId, roundId, appealMaker, ruling: appealedRuling })
               })
 
               context('when the appeal was not confirmed', () => {
                 const expectedFinalRuling = appealedRuling
-                const expectedWinningJurors = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
-                const expectedLosingJurors = filterJurors(voters, expectedWinningJurors)
+                const expectedWinningGuardians = voters.filter(({ outcome }) => outcome === expectedFinalRuling)
+                const expectedLosingGuardians = filterGuardians(voters, expectedWinningGuardians)
 
                 beforeEach('pass confirmation period', async () => {
-                  await courtHelper.passTerms(courtHelper.appealConfirmTerms)
+                  await protocolHelper.passTerms(protocolHelper.appealConfirmTerms)
                 })
 
                 itIsAtState(roundId, ROUND_STATES.ENDED)
                 itExecutesFinalRulingProperly(expectedFinalRuling)
-                itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningJurors, expectedLosingJurors)
+                itSettlesPenaltiesAndRewardsProperly(roundId, expectedWinningGuardians, expectedLosingGuardians)
               })
 
               context('when the appeal was confirmed', () => {
                 beforeEach('confirm appeal', async () => {
-                  await courtHelper.confirmAppeal({ disputeId, roundId, appealTaker })
+                  await protocolHelper.confirmAppeal({ disputeId, roundId, appealTaker })
                 })
 
                 itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -576,18 +576,18 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   const newRoundId = roundId + 1
 
                   const itHandlesRoundsSettlesProperly = (newRoundVoters, expectedFinalRuling) => {
-                    const [firstRoundWinners, firstRoundLosers] = filterWinningJurors(voters, expectedFinalRuling)
-                    const [secondRoundWinners, secondRoundLosers] = filterWinningJurors(newRoundVoters, expectedFinalRuling)
+                    const [firstRoundWinners, firstRoundLosers] = filterWinningGuardians(voters, expectedFinalRuling)
+                    const [secondRoundWinners, secondRoundLosers] = filterWinningGuardians(newRoundVoters, expectedFinalRuling)
 
                     beforeEach('draft and vote second round', async () => {
-                      const expectedNewRoundJurorsNumber = 9 // previous jurors * 3 + 1
-                      const { roundJurorsNumber } = await courtHelper.getRound(disputeId, newRoundId)
-                      assertBn(roundJurorsNumber, expectedNewRoundJurorsNumber, 'new round jurors number does not match')
+                      const expectedNewRoundGuardiansNumber = 9 // previous guardians * 3 + 1
+                      const { roundGuardiansNumber } = await protocolHelper.getRound(disputeId, newRoundId)
+                      assertBn(roundGuardiansNumber, expectedNewRoundGuardiansNumber, 'new round guardians number does not match')
 
-                      await courtHelper.draft({ disputeId, maxJurorsToBeDrafted: expectedNewRoundJurorsNumber, draftedJurors: newRoundVoters })
-                      await courtHelper.commit({ disputeId, roundId: newRoundId, voters: newRoundVoters })
-                      await courtHelper.reveal({ disputeId, roundId: newRoundId, voters: newRoundVoters })
-                      await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
+                      await protocolHelper.draft({ disputeId, maxGuardiansToBeDrafted: expectedNewRoundGuardiansNumber, draftedGuardians: newRoundVoters })
+                      await protocolHelper.commit({ disputeId, roundId: newRoundId, voters: newRoundVoters })
+                      await protocolHelper.reveal({ disputeId, roundId: newRoundId, voters: newRoundVoters })
+                      await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
                     })
 
                     itExecutesFinalRulingProperly(expectedFinalRuling)
@@ -611,11 +611,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is sustained', async () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.LOW },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.LOW },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.LOW }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.LOW },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.LOW },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.LOW }
                     ]
 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
@@ -624,11 +624,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is flipped', async () => {
                     const expectedFinalRuling = appealedRuling
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.HIGH },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.HIGH },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.HIGH }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.HIGH },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.HIGH },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.HIGH }
                     ]
 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
@@ -637,11 +637,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is refused', async () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const newRoundVoters = [
-                      { address: juror500,  weight: 1, outcome: OUTCOMES.REFUSED },
-                      { address: juror2000, weight: 4, outcome: OUTCOMES.REFUSED },
-                      { address: juror2500, weight: 1, outcome: OUTCOMES.REFUSED },
-                      { address: juror4000, weight: 2, outcome: OUTCOMES.REFUSED },
-                      { address: juror3000, weight: 1, outcome: OUTCOMES.REFUSED }
+                      { address: guardian500,  weight: 1, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2000, weight: 4, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2500, weight: 1, outcome: OUTCOMES.REFUSED },
+                      { address: guardian4000, weight: 2, outcome: OUTCOMES.REFUSED },
+                      { address: guardian3000, weight: 1, outcome: OUTCOMES.REFUSED }
                     ]
 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
@@ -649,18 +649,18 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   context('when no one voted', async () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
-                    const [firstRoundWinners, firstRoundLosers] = filterWinningJurors(voters, expectedFinalRuling)
-                    const newRoundDraftedJurors = [
-                      { address: juror500,  weight: 1 },
-                      { address: juror2000, weight: 4 },
-                      { address: juror2500, weight: 1 },
-                      { address: juror4000, weight: 2 },
-                      { address: juror3000, weight: 1 }
+                    const [firstRoundWinners, firstRoundLosers] = filterWinningGuardians(voters, expectedFinalRuling)
+                    const newRoundDraftedGuardians = [
+                      { address: guardian500,  weight: 1 },
+                      { address: guardian2000, weight: 4 },
+                      { address: guardian2500, weight: 1 },
+                      { address: guardian4000, weight: 2 },
+                      { address: guardian3000, weight: 1 }
                     ]
 
                     beforeEach('pass second round', async () => {
-                      await courtHelper.draft({ disputeId, maxJurorsToBeDrafted: 0, draftedJurors: newRoundDraftedJurors })
-                      await courtHelper.passTerms(courtHelper.commitTerms.add(courtHelper.revealTerms).add(courtHelper.appealTerms).add(courtHelper.appealConfirmTerms))
+                      await protocolHelper.draft({ disputeId, maxGuardiansToBeDrafted: 0, draftedGuardians: newRoundDraftedGuardians })
+                      await protocolHelper.passTerms(protocolHelper.commitTerms.add(protocolHelper.revealTerms).add(protocolHelper.appealTerms).add(protocolHelper.appealConfirmTerms))
                     })
 
                     itExecutesFinalRulingProperly(expectedFinalRuling)
@@ -677,7 +677,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                         }
                       })
 
-                      itSettlesPenaltiesAndRewardsProperly(newRoundId, [], newRoundDraftedJurors)
+                      itSettlesPenaltiesAndRewardsProperly(newRoundId, [], newRoundDraftedGuardians)
                     })
                   })
                 })
@@ -687,60 +687,60 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
 
                   const itHandlesRoundsSettlesProperly = (finalRoundVoters, expectedFinalRuling) => {
                     const previousRoundsVoters = { [roundId]: voters }
-                    const [expectedWinners, expectedLosers] = filterWinningJurors(finalRoundVoters, expectedFinalRuling)
+                    const [expectedWinners, expectedLosers] = filterWinningGuardians(finalRoundVoters, expectedFinalRuling)
 
                     beforeEach('move to final round', async () => {
                       // appeal until we reach the final round, always flipping the previous round winning ruling
                       let previousWinningRuling = await voting.getWinningOutcome(voteId)
                       for (let nextRoundId = roundId + 1; nextRoundId < finalRoundId; nextRoundId++) {
                         const roundWinningRuling = oppositeOutcome(previousWinningRuling)
-                        const roundVoters = await courtHelper.draft({ disputeId })
+                        const roundVoters = await protocolHelper.draft({ disputeId })
                         roundVoters.forEach(voter => voter.outcome = roundWinningRuling)
                         previousRoundsVoters[nextRoundId] = roundVoters
 
-                        await courtHelper.commit({ disputeId, roundId: nextRoundId, voters: roundVoters })
-                        await courtHelper.reveal({ disputeId, roundId: nextRoundId, voters: roundVoters })
-                        await courtHelper.appeal({ disputeId, roundId: nextRoundId, appealMaker, ruling: previousWinningRuling })
-                        await courtHelper.confirmAppeal({ disputeId, roundId: nextRoundId, appealTaker, ruling: roundWinningRuling })
+                        await protocolHelper.commit({ disputeId, roundId: nextRoundId, voters: roundVoters })
+                        await protocolHelper.reveal({ disputeId, roundId: nextRoundId, voters: roundVoters })
+                        await protocolHelper.appeal({ disputeId, roundId: nextRoundId, appealMaker, ruling: previousWinningRuling })
+                        await protocolHelper.confirmAppeal({ disputeId, roundId: nextRoundId, appealTaker, ruling: roundWinningRuling })
                         previousWinningRuling = roundWinningRuling
                       }
                     })
 
                     beforeEach('end final round', async () => {
                       // commit and reveal votes, and pass appeal and confirmation periods to end dispute
-                      await courtHelper.commit({ disputeId, roundId: finalRoundId, voters: finalRoundVoters })
-                      await courtHelper.reveal({ disputeId, roundId: finalRoundId, voters: finalRoundVoters })
-                      await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
+                      await protocolHelper.commit({ disputeId, roundId: finalRoundId, voters: finalRoundVoters })
+                      await protocolHelper.reveal({ disputeId, roundId: finalRoundId, voters: finalRoundVoters })
+                      await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
                     })
 
                     beforeEach('settle previous rounds', async () => {
                       for (let nextRoundId = 0; nextRoundId < finalRoundId; nextRoundId++) {
                         await disputeManager.settlePenalties(disputeId, nextRoundId, 0)
-                        const [winners] = filterWinningJurors(previousRoundsVoters[nextRoundId], expectedFinalRuling)
+                        const [winners] = filterWinningGuardians(previousRoundsVoters[nextRoundId], expectedFinalRuling)
                         for (const { address } of winners) {
                           await disputeManager.settleReward(disputeId, nextRoundId, address)
                         }
                       }
                     })
 
-                    afterEach('reactivate jurors and pass final round lock terms', async () => {
-                      for (const { address, initialActiveBalance } of jurors) {
-                        const { jurorToken, jurorsRegistry } = courtHelper
-                        const unlockedBalance = await jurorsRegistry.unlockedActiveBalanceOf(address)
+                    afterEach('reactivate guardians and pass final round lock terms', async () => {
+                      for (const { address, initialActiveBalance } of guardians) {
+                        const { guardianToken, guardiansRegistry } = protocolHelper
+                        const unlockedBalance = await guardiansRegistry.unlockedActiveBalanceOf(address)
 
                         if (unlockedBalance.gt(initialActiveBalance)) {
                           const amount = unlockedBalance.sub(initialActiveBalance)
-                          await jurorsRegistry.deactivate(amount, { from: address })
+                          await guardiansRegistry.deactivate(amount, { from: address })
                         }
 
                         if (unlockedBalance.lt(initialActiveBalance)) {
                           const amount = initialActiveBalance.sub(unlockedBalance)
-                          await jurorToken.generateTokens(address, amount)
-                          await jurorToken.approveAndCall(jurorsRegistry.address, amount, ACTIVATE_DATA, { from: address })
+                          await guardianToken.generateTokens(address, amount)
+                          await guardianToken.approveAndCall(guardiansRegistry.address, amount, ACTIVATE_DATA, { from: address })
                         }
                       }
 
-                      await courtHelper.passTerms(DEFAULTS.finalRoundLockTerms)
+                      await protocolHelper.passTerms(DEFAULTS.finalRoundLockTerms)
                     })
 
                     itExecutesFinalRulingProperly(expectedFinalRuling)
@@ -750,11 +750,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is sustained', async () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.HIGH },
-                      { address: juror2000, outcome: OUTCOMES.LOW },
-                      { address: juror2500, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, outcome: OUTCOMES.LOW },
-                      { address: juror3000, outcome: OUTCOMES.LOW }
+                      { address: guardian500,  outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, outcome: OUTCOMES.LOW },
+                      { address: guardian2500, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, outcome: OUTCOMES.LOW },
+                      { address: guardian3000, outcome: OUTCOMES.LOW }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
@@ -763,11 +763,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is flipped', async () => {
                     const expectedFinalRuling = appealedRuling
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.HIGH },
-                      { address: juror2000, outcome: OUTCOMES.HIGH },
-                      { address: juror2500, outcome: OUTCOMES.HIGH },
-                      { address: juror4000, outcome: OUTCOMES.HIGH },
-                      { address: juror3000, outcome: OUTCOMES.HIGH }
+                      { address: guardian500,  outcome: OUTCOMES.HIGH },
+                      { address: guardian2000, outcome: OUTCOMES.HIGH },
+                      { address: guardian2500, outcome: OUTCOMES.HIGH },
+                      { address: guardian4000, outcome: OUTCOMES.HIGH },
+                      { address: guardian3000, outcome: OUTCOMES.HIGH }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
@@ -776,11 +776,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
                   context('when the ruling is refused', async () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const finalRoundVoters = [
-                      { address: juror500,  outcome: OUTCOMES.REFUSED },
-                      { address: juror2000, outcome: OUTCOMES.REFUSED },
-                      { address: juror2500, outcome: OUTCOMES.REFUSED },
-                      { address: juror4000, outcome: OUTCOMES.REFUSED },
-                      { address: juror3000, outcome: OUTCOMES.REFUSED }
+                      { address: guardian500,  outcome: OUTCOMES.REFUSED },
+                      { address: guardian2000, outcome: OUTCOMES.REFUSED },
+                      { address: guardian2500, outcome: OUTCOMES.REFUSED },
+                      { address: guardian4000, outcome: OUTCOMES.REFUSED },
+                      { address: guardian3000, outcome: OUTCOMES.REFUSED }
                     ]
 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)

@@ -1,21 +1,21 @@
 const { ZERO_ADDRESS, bn } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/court')
+const { buildHelper } = require('../helpers/wrappers/protocol')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 
 const PaymentsBook = artifacts.require('PaymentsBook')
 
 contract('PaymentsBook', ([_, governor, someone]) => {
-  let courtHelper, controller
+  let protocolHelper, controller
 
   const PERIOD_DURATION = 24 * 30           // 30 days, assuming terms are 1h
   const GOVERNOR_SHARE_PCT = bn(100)        // 100‱ = 1%
 
   before('create controller', async () => {
-    courtHelper = buildHelper()
-    controller = await courtHelper.deploy({ configGovernor: governor })
+    protocolHelper = buildHelper()
+    controller = await protocolHelper.deploy({ configGovernor: governor })
   })
 
   describe('constructor', () => {
@@ -68,7 +68,7 @@ contract('PaymentsBook', ([_, governor, someone]) => {
     let paymentsBook
 
     beforeEach('create payments module', async () => {
-      paymentsBook = courtHelper.paymentsBook
+      paymentsBook = protocolHelper.paymentsBook
     })
 
     context('when the sender is the governor', async () => {

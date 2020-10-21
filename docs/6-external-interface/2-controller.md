@@ -8,22 +8,22 @@ The following events are emitted by the `Controller`:
 
 - **Name:** `NewConfig`
 - **Args:**
-    - **From term ID:** Identification number of the Court term when the config change will happen
-    - **Court config ID:** Identification number of the Court config to be changed
+    - **From term ID:** Identification number of the Protocol term when the config change will happen
+    - **Protocol config ID:** Identification number of the Protocol config to be changed
 
 #### 6.2.1.2. Start time delayed
 
 - **Name:** `StartTimeDelayed`
 - **Args:**
-    - **Previous first term start time:** Previous timestamp in seconds when the Court will start
-    - **Current first-term start time:** New timestamp in seconds when the Court will start
+    - **Previous first term start time:** Previous timestamp in seconds when the Protocol will start
+    - **Current first-term start time:** New timestamp in seconds when the Protocol will start
 
 #### 6.2.1.3. Heartbeat
 
 - **Name:** `Heartbeat`
 - **Args:**
-    - **Previous term ID:** Identification number of the Court term before the transition
-    - **Current term ID:** Identification number of the Court term after the transition
+    - **Previous term ID:** Identification number of the Protocol term before the transition
+    - **Current term ID:** Identification number of the Protocol term after the transition
 
 #### 6.2.1.4. Automatic withdrawals changed
 
@@ -67,49 +67,49 @@ The following functions are state getters provided by the `Controller`:
 #### 6.2.2.3. Config
 
 - **Inputs:**
-    - **Term ID:** Identification number of the term querying the Court config of
+    - **Term ID:** Identification number of the term querying the Protocol config of
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Fee token:** Address of the token used to pay for fees
     - **Fees:** Array Array containing fee information:
-        - **Juror fee:** Amount of fee tokens that is paid per juror per dispute
-        - **Draft fee:** Amount of fee tokens per juror to cover the drafting cost
-        - **Settle fee:** Amount of fee tokens per juror to cover round settlement cost
+        - **Guardian fee:** Amount of fee tokens that is paid per guardian per dispute
+        - **Draft fee:** Amount of fee tokens per guardian to cover the drafting cost
+        - **Settle fee:** Amount of fee tokens per guardian to cover round settlement cost
     - **Round state durations:** Array containing the durations in terms of the different phases of a dispute:
-        - **Evidence terms:** Max submitting evidence period duration in Court terms
-        - **Commit terms:** Commit period duration in Court terms
-        - **Reveal terms:** Reveal period duration in Court terms
-        - **Appeal terms:** Appeal period duration in Court terms
-        - **Appeal confirmation terms:** Appeal confirmation period duration in Court terms
+        - **Evidence terms:** Max submitting evidence period duration in Protocol terms
+        - **Commit terms:** Commit period duration in Protocol terms
+        - **Reveal terms:** Reveal period duration in Protocol terms
+        - **Appeal terms:** Appeal period duration in Protocol terms
+        - **Appeal confirmation terms:** Appeal confirmation period duration in Protocol terms
     - **Permyriads:** Array containing permyriads information:
-        - **Penalty pct:** Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+        - **Penalty pct:** Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
         - **Final round reduction:** Permyriad of fee reduction for the last appeal round (‱ - 1/10,000)
     - **Round params:** Array containing params for rounds:
-        - **First round jurors number:** Number of jurors to be drafted for the first round of disputes
-        - **Appeal step factor:** Increasing factor for the number of jurors of each round of a dispute
+        - **First round guardians number:** Number of guardians to be drafted for the first round of disputes
+        - **Appeal step factor:** Increasing factor for the number of guardians of each round of a dispute
         - **Max regular appeal rounds:** Number of regular appeal rounds before the final round is triggered
-        - **Final round lock terms:** Number of terms that a coherent juror in a final round is disallowed to withdraw (to prevent 51% attacks)
+        - **Final round lock terms:** Number of terms that a coherent guardian in a final round is disallowed to withdraw (to prevent 51% attacks)
     - **Appeal collateral params:** Array containing params for appeal collateral:
-        - **Appeal collateral factor:** Multiple of dispute fees (jurors, draft, and settlements) required to appeal a preliminary ruling
-        - **Appeal confirm collateral factor:** Multiple of dispute fees (jurors, draft, and settlements) required to confirm appeal
+        - **Appeal collateral factor:** Multiple of dispute fees (guardians, draft, and settlements) required to appeal a preliminary ruling
+        - **Appeal confirm collateral factor:** Multiple of dispute fees (guardians, draft, and settlements) required to confirm appeal
 
 #### 6.2.2.4. Drafts config
 
 - **Inputs:**
-    - **Term ID:** Identification number of the term querying the Court drafts config of
+    - **Term ID:** Identification number of the term querying the Protocol drafts config of
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Fee token:** ERC20 token to be used for the fees of the Court
-    - **Draft fee:** Amount of fee tokens per juror to cover the drafting cost
-    - **Penalty pct:** Permyriad of min active tokens balance to be locked for each drafted juror (‱ - 1/10,000)
+    - **Fee token:** ERC20 token to be used for the fees of the Protocol
+    - **Draft fee:** Amount of fee tokens per guardian to cover the drafting cost
+    - **Penalty pct:** Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
 
 #### 6.2.2.5. Minimum ANJ active balance
 
 - **Inputs:**
-    - **Term ID:** Identification number of the term querying the Court min active balance of
+    - **Term ID:** Identification number of the term querying the Protocol min active balance of
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Min active balance:** Minimum amount of juror tokens jurors have to activate to participate in the Court
+    - **Min active balance:** Minimum amount of guardian tokens guardians have to activate to participate in the Protocol
 
 #### 6.2.2.6. Config change term ID
 
@@ -123,7 +123,7 @@ The following functions are state getters provided by the `Controller`:
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Term duration:** Duration in seconds of the Court term
+    - **Term duration:** Duration in seconds of the Protocol term
 
 #### 6.2.2.8. Last ensured term ID
 
@@ -144,7 +144,7 @@ The following functions are state getters provided by the `Controller`:
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Needed transitions:** Number of terms the Court should transition to be up-to-date
+    - **Needed transitions:** Number of terms the Protocol should transition to be up-to-date
 
 #### 6.2.2.11. Term
 
@@ -207,14 +207,14 @@ The following functions are state getters provided by the `Controller`:
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Court address:** Address of the `DisputeManager` module set
+    - **Protocol address:** Address of the `DisputeManager` module set
 
-#### 6.2.2.19. Jurors registry
+#### 6.2.2.19. Guardians registry
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Jurors registry address:** Address of the `JurorsRegistry` module set
+    - **Guardians registry address:** Address of the `GuardiansRegistry` module set
 
 #### 6.2.2.20. Voting
 

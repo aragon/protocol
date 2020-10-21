@@ -2,8 +2,8 @@ pragma solidity ^0.5.8;
 
 import "../../voting/ICRVoting.sol";
 import "../../voting/ICRVotingOwner.sol";
-import "../../court/controller/Controller.sol";
-import "../../court/controller/Controlled.sol";
+import "../../core/controller/Controller.sol";
+import "../../core/controller/Controlled.sol";
 
 
 contract DisputeManagerMockForVoting is ICRVotingOwner, Controlled {

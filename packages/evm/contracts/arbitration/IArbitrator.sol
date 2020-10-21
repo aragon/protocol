@@ -24,7 +24,7 @@ interface IArbitrator {
 
     /**
     * @dev Submit evidence for a dispute
-    * @param _disputeId Id of the dispute in the Court
+    * @param _disputeId Id of the dispute in the Protocol
     * @param _submitter Address of the account submitting the evidence
     * @param _evidence Data submitted for the evidence related to the dispute
     */

@@ -2,9 +2,9 @@
 
 The following objects are the data-structures used by the `Voting`:
 
-### 5.4.1. Juror
+### 5.4.1. Vote
 
-The juror object includes the following fields:
+The vote object includes the following fields:
 
 - **Winning outcome:** Outcome winner of a vote instance
 - **Max allowed outcome:** Highest outcome allowed for the vote instance

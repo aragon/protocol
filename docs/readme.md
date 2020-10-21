@@ -1,6 +1,6 @@
-# Aragon Court v1 - Technical spec
+# Aragon Protocol v1 - Technical spec
 
-The following documents attempt to be a high-level description of the inner implementation details of Aragon Court v1. It doesn't go deep to the point of being an exhaustive spec detailing all authentication checks and state transitions, but aims to provide enough description for a developer to deeply understand the existing codebase or guide a re-implementation.
+The following documents attempt to be a high-level description of the inner implementation details of Aragon Protocol v1. It doesn't go deep to the point of being an exhaustive spec detailing all authentication checks and state transitions, but aims to provide enough description for a developer to deeply understand the existing codebase or guide a re-implementation.
 
 This document was written to ease the job of security auditors looking at the codebase and was written after the v1 implementation had been frozen.
 

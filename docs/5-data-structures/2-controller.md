@@ -16,34 +16,34 @@ The config object includes the following fields:
 
 - **Fees config:** Fees config object
 - **Disputes config:** Disputes config object
-- **Min active balance:** Minimum amount of tokens jurors have to activate to participate in the Court
+- **Min active balance:** Minimum amount of tokens guardians have to activate to participate in the Protocol
 
 ### 5.2.3. Fees config
 
 The fees config object includes the following fields:
 
-- **Token:** ERC20 token to be used for the fees of the Court
+- **Token:** ERC20 token to be used for the fees of the Protocol
 - **Final round reduction:** Permyriad of fees reduction applied for final appeal round (1/10,000)
-- **Juror fee:** Amount of tokens paid to draft a juror to adjudicate a dispute
-- **Draft fee:** Amount of tokens paid per round to cover the costs of drafting jurors
-- **Settle fee:** Amount of tokens paid per round to cover the costs of slashing jurors
+- **Guardian fee:** Amount of tokens paid to draft a guardian to adjudicate a dispute
+- **Draft fee:** Amount of tokens paid per round to cover the costs of drafting guardians
+- **Settle fee:** Amount of tokens paid per round to cover the costs of slashing guardians
 
 ### 5.2.4. Disputes config
 
 The disputes config object includes the following fields:
 
-- **Evidence terms:** Max submitting evidence period duration in Court terms
+- **Evidence terms:** Max submitting evidence period duration in Protocol terms
 - **Commit terms:** Committing period duration in terms
 - **Reveal terms:** Revealing period duration in terms
 - **Appeal terms:** Appealing period duration in terms
 - **Appeal confirmation terms:** Confirmation appeal period duration in terms
-- **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted juror (1/10,000)
-- **First round jurors number:** Number of jurors drafted on first round
-- **Appeal step factor:** Factor in which the jurors number is increased on each appeal
-- **Final round lock terms:** Period a coherent juror in the final round will remain locked
+- **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted guardian (1/10,000)
+- **First round guardians number:** Number of guardians drafted on first round
+- **Appeal step factor:** Factor in which the guardians number is increased on each appeal
+- **Final round lock terms:** Period a coherent guardian in the final round will remain locked
 - **Max regular appeal rounds:** Before the final appeal
-- **Appeal collateral factor:** Permyriad multiple of dispute fees (jurors, draft, and settlements) required to appeal a preliminary ruling (1/10,000)
-- **Appeal confirmation collateral factor:** Permyriad multiple of dispute fees (jurors, draft, and settlements) required to confirm appeal (1/10,000)
+- **Appeal collateral factor:** Permyriad multiple of dispute fees (guardians, draft, and settlements) required to appeal a preliminary ruling (1/10,000)
+- **Appeal confirmation collateral factor:** Permyriad multiple of dispute fees (guardians, draft, and settlements) required to confirm appeal (1/10,000)
 
 ### 5.2.5. Term
 

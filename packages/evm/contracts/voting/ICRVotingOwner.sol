@@ -19,7 +19,7 @@ interface ICRVotingOwner {
     * @dev Ensure a certain voter can reveal votes for vote instance, revert otherwise
     * @param _voteId ID of the vote instance to request the weight of a voter for
     * @param _voter Address of the voter querying the weight of
-    * @return Weight of the requested juror for the requested vote instance
+    * @return Weight of the requested guardian for the requested vote instance
     */
     function ensureCanReveal(uint256 _voteId, address _voter) external returns (uint64);
 }

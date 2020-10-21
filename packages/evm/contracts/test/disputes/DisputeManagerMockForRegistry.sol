@@ -1,7 +1,7 @@
 pragma solidity ^0.5.8;
 
-import "../../court/controller/Controlled.sol";
-import "../../court/controller/Controller.sol";
+import "../../core/controller/Controlled.sol";
+import "../../core/controller/Controller.sol";
 
 
 contract DisputeManagerMockForRegistry is Controlled {
@@ -11,30 +11,30 @@ contract DisputeManagerMockForRegistry is Controlled {
 
     constructor(Controller _controller) Controlled(_controller) public {}
 
-    function assignTokens(address _juror, uint256 _amount) external {
-        _jurorsRegistry().assignTokens(_juror, _amount);
+    function assignTokens(address _guardian, uint256 _amount) external {
+        _guardiansRegistry().assignTokens(_guardian, _amount);
     }
 
     function burnTokens(uint256 _amount) external {
-        _jurorsRegistry().burnTokens(_amount);
+        _guardiansRegistry().burnTokens(_amount);
     }
 
-    function slashOrUnlock(address[] calldata _jurors, uint256[] calldata _lockedAmounts, bool[] calldata _rewardedJurors) external {
-        uint256 collectedTokens = _jurorsRegistry().slashOrUnlock(_getLastEnsuredTermId(), _jurors, _lockedAmounts, _rewardedJurors);
+    function slashOrUnlock(address[] calldata _guardians, uint256[] calldata _lockedAmounts, bool[] calldata _rewardedGuardians) external {
+        uint256 collectedTokens = _guardiansRegistry().slashOrUnlock(_getLastEnsuredTermId(), _guardians, _lockedAmounts, _rewardedGuardians);
         emit Slashed(collectedTokens);
     }
 
-    function collect(address _juror, uint256 _amount) external {
-        bool collected = _jurorsRegistry().collectTokens(_juror, _amount, _getLastEnsuredTermId());
+    function collect(address _guardian, uint256 _amount) external {
+        bool collected = _guardiansRegistry().collectTokens(_guardian, _amount, _getLastEnsuredTermId());
         emit Collected(collected);
     }
 
     function draft(
         bytes32 _termRandomness,
         uint256 _disputeId,
-        uint256 _selectedJurors,
-        uint256 _batchRequestedJurors,
-        uint64 _roundRequestedJurors,
+        uint256 _selectedGuardians,
+        uint256 _batchRequestedGuardians,
+        uint64 _roundRequestedGuardians,
         uint16 _lockPct
     )
         external
@@ -43,13 +43,13 @@ contract DisputeManagerMockForRegistry is Controlled {
             uint256(_termRandomness),
             _disputeId,
             _getLastEnsuredTermId(),
-            _selectedJurors,
-            _batchRequestedJurors,
-            _roundRequestedJurors,
+            _selectedGuardians,
+            _batchRequestedGuardians,
+            _roundRequestedGuardians,
             _lockPct
         ];
 
-        (address[] memory jurors, uint256 length) = _jurorsRegistry().draft(draftParams);
-        emit Drafted(jurors, length);
+        (address[] memory guardians, uint256 length) = _guardiansRegistry().draft(draftParams);
+        emit Drafted(guardians, length);
     }
 }
