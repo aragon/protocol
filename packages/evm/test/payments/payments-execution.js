@@ -64,18 +64,18 @@ contract('PaymentBook', ([_, someone, payer]) => {
               assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance.add(amount), 'payments book balances do not match')
             })
 
-            it('computes the guardian and governor fees correctly', async () => {
+            it('computes the guardian and governor share correctly', async () => {
               const currentPeriodId = await paymentsBook.getCurrentPeriodId()
-              const { guardianFees: previousGuardianFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
+              const { guardiansShare: previousGuardiansShare, governorShare: previousGovernorShare } = await paymentsBook.getPeriodShares(currentPeriodId, token.address)
 
               await paymentsBook.pay(token.address, amount, someone, data, { from })
-              const { guardianFees: currentGuardianFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, token.address)
+              const { guardiansShare: currentGuardiansShare, governorShare: currentGovernorShare } = await paymentsBook.getPeriodShares(currentPeriodId, token.address)
 
-              const expectedGovernorFees = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
-              assertBn(currentGovernorFees, previousGovernorFees.add(expectedGovernorFees), 'period governor fees do not match')
+              const expectedGovernorShare = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
+              assertBn(currentGovernorShare, previousGovernorShare.add(expectedGovernorShare), 'period governor share do not match')
 
-              const expectedGuardianFees = amount.sub(expectedGovernorFees)
-              assertBn(currentGuardianFees, previousGuardianFees.add(expectedGuardianFees), 'period guardian fees do not match')
+              const expectedGuardiansShare = amount.sub(expectedGovernorShare)
+              assertBn(currentGuardiansShare, previousGuardiansShare.add(expectedGuardiansShare), 'period guardians share do not match')
             })
 
             it('emits an event', async () => {
@@ -101,18 +101,18 @@ contract('PaymentBook', ([_, someone, payer]) => {
               assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance.add(amount), 'payments book balances do not match')
             })
 
-            it('computes the guardian and governor fees correctly', async () => {
+            it('computes the guardian and governor shares correctly', async () => {
               const currentPeriodId = await paymentsBook.getCurrentPeriodId()
-              const { guardianFees: previousGuardianFees, governorFees: previousGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
+              const { guardiansShares: previousGuardiansShares, governorShares: previousGovernorShares } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
 
               await paymentsBook.pay(eth.address, amount, someone, data, { from, value: amount })
-              const { guardianFees: currentGuardianFees, governorFees: currentGovernorFees } = await paymentsBook.getPeriodFees(currentPeriodId, eth.address)
+              const { guardiansShares: currentGuardiansShares, governorShares: currentGovernorShares } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
 
-              const expectedGovernorFees = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
-              assertBn(currentGovernorFees, previousGovernorFees.add(expectedGovernorFees), 'period governor fees do not match')
+              const expectedGovernorShares = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
+              assertBn(currentGovernorShares, previousGovernorShares.add(expectedGovernorShares), 'period governor shares do not match')
 
-              const expectedGuardianFees = amount.sub(expectedGovernorFees)
-              assertBn(currentGuardianFees, previousGuardianFees.add(expectedGuardianFees), 'period guardian fees do not match')
+              const expectedGuardiansShares = amount.sub(expectedGovernorShares)
+              assertBn(currentGuardiansShares, previousGuardiansShares.add(expectedGuardiansShares), 'period guardians shares do not match')
             })
 
             it('emits an event', async () => {
