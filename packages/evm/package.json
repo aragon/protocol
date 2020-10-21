@@ -13,7 +13,7 @@
     "console": "buidler console",
     "compile": "buidler compile --force",
     "lint": "yarn lint:solidity && yarn lint:js",
-    "lint:js": "eslint ./test ./scripts ./migrations",
+    "lint:js": "eslint .",
     "lint:solidity": "solium --dir ./contracts",
     "test": "buidler test",
     "test:controller": "yarn test test/core/**/*.js test/core/*.js",
