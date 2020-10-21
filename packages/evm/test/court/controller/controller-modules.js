@@ -1,6 +1,6 @@
 const { sha3 } = require('web3-utils')
-const { ZERO_ADDRESS, ZERO_BYTES32 } = require('@aragon/contract-helpers-test')
-const { assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
+const { ZERO_ADDRESS, ZERO_BYTES32, bigExp } = require('@aragon/contract-helpers-test')
+const { assertRevert, assertAmountOfEvents, assertEvent, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../../helpers/wrappers/court')
 const { getCachedAddress } = require('../../helpers/utils/modules')
@@ -8,6 +8,7 @@ const { CONTROLLER_ERRORS, CONTROLLED_ERRORS } = require('../../helpers/utils/er
 const { CONTROLLER_EVENTS, CONTROLLED_EVENTS } = require('../../helpers/utils/events')
 
 const Controlled = artifacts.require('Controlled')
+const ControlledMock = artifacts.require('ControlledMock')
 
 contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, someone]) => {
   let controller
@@ -613,6 +614,120 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
       it('reverts', async () => {
         await assertRevert(firstModule.cacheModules([firstID], [firstModule.address], { from }), CONTROLLED_ERRORS.SENDER_NOT_CONTROLLER)
+      })
+    })
+  })
+
+  describe('customFunctions', () => {
+    let module
+
+    const setCounterSig = sha3('setCounter(uint256)').slice(0, 10)
+    const receiveEtherSig = sha3('receiveEther()').slice(0, 10)
+    const failSig = sha3('fail()').slice(0, 10)
+
+    beforeEach('deploy module', async () => {
+      module = await ControlledMock.new(controller.address)
+    })
+
+    context('when the sender is the governor', () => {
+      const from = modulesGovernor
+
+      context('when setting a function', () => {
+        const itRegistersTheCustomFunction = () => {
+          it('sets the function', async () => {
+            const receipt = await controller.setCustomFunction(setCounterSig, module.address, { from })
+            assertAmountOfEvents(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
+            assertEvent(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: module.address })
+
+            const anotherReceipt = await controller.setCustomFunction(receiveEtherSig, module.address, { from })
+            assertAmountOfEvents(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
+            assertEvent(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: module.address })
+          })
+
+          it('can be called', async () => {
+            const data = module.contract.methods.setCounter(10).encodeABI()
+            await controller.setCustomFunction(setCounterSig, module.address, { from })
+
+            assertBn(await module.counter(), 0, 'counter does not match')
+            await controller.sendTransaction({ data })
+            assertBn(await module.counter(), 10, 'counter does not match')
+          })
+
+          it('handles eth transfers properly', async () => {
+            await controller.setCustomFunction(receiveEtherSig, module.address, { from })
+
+            const receipt = await controller.sendTransaction({ data: receiveEtherSig, value: bigExp(1, 18) })
+
+            assertAmountOfEvents(receipt, 'EtherReceived', { decodeForAbi: ControlledMock.abi })
+            assertEvent(receipt, 'EtherReceived', { expectedArgs: { sender: controller.address, value: bigExp(1, 18) }, decodeForAbi: ControlledMock.abi })
+
+            const currentBalance = await web3.eth.getBalance(module.address)
+            assertBn(currentBalance, bigExp(1, 18), 'module balance does not match')
+          })
+
+          it('handles reverts properly', async () => {
+            await controller.setCustomFunction(failSig, module.address, { from })
+
+            await assertRevert(controller.sendTransaction({ data: failSig }), 'CONTROLLED_FAIL')
+          })
+        }
+
+        context('when the function was not set', () => {
+          itRegistersTheCustomFunction()
+        })
+
+        context('when the function was already set', () => {
+          beforeEach('set custom function', async () => {
+            await controller.setCustomFunction(failSig, modulesGovernor, { from })
+            await controller.setCustomFunction(setCounterSig, modulesGovernor, { from })
+            await controller.setCustomFunction(receiveEtherSig, modulesGovernor, { from })
+          })
+
+          itRegistersTheCustomFunction()
+        })
+      })
+
+      context('when unsetting a function', () => {
+        const itUnregistersTheCustomFunction = () => {
+          it('unsets the function', async () => {
+            const receipt = await controller.setCustomFunction(setCounterSig, ZERO_ADDRESS, { from })
+            assertAmountOfEvents(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
+            assertEvent(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: ZERO_ADDRESS })
+
+            const anotherReceipt = await controller.setCustomFunction(receiveEtherSig, ZERO_ADDRESS, { from })
+            assertAmountOfEvents(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
+            assertEvent(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: ZERO_ADDRESS })
+          })
+
+          it('cannot be called', async () => {
+            const data = module.contract.methods.setCounter(10).encodeABI()
+            await controller.setCustomFunction(setCounterSig, ZERO_ADDRESS, { from })
+
+            await assertRevert(controller.sendTransaction({ data }), CONTROLLER_ERRORS.CUSTOM_FUNCTION_NOT_SET)
+          })
+        }
+
+        context('when the function was not set', () => {
+          itUnregistersTheCustomFunction()
+        })
+
+        context('when the function was already set', () => {
+          beforeEach('set custom function', async () => {
+            await controller.setCustomFunction(failSig, modulesGovernor, { from })
+            await controller.setCustomFunction(setCounterSig, modulesGovernor, { from })
+            await controller.setCustomFunction(receiveEtherSig, modulesGovernor, { from })
+          })
+
+          itUnregistersTheCustomFunction()
+        })
+      })
+    })
+
+    context('when the sender is not the governor', () => {
+      const from = someone
+
+      it('reverts', async () => {
+        await assertRevert(controller.setCustomFunction(setCounterSig, ZERO_ADDRESS, { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
       })
     })
   })
