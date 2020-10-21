@@ -206,7 +206,7 @@ contract('JurorsRegistry', ([_, juror, secondJuror, thirdJuror, anyone]) => {
 
     context('when the sender is not the dispute manager', () => {
       it('reverts', async () => {
-        await assertRevert(registry.slashOrUnlock(0, [], [], []), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(registry.slashOrUnlock(0, [], [], []), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })
@@ -519,7 +519,7 @@ contract('JurorsRegistry', ([_, juror, secondJuror, thirdJuror, anyone]) => {
       const from = anyone
 
       it('reverts', async () => {
-        await assertRevert(registry.collectTokens(juror, bigExp(100, 18), 0, { from }), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(registry.collectTokens(juror, bigExp(100, 18), 0, { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })

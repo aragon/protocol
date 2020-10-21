@@ -24,10 +24,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     using PctHelpers for uint256;
     using Uint256Helpers for uint256;
 
-    // Voting-related error messages
-    string private constant ERROR_VOTER_WEIGHT_ZERO = "DM_VOTER_WEIGHT_ZERO";
-    string private constant ERROR_SENDER_NOT_VOTING = "DM_SENDER_NOT_VOTING";
-
     // Disputes-related error messages
     string private constant ERROR_SENDER_NOT_DISPUTE_SUBJECT = "DM_SENDER_NOT_DISPUTE_SUBJECT";
     string private constant ERROR_EVIDENCE_PERIOD_IS_CLOSED = "DM_EVIDENCE_PERIOD_IS_CLOSED";
@@ -44,6 +40,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     string private constant ERROR_INVALID_ADJUDICATION_STATE = "DM_INVALID_ADJUDICATION_STATE";
     string private constant ERROR_ROUND_ALREADY_DRAFTED = "DM_ROUND_ALREADY_DRAFTED";
     string private constant ERROR_DRAFT_TERM_NOT_REACHED = "DM_DRAFT_TERM_NOT_REACHED";
+    string private constant ERROR_VOTER_WEIGHT_ZERO = "DM_VOTER_WEIGHT_ZERO";
     string private constant ERROR_ROUND_NOT_APPEALED = "DM_ROUND_NOT_APPEALED";
     string private constant ERROR_INVALID_APPEAL_RULING = "DM_INVALID_APPEAL_RULING";
 
@@ -142,15 +139,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     event RewardSettled(uint256 indexed disputeId, uint256 indexed roundId, address juror, uint256 tokens, uint256 fees);
     event AppealDepositSettled(uint256 indexed disputeId, uint256 indexed roundId);
     event MaxJurorsPerDraftBatchChanged(uint64 previousMaxJurorsPerDraftBatch, uint64 currentMaxJurorsPerDraftBatch);
-
-    /**
-    * @dev Ensure the msg.sender is the CR Voting module
-    */
-    modifier onlyVoting() {
-        ICRVoting voting = _voting();
-        require(msg.sender == address(voting), ERROR_SENDER_NOT_VOTING);
-        _;
-    }
 
     /**
     * @dev Ensure a dispute exists
@@ -534,7 +522,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _voteId ID of the vote instance to request the weight of a voter for
     * @param _voter Address of the voter querying the weight of
     */
-    function ensureCanCommit(uint256 _voteId, address _voter) external onlyVoting {
+    function ensureCanCommit(uint256 _voteId, address _voter) external onlyActiveVoting {
         (Dispute storage dispute, uint256 roundId) = _decodeVoteId(_voteId);
         Config memory config = _getDisputeConfig(dispute);
 

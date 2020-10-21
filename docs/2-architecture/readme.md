@@ -55,3 +55,100 @@ The main entry point of the protocol is `AragonCourt`, this component inherits f
 This allows to guarantee a single and immutable address to the users of the Court protocol. `AragonCourt` does not implement core logic, only the main entry points of the protocol where each request is forwarded to the corresponding modules of the `Controller` to be fulfilled.
 
 Detailed information about `AragonCourt` can be found in [section 4](../4-entry-points).
+
+## 2.5. Migration Strategies
+
+| Module           |                          Ongoing disputes                         |                              No disputes                          |                      
+|------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
+| Dispute Manager  | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting cache                 |
+| Voting           | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute manager cache        |    
+| Treasury         | Deploy new Dispute Manager and point to new Treasury instance (*) | Disable previous instance and update Dispute manager cache        |
+| Subscriptions    | Leave the previous instance active until all funds are claimed                                                                        |  
+| Jurors Registry  | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and Subscriptions modules (**) |  
+
+(*) Assuming there is no easy way to migrate/replicate the current status of the existing module to the new one 
+
+(**) If the Jurors Registry status cannot be migrated it would be similar to deploying a new entire protocol
+
+### 2.5.1. Dispute Manager
+
+| Relies on module |           On           |    Expected behavior      |
+|------------------|------------------------|---------------------------|
+| Treasury         | `createDispute`        | The Dispute Manager needs to access the same Treasury instance during a dispute lifecycle |
+| Treasury         | `createAppeal`         | " |
+| Treasury         | `confirmAppeal`        | " |
+| Treasury         | `draft`                | " |
+| Treasury         | `settleReward`         | " |
+| Treasury         | `settlePenalties`      | " |
+| Treasury         | `settleAppealDeposit`  | " |
+| Voting           | `createDispute`        | The Dispute Manager needs to access the same Voting instance during a dispute lifecycle |
+| Voting           | `ensureCanCommit`      | " | 
+| Voting           | `createAppeal`         | " |
+| Voting           | `confirmAppeal`        | " |
+| Voting           | `settleReward`         | " |
+| Voting           | `settlePenalties`      | " |
+| JurorsRegistry   | `draft`                | The Dispute Manager needs to access the same Jurors Registry instance during a dispute lifecycle |
+| JurorsRegistry   | `ensureCanCommit`      | " |
+| JurorsRegistry   | `getJuror`             | " |
+| JurorsRegistry   | `createAppeal`         | " |
+| JurorsRegistry   | `confirmAppeal`        | " |
+| JurorsRegistry   | `settleReward`         | " |
+| JurorsRegistry   | `settlePenalties`      | " |
+| JurorsRegistry   | `settleAppealDeposit`  | " |
+
+Notes: 
+- If there are no ongoing disputes any of the three dependencies can be swapped 
+- If there are ongoing disputes none of the three dependencies can be migrated 
+
+
+### 2.5.2. Voting
+
+| Relies on module |           On           |     Expected behavior     |
+|------------------|------------------------|---------------------------|
+| DisputeManager   | `create`               | Only the latest Dispute Manager should be able to create votes                              |
+| DisputeManager   | `commit`               | The Voting module needs to access the same Dispute Manager instance during a vote lifecycle |
+| DisputeManager   | `reveal`               | " |
+| DisputeManager   | `leak`                 | " |
+
+Notes: 
+- If there are ongoing disputes the Voting dependency cannot be changed
+- If a new Dispute Manager is deployed it can be pointed to the same Voting module 
+
+
+### 2.5.3. Treasury
+
+| Relies on module |           On           |     Expected behavior     |
+|------------------|------------------------|---------------------------|
+| DisputesManager  | `assign`               | Any active Dispute Manager should be able to assign token balances |
+
+Notes:
+- The Treasury module shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
+
+
+### 2.5.4. Jurors Registry
+
+| Relies on module |           On           |    Expected behavior     |
+|------------------|------------------------|--------------------------|
+| DisputesManager  | `assignTokens`         | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `burnTokens`           | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `draft`                | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `clashOrUnlock`        | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `collectTokens`        | Any active Dispute Manager should be able to manage juror tokens |
+| DisputesManager  | `lockWithdrawals`      | Any active Dispute Manager should be able to manage juror tokens |
+
+Notes:
+- The Jurors Registry shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
+
+
+### 2.5.5. Subscriptions
+
+| Relies on module |           On           |    Expected behavior     |
+|------------------|------------------------|--------------------------|
+| JurorsRegistry   | `getJuror`             | Each period should work always with the same Jurors Registry instance |
+| JurorsRegistry   | `getJurorShare`        | " |
+| JurorsRegistry   | `claimFees`            | " |
+| JurorsRegistry   | `ensurePeriodBalance`  | " |
+
+Notes:
+- The Subscriptions module could checkpoint the Jurors Registry instance per period
+- Otherwise, it can trust that the Jurors Registry always reflects the same status among all its versions

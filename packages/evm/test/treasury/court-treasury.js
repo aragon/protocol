@@ -142,7 +142,7 @@ contract('CourtTreasury', ([_, disputeManager, holder, someone]) => {
         const from = someone
 
         it('reverts', async () => {
-          await assertRevert(treasury.assign(DAI.address, account, bigExp(10, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+          await assertRevert(treasury.assign(DAI.address, account, bigExp(10, 18), { from }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
         })
       })
     }

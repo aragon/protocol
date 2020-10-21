@@ -57,12 +57,15 @@ const SUBSCRIPTIONS_EVENTS = {
 
 const CONTROLLER_EVENTS = {
   MODULE_SET: 'ModuleSet',
+  MODULE_ENABLED: 'ModuleEnabled',
+  MODULE_DISABLED: 'ModuleDisabled',
   FUNDS_GOVERNOR_CHANGED: 'FundsGovernorChanged',
   CONFIG_GOVERNOR_CHANGED: 'ConfigGovernorChanged',
   MODULES_GOVERNOR_CHANGED: 'ModulesGovernorChanged'
 }
 
 const CONTROLLED_EVENTS = {
+  MODULE_CACHED: 'ModuleCached',
   RECOVER_FUNDS: 'RecoverFunds'
 }
 

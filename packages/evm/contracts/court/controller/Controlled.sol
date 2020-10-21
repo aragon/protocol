@@ -2,6 +2,8 @@ pragma solidity ^0.5.8;
 
 import "../../lib/os/IsContract.sol";
 
+import "./Modules.sol";
+import "./IModuleCache.sol";
 import "./Controller.sol";
 import "../clock/IClock.sol";
 import "../config/ConfigConsumer.sol";
@@ -12,14 +14,24 @@ import "../../disputes/IDisputeManager.sol";
 import "../../subscriptions/ISubscriptions.sol";
 
 
-contract Controlled is IsContract, ConfigConsumer {
+contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
+    string private constant ERROR_MODULE_NOT_SET = "CTD_MODULE_NOT_SET";
+    string private constant ERROR_INVALID_MODULES_CACHE_INPUT = "CTD_INVALID_MODULES_CACHE_INPUT";
     string private constant ERROR_CONTROLLER_NOT_CONTRACT = "CTD_CONTROLLER_NOT_CONTRACT";
+    string private constant ERROR_SENDER_NOT_ALLOWED = "CTD_SENDER_NOT_ALLOWED";
     string private constant ERROR_SENDER_NOT_CONTROLLER = "CTD_SENDER_NOT_CONTROLLER";
     string private constant ERROR_SENDER_NOT_CONFIG_GOVERNOR = "CTD_SENDER_NOT_CONFIG_GOVERNOR";
-    string private constant ERROR_SENDER_NOT_DISPUTES_MODULE = "CTD_SENDER_NOT_DISPUTES_MODULE";
+    string private constant ERROR_SENDER_NOT_ACTIVE_VOTING = "CTD_SENDER_NOT_ACTIVE_VOTING";
+    string private constant ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER = "CTD_SEND_NOT_ACTIVE_DISPUTE_MGR";
+    string private constant ERROR_SENDER_NOT_CURRENT_DISPUTE_MANAGER = "CTD_SEND_NOT_CURRENT_DISPUTE_MGR";
 
     // Address of the controller
     Controller internal controller;
+
+    // List of module caches indexed by ID
+    mapping (bytes32 => address) internal modulesCache;
+
+    event ModuleCached(bytes32 id, address addr);
 
     /**
     * @dev Ensure the msg.sender is the controller's config governor
@@ -38,10 +50,28 @@ contract Controlled is IsContract, ConfigConsumer {
     }
 
     /**
-    * @dev Ensure the msg.sender is the DisputeManager module
+    * @dev Ensure the msg.sender is an active Voting module
     */
-    modifier onlyDisputeManager() {
-        require(msg.sender == address(_disputeManager()), ERROR_SENDER_NOT_DISPUTES_MODULE);
+    modifier onlyActiveVoting() {
+        require(controller.isActive(VOTING, msg.sender), ERROR_SENDER_NOT_ACTIVE_VOTING);
+        _;
+    }
+
+    /**
+    * @dev Ensure the msg.sender is an active DisputeManager module
+    */
+    modifier onlyActiveDisputeManagers() {
+        require(controller.isActive(DISPUTE_MANAGER, msg.sender), ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
+        _;
+    }
+
+    /**
+    * @dev Ensure the msg.sender is the current DisputeManager module
+    */
+    modifier onlyCurrentDisputeManager() {
+        (address addr, bool disabled) = controller.getDisputeManager();
+        require(msg.sender == addr, ERROR_SENDER_NOT_CURRENT_DISPUTE_MANAGER);
+        require(!disabled, ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
         _;
     }
 
@@ -52,6 +82,20 @@ contract Controlled is IsContract, ConfigConsumer {
     constructor(Controller _controller) public {
         require(isContract(address(_controller)), ERROR_CONTROLLER_NOT_CONTRACT);
         controller = _controller;
+    }
+
+    /**
+    * @notice Update the implementations cache of a list of modules
+    * @param _ids List of IDs of the modules to be updated
+    * @param _addresses List of module addresses to be updated
+    */
+    function cacheModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyController {
+        require(_ids.length == _addresses.length, ERROR_INVALID_MODULES_CACHE_INPUT);
+
+        for (uint256 i = 0; i < _ids.length; i++) {
+            modulesCache[_ids[i]] = _addresses[i];
+            emit ModuleCached(_ids[i], _addresses[i]);
+        }
     }
 
     /**
@@ -88,58 +132,77 @@ contract Controlled is IsContract, ConfigConsumer {
 
     /**
     * @dev Internal function to fetch the controller's config governor
-    * @return Address of the controller's governor
+    * @return Address of the controller's config governor
     */
     function _configGovernor() internal view returns (address) {
         return controller.getConfigGovernor();
     }
 
     /**
-    * @dev Internal function to fetch the address of the DisputeManager module from the controller
+    * @dev Internal function to fetch the controller's modules governor
+    * @return Address of the controller's modules governor
+    */
+    function _modulesGovernor() internal view returns (address) {
+        return controller.getModulesGovernor();
+    }
+
+    /**
+    * @dev Internal function to fetch the address of the DisputeManager module
     * @return Address of the DisputeManager module
     */
     function _disputeManager() internal view returns (IDisputeManager) {
-        return IDisputeManager(controller.getDisputeManager());
+        return IDisputeManager(_getModuleCache(DISPUTE_MANAGER));
     }
 
     /**
-    * @dev Internal function to fetch the address of the Treasury module implementation from the controller
+    * @dev Internal function to fetch the address of the Treasury module implementation
     * @return Address of the Treasury module implementation
     */
     function _treasury() internal view returns (ITreasury) {
-        return ITreasury(controller.getTreasury());
+        return ITreasury(_getModuleCache(TREASURY));
     }
 
     /**
-    * @dev Internal function to fetch the address of the Voting module implementation from the controller
+    * @dev Internal function to fetch the address of the Voting module implementation
     * @return Address of the Voting module implementation
     */
     function _voting() internal view returns (ICRVoting) {
-        return ICRVoting(controller.getVoting());
+        return ICRVoting(_getModuleCache(VOTING));
     }
 
     /**
-    * @dev Internal function to fetch the address of the Voting module owner from the controller
+    * @dev Internal function to fetch the address of the Voting module owner
     * @return Address of the Voting module owner
     */
     function _votingOwner() internal view returns (ICRVotingOwner) {
-        return ICRVotingOwner(address(_disputeManager()));
+        return ICRVotingOwner(_getModuleCache(DISPUTE_MANAGER));
     }
 
     /**
-    * @dev Internal function to fetch the address of the JurorRegistry module implementation from the controller
+    * @dev Internal function to fetch the address of the JurorRegistry module implementation
     * @return Address of the JurorRegistry module implementation
     */
     function _jurorsRegistry() internal view returns (IJurorsRegistry) {
-        return IJurorsRegistry(controller.getJurorsRegistry());
+        return IJurorsRegistry(_getModuleCache(JURORS_REGISTRY));
     }
 
     /**
-    * @dev Internal function to fetch the address of the Subscriptions module implementation from the controller
+    * @dev Internal function to fetch the address of the Subscriptions module implementation
     * @return Address of the Subscriptions module implementation
     */
     function _subscriptions() internal view returns (ISubscriptions) {
-        return ISubscriptions(controller.getSubscriptions());
+        return ISubscriptions(_getModuleCache(SUBSCRIPTIONS));
+    }
+
+    /**
+    * @dev Internal function to tell the address cached for a module based on a given ID
+    * @param _id ID of the module being queried
+    * @return Cached address of the requested module
+    */
+    function _getModuleCache(bytes32 _id) internal view returns (address) {
+        address module = modulesCache[_id];
+        require(module != address(0), ERROR_MODULE_NOT_SET);
+        return module;
     }
 
     /**

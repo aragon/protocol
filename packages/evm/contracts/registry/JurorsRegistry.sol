@@ -221,7 +221,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     * @param _juror Juror to add an amount of tokens to
     * @param _amount Amount of tokens to be added to the available balance of a juror
     */
-    function assignTokens(address _juror, uint256 _amount) external onlyDisputeManager {
+    function assignTokens(address _juror, uint256 _amount) external onlyActiveDisputeManagers {
         if (_amount > 0) {
             _updateAvailableBalanceOf(_juror, _amount, true);
             emit JurorTokensAssigned(_juror, _amount);
@@ -232,7 +232,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     * @notice Burn `@tokenAmount(self.token(), _amount)`
     * @param _amount Amount of tokens to be burned
     */
-    function burnTokens(uint256 _amount) external onlyDisputeManager {
+    function burnTokens(uint256 _amount) external onlyActiveDisputeManagers {
         if (_amount > 0) {
             _updateAvailableBalanceOf(BURN_ACCOUNT, _amount, true);
             emit JurorTokensBurned(_amount);
@@ -253,7 +253,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     * @return jurors List of jurors selected for the draft
     * @return length Size of the list of the draft result
     */
-    function draft(uint256[7] calldata _params) external onlyDisputeManager returns (address[] memory jurors, uint256 length) {
+    function draft(uint256[7] calldata _params) external onlyActiveDisputeManagers returns (address[] memory jurors, uint256 length) {
         DraftParams memory draftParams = _buildDraftParams(_params);
         jurors = new address[](draftParams.batchRequestedJurors);
 
@@ -314,7 +314,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     */
     function slashOrUnlock(uint64 _termId, address[] calldata _jurors, uint256[] calldata _lockedAmounts, bool[] calldata _rewardedJurors)
         external
-        onlyDisputeManager
+        onlyActiveDisputeManagers
         returns (uint256)
     {
         require(_jurors.length == _lockedAmounts.length, ERROR_INVALID_LOCKED_AMOUNTS_LENGTH);
@@ -352,7 +352,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     * @param _termId Current term id
     * @return True if the juror has enough unlocked tokens to be collected for the requested term, false otherwise
     */
-    function collectTokens(address _juror, uint256 _amount, uint64 _termId) external onlyDisputeManager returns (bool) {
+    function collectTokens(address _juror, uint256 _amount, uint64 _termId) external onlyActiveDisputeManagers returns (bool) {
         if (_amount == 0) {
             return true;
         }
@@ -389,7 +389,7 @@ contract JurorsRegistry is ControlledRecoverable, IJurorsRegistry, ERC900, Appro
     * @param _juror Address of the juror to be locked
     * @param _termId Term ID until which the juror's withdrawals will be locked
     */
-    function lockWithdrawals(address _juror, uint64 _termId) external onlyDisputeManager {
+    function lockWithdrawals(address _juror, uint64 _termId) external onlyActiveDisputeManagers {
         Juror storage juror = jurorsByAddress[_juror];
         juror.withdrawalsLockTermId = _termId;
     }

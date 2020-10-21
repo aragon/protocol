@@ -591,7 +591,7 @@ contract('JurorsRegistry', ([_, juror500, juror1000, juror1500, juror2000, juror
 
     context('when the sender is not the dispute manager', () => {
       it('reverts', async () => {
-        await assertRevert(registry.draft([0, 0, 0, 0, 0, 0, 0]), CONTROLLED_ERRORS.SENDER_NOT_DISPUTES_MODULE)
+        await assertRevert(registry.draft([0, 0, 0, 0, 0, 0, 0]), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_DISPUTE_MANAGER)
       })
     })
   })

@@ -34,29 +34,30 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
     {}
 
     function setDisputeManager(address _addr) external {
-        _setModule(DISPUTE_MANAGER, _addr);
+        _setAndCacheModule(DISPUTE_MANAGER, _addr);
     }
 
     function setDisputeManagerMock(address _addr) external {
         // This function allows setting any address as the DisputeManager module
-        modules[DISPUTE_MANAGER] = _addr;
+        currentModules[DISPUTE_MANAGER] = _addr;
+        allModules[_addr].id = DISPUTE_MANAGER;
         emit ModuleSet(DISPUTE_MANAGER, _addr);
     }
 
     function setTreasury(address _addr) external {
-        _setModule(TREASURY, _addr);
+        _setAndCacheModule(TREASURY, _addr);
     }
 
     function setVoting(address _addr) external {
-        _setModule(VOTING, _addr);
+        _setAndCacheModule(VOTING, _addr);
     }
 
     function setJurorsRegistry(address _addr) external {
-        _setModule(JURORS_REGISTRY, _addr);
+        _setAndCacheModule(JURORS_REGISTRY, _addr);
     }
 
     function setSubscriptions(address _addr) external {
-        _setModule(SUBSCRIPTIONS, _addr);
+        _setAndCacheModule(SUBSCRIPTIONS, _addr);
     }
 
     function mockIncreaseTerm() external {
@@ -100,5 +101,25 @@ contract AragonCourtMock is AragonCourt, TimeHelpersMock {
     function _computeTermRandomness(uint64 _termId) internal view returns (bytes32) {
         if (mockedTermRandomness != bytes32(0)) return mockedTermRandomness;
         return super._computeTermRandomness(_termId);
+    }
+
+    function _setAndCacheModule(bytes32 _id, address _addr) private {
+        _setModule(_id, _addr);
+
+        bytes32[] memory ids = new bytes32[](5);
+        ids[0] = DISPUTE_MANAGER;
+        ids[1] = VOTING;
+        ids[2] = TREASURY;
+        ids[3] = JURORS_REGISTRY;
+        ids[4] = SUBSCRIPTIONS;
+
+        address[] memory addresses = new address[](5);
+        for (uint i = 0; i < ids.length; i++) {
+            addresses[i] = currentModules[ids[i]];
+        }
+
+        for (uint j = 0; j < addresses.length; j++) {
+            IModuleCache(addresses[j]).cacheModules(ids, addresses);
+        }
     }
 }
