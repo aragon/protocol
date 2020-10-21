@@ -38,11 +38,11 @@ SUBGRAPH_ID=$(grep "Build completed:" deploy-output.txt | grep -oE "Qm[a-zA-Z0-9
 rm deploy-output.txt
 echo "The Graph deployment complete: ${SUBGRAPH_ID}"
 
-if [[ -z "$SUBGRAPH_ID" ]]; then
+if [[ -z "$SUBGRAPH_ID" || "$NETWORK" == "ganache" ]]; then
   echo "Could not find subgraph ID in deploy output, cannot deploy to Aragon infra."
 else
   echo "Deploying subgraph ${SUBGRAPH_ID} to Aragon infra..."
-  kubectl exec graph-shell -- create aragon/aragon-protocol-${NETWORK}
-  kubectl exec graph-shell -- deploy aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
-  kubectl exec graph-shell -- reassign aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell-0 -- create aragon/aragon-protocol-${NETWORK}
+  kubectl exec graph-shell-0 -- deploy aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell-0 -- reassign aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
 fi
