@@ -1,9 +1,18 @@
 pragma solidity ^0.5.8;
 
+import "./IArbitrable.sol";
 import "../lib/os/ERC20.sol";
 
 
 interface IArbitrator {
+    /**
+    * @dev Emitted when new evidence is submitted for the IArbitrable instance's dispute
+    * @param disputeId Identification number of the dispute receiving new evidence
+    * @param submitter Address of the account submitting the evidence
+    * @param evidence Data submitted for the evidence of the dispute
+    */
+    event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence);
+
     /**
     * @dev Create a dispute over the Arbitrable sender with a number of possible rulings
     * @param _possibleRulings Number of possible rulings allowed for the dispute
@@ -13,16 +22,26 @@ interface IArbitrator {
     function createDispute(uint256 _possibleRulings, bytes calldata _metadata) external returns (uint256);
 
     /**
+    * @dev Submit evidence for a dispute
+    * @param _disputeId Id of the dispute in the Court
+    * @param _submitter Address of the account submitting the evidence
+    * @param _evidence Data submitted for the evidence related to the dispute
+    */
+    function submitEvidence(uint256 _disputeId, address _submitter, bytes calldata _evidence) external;
+
+    /**
     * @dev Close the evidence period of a dispute
     * @param _disputeId Identification number of the dispute to close its evidence submitting period
     */
     function closeEvidencePeriod(uint256 _disputeId) external;
 
     /**
-    * @dev Execute the Arbitrable associated to a dispute based on its final ruling
-    * @param _disputeId Identification number of the dispute to be executed
+    * @notice Rule dispute #`_disputeId` if ready
+    * @param _disputeId Identification number of the dispute to be ruled
+    * @return subject Arbitrable instance associated to the dispute
+    * @return ruling Ruling number computed for the given dispute
     */
-    function executeRuling(uint256 _disputeId) external;
+    function rule(uint256 _disputeId) external returns (IArbitrable subject, uint256 ruling);
 
     /**
     * @dev Tell the dispute fees information to create a dispute

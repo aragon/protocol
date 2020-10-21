@@ -231,7 +231,7 @@ contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, juror500
       })
     })
 
-    describe('executeRuling', () => {
+    describe('rule', () => {
       let disputeId
 
       beforeEach('create dispute, draft and vote', async () => {
@@ -251,7 +251,7 @@ contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, juror500
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
-        itCostsAtMost('executeRuling', 98e3, () => court.executeRuling(disputeId))
+        itCostsAtMost('rule', 94e3, () => court.rule(disputeId))
       })
 
       context('when the current term is outdated by one term', () => {
@@ -261,7 +261,7 @@ contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, juror500
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
-        itCostsAtMost('executeRuling', 159e3, () => court.executeRuling(disputeId))
+        itCostsAtMost('rule', 155e3, () => court.rule(disputeId))
       })
     })
 

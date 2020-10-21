@@ -67,9 +67,9 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
         }
 
         const itExecutesFinalRulingProperly = expectedFinalRuling => {
-          describe('executeRuling', () => {
+          describe('rule', () => {
             it('marks the dispute ruling as computed but not twice', async () => {
-              const receipt = await court.executeRuling(disputeId)
+              const receipt = await court.rule(disputeId)
 
               const logs = decodeEvents(receipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
               assertAmountOfEvents({ logs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
@@ -80,13 +80,16 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, juror500, jur
               assertBn(possibleRulings, 2, 'dispute possible rulings do not match')
               assertBn(finalRuling, expectedFinalRuling, 'dispute final ruling does not match')
 
-              const anotherReceipt = await court.executeRuling(disputeId)
+              const anotherReceipt = await court.rule(disputeId)
               const anotherLogs = decodeEvents(anotherReceipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED)
               assertAmountOfEvents({ logs: anotherLogs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED, { expectedAmount: 0 })
             })
 
             it('executes the final ruling on the arbitrable', async () => {
-              const receipt = await court.executeRuling(disputeId)
+              const { subject } = await courtHelper.getDispute(disputeId)
+              const arbitrable = await Arbitrable.at(subject)
+
+              const receipt = await arbitrable.rule(disputeId)
 
               const logs = decodeEvents(receipt, Arbitrable.abi, ARBITRABLE_EVENTS.RULED)
               assertAmountOfEvents({ logs }, ARBITRABLE_EVENTS.RULED)
