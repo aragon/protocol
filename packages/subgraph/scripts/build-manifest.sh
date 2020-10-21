@@ -4,16 +4,16 @@
 set -o errexit
 
 # Protocol known addresses
-protocol_ropsten=0x3b26bc496aebaed5b3E0E81cDE6B582CDe71396e
-protocol_staging=0x52180af656a1923024d1accf1d827ab85ce48878
-protocol_rinkeby=0xf7970965489f4d4eafcf5fad55ca5ea57fb4bfcb
-protocol_mainnet=0xee4650cBe7a2B23701D416f58b41D8B76b617797
+protocol_ropsten=0x7639480251C12f8168eeEc5e815Ab96072E5fe62
+protocol_staging=0x2057Fa53c5c85bB2cff125f9DB2D0cA7E4eeBE02
+protocol_rinkeby=0xDB56c4d44ba23133805A38d837aBeC811D6c28b9
+protocol_mainnet=
 
 # Known block numbers
-start_block_ropsten=6819000
-start_block_staging=6199000
-start_block_rinkeby=7238369
-start_block_mainnet=9017000
+start_block_ropsten=8916212
+start_block_staging=7404103
+start_block_rinkeby=7404061
+start_block_mainnet=
 
 # Validate network
 networks=(ganache ropsten staging rinkeby mainnet)
