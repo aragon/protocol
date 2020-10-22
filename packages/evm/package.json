@@ -1,6 +1,6 @@
 {
   "name": "@aragon/protocol-evm",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "Aragon Protocol EVM contracts",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "GPL-3.0",
