@@ -2,8 +2,11 @@ name: Subgraph testnets deployment
 
 on:
   push:
+    paths:
+    - 'packages/subgraph/**'
     branches:
     - 'master'
+    - 'development'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}

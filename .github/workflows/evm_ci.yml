@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
+    branches:
+    - 'master'
     paths:
     - 'packages/evm/**'
   pull_request:
+    branches:
+    - '*'
     paths:
     - 'packages/evm/**'
 
