@@ -4,7 +4,7 @@ import "../../registry/GuardiansRegistry.sol";
 
 
 contract GuardiansRegistryMock is GuardiansRegistry {
-    string private constant ERROR_INVALID_MOCK_LOCK_AMOUNT = 'JR_INVALID_MOCK_LOCK_AMOUNT';
+    string private constant ERROR_INVALID_MOCK_LOCK_AMOUNT = 'GR_INVALID_MOCK_LOCK_AMOUNT';
 
     bool internal nextDraftMocked;
     address[] internal mockedSelectedGuardians;
