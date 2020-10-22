@@ -1,15 +1,17 @@
-import { JurorDraft, Vote } from '../types/schema'
-import { buildDraftId, decodeDisputeRoundId, createJurorDraft } from './DisputeManager'
-import { VoteCommitted, VoteLeaked, VoteRevealed } from '../types/templates/Voting/Voting'
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
-import { Voting } from '../types/templates/Voting/Voting'
-import { Controller } from '../types/templates/JurorsRegistry/Controller'
+
+import { buildDraftId, decodeDisputeRoundId, createGuardianDraft } from './DisputeManager'
+
+import { Controller } from '../types/templates/GuardiansRegistry/Controller'
+import { GuardianDraft, Vote } from '../types/schema'
+import { Voting, VoteCommitted, VoteLeaked, VoteRevealed } from '../types/templates/Voting/Voting'
 
 export function handleVoteCommitted(event: VoteCommitted): void {
-  let disputeRoundId = event.params.voteId
-  let draftId = buildDraftId(disputeRoundId, event.params.voter)
-  let draft = loadOrCreateJurorDraft(draftId, disputeRoundId, event.params.voter, event)
+  const disputeRoundId = event.params.voteId
+  const draftId = buildDraftId(disputeRoundId, event.params.voter)
+  const draft = loadOrCreateGuardianDraft(draftId, disputeRoundId, event.params.voter, event)
   draft.commitment = event.params.commitment
+  draft.commitmentBy = event.params.sender
   draft.commitmentDate = event.block.timestamp
   draft.save()
 
@@ -17,9 +19,9 @@ export function handleVoteCommitted(event: VoteCommitted): void {
 }
 
 export function handleVoteLeaked(event: VoteLeaked): void {
-  let roundId = event.params.voteId
-  let draftId = buildDraftId(roundId, event.params.voter)
-  let draft = JurorDraft.load(draftId)
+  const roundId = event.params.voteId
+  const draftId = buildDraftId(roundId, event.params.voter)
+  const draft = GuardianDraft.load(draftId)
   draft.outcome = event.params.outcome
   draft.leaker = event.params.leaker
   draft.save()
@@ -28,9 +30,9 @@ export function handleVoteLeaked(event: VoteLeaked): void {
 }
 
 export function handleVoteRevealed(event: VoteRevealed): void {
-  let roundId = event.params.voteId
-  let draftId = buildDraftId(roundId, event.params.voter)
-  let draft = JurorDraft.load(draftId)
+  const roundId = event.params.voteId
+  const draftId = buildDraftId(roundId, event.params.voter)
+  const draft = GuardianDraft.load(draftId)
   draft.outcome = event.params.outcome
   draft.revealDate = event.block.timestamp
   draft.save()
@@ -39,14 +41,14 @@ export function handleVoteRevealed(event: VoteRevealed): void {
 }
 
 function updateVote(voteId: BigInt, event: ethereum.Event): void {
-  let vote = loadOrCreateVote(voteId, event)
-  let voting = Voting.bind(event.address)
-  let winningOutcome = voting.getWinningOutcome(voteId)
+  const vote = loadOrCreateVote(voteId, event)
+  const voting = Voting.bind(event.address)
+  const winningOutcome = voting.getWinningOutcome(voteId)
   vote.winningOutcome = castOutcome(winningOutcome)
   vote.save()
 }
 
-function loadOrCreateVote(voteId: BigInt, event: ethereum.Event): Vote | null {
+function loadOrCreateVote(voteId: BigInt, event: ethereum.Event): Vote {
   let vote = Vote.load(voteId.toString())
 
   if (vote === null) {
@@ -54,22 +56,22 @@ function loadOrCreateVote(voteId: BigInt, event: ethereum.Event): Vote | null {
     vote.createdAt = event.block.timestamp
   }
 
-  return vote
+  return vote!
 }
 
-function loadOrCreateJurorDraft(draftId: string, disputeRoundId: BigInt, jurorAddress: Address, event: ethereum.Event): JurorDraft | null {
-  let draft = JurorDraft.load(draftId)
+function loadOrCreateGuardianDraft(draftId: string, disputeRoundId: BigInt, guardianAddress: Address, event: ethereum.Event): GuardianDraft {
+  let draft = GuardianDraft.load(draftId)
 
   if (draft === null) {
-    let voting = Voting.bind(event.address)
-    let controllerAddress = voting.getController()
-    let controller = Controller.bind(controllerAddress)
-    let disputeManagerAddress = controller.getDisputeManager()
-    let disputeRoundIdArray = decodeDisputeRoundId(disputeRoundId)
-    draft = createJurorDraft(disputeManagerAddress, disputeRoundIdArray[0], disputeRoundIdArray[1], jurorAddress, event.block.timestamp)
+    const voting = Voting.bind(event.address)
+    const controllerAddress = voting.getController()
+    const controller = Controller.bind(controllerAddress)
+    const disputeManagerAddress = controller.getDisputeManager().value0
+    const disputeRoundIdArray = decodeDisputeRoundId(disputeRoundId)
+    draft = createGuardianDraft(disputeManagerAddress, disputeRoundIdArray[0], disputeRoundIdArray[1], guardianAddress, event.block.timestamp)
   }
 
-  return draft
+  return draft!
 }
 
 function castOutcome(outcome: i32): string {

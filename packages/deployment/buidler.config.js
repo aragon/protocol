@@ -22,7 +22,7 @@ task('deploy-faucet', 'Deploy token faucet')
 
 module.exports = {
   networks: {
-    localhost: {
+    ganache: {
       url: 'http://localhost:8545',
       gasLimit: 8000000,
       defaultBalanceEther: 1000

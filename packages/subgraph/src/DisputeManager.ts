@@ -1,80 +1,62 @@
-import { concat } from '../helpers/bytes'
-import { buildId } from '../helpers/id'
+import { crypto, Bytes, BigInt, Address, ethereum } from '@graphprotocol/graph-ts'
+
+import { buildId, concat } from '../helpers/utils'
 import { createFeeMovement } from './Treasury'
 import { tryDecodingAgreementMetadata } from '../helpers/disputable'
-import { Arbitrable as ArbitrableTemplate } from '../types/templates'
-import { crypto, Bytes, BigInt, Address, ethereum } from '@graphprotocol/graph-ts'
-import { AdjudicationRound, Arbitrable, Dispute, Appeal, JurorDispute, JurorDraft } from '../types/schema'
-import {
-  DisputeManager,
-  NewDispute,
-  EvidencePeriodClosed,
-  JurorDrafted,
-  DisputeStateChanged,
-  PenaltiesSettled,
-  RewardSettled,
-  AppealDepositSettled,
-  RulingAppealed,
-  RulingAppealConfirmed,
-  RulingComputed
-} from '../types/templates/DisputeManager/DisputeManager'
 
-const JUROR_FEES = 'Juror'
-const APPEAL_FEES = 'Appeal'
+import { AdjudicationRound, Dispute, Appeal, GuardianDispute, GuardianDraft } from '../types/schema'
+import { DisputeManager, NewDispute, EvidencePeriodClosed, GuardianDrafted, DisputeStateChanged, PenaltiesSettled, RewardSettled, AppealDepositSettled, RulingAppealed, RulingAppealConfirmed, RulingComputed } from '../types/templates/DisputeManager/DisputeManager'
+
+const APPEAL_MOVEMENT = 'Appeal'
+const GUARDIAN_MOVEMENT = 'Guardian'
+const UINT128 = BigInt.fromI32(2).pow(128)
 
 export function handleNewDispute(event: NewDispute): void {
-  let manager = DisputeManager.bind(event.address)
-  let dispute = new Dispute(event.params.disputeId.toString())
-  let disputeResult = manager.getDispute(event.params.disputeId)
-  dispute.subject = event.params.subject.toHexString()
+  const manager = DisputeManager.bind(event.address)
+  const dispute = new Dispute(event.params.disputeId.toString())
+  const disputeData = manager.getDispute(event.params.disputeId)
+  dispute.subject = event.params.subject
   dispute.metadata = event.params.metadata.toString()
   dispute.rawMetadata = event.params.metadata
-  dispute.possibleRulings = disputeResult.value1
+  dispute.possibleRulings = disputeData.value1
   dispute.state = 'Evidence'
   dispute.settledPenalties = false
-  dispute.finalRuling = disputeResult.value3
-  dispute.lastRoundId = disputeResult.value4
-  dispute.createTermId = disputeResult.value5
+  dispute.finalRuling = disputeData.value3
+  dispute.lastRoundId = disputeData.value4
+  dispute.createTermId = disputeData.value5
   dispute.createdAt = event.block.timestamp
   dispute.txHash = event.transaction.hash.toHexString()
   dispute.save()
 
   updateRound(event.params.disputeId, dispute.lastRoundId, event)
   tryDecodingAgreementMetadata(dispute)
-
-  ArbitrableTemplate.create(event.params.subject)
-  let arbitrable = new Arbitrable(event.params.subject.toHexString())
-  arbitrable.save()
 }
 
 export function handleEvidencePeriodClosed(event: EvidencePeriodClosed): void {
-  let dispute = Dispute.load(event.params.disputeId.toString())
+  const dispute = Dispute.load(event.params.disputeId.toString())
   dispute.state = 'Drafting'
   dispute.save()
 
   updateRound(event.params.disputeId, dispute.lastRoundId, event)
 }
 
-export function handleJurorDrafted(event: JurorDrafted): void {
-  let draft = createJurorDraft(event.address, event.params.disputeId, event.params.roundId, event.params.juror, event.block.timestamp)
-  draft.save()
-
-  createJurorDispute(event.params.disputeId, event.params.juror)
-
+export function handleGuardianDrafted(event: GuardianDrafted): void {
+  createGuardianDraft(event.address, event.params.disputeId, event.params.roundId, event.params.guardian, event.block.timestamp)
+  loadOrCreateGuardianDispute(event.params.disputeId, event.params.guardian)
   updateRound(event.params.disputeId, event.params.roundId, event)
 }
 
 export function handleDisputeStateChanged(event: DisputeStateChanged): void {
-  let dispute = Dispute.load(event.params.disputeId.toString())
+  const dispute = Dispute.load(event.params.disputeId.toString())
   dispute.state = castDisputeState(event.params.state)
   dispute.save()
 
   updateRound(event.params.disputeId, dispute.lastRoundId, event)
 
   if (event.params.state === 1) { // Adjudicating
-    let round = loadOrCreateRound(event.params.disputeId, dispute.lastRoundId, event)
-    round.draftedTermId = round.draftTermId.plus(round.delayedTerms);
-    round.save();
+    const round = loadOrCreateRound(event.params.disputeId, dispute.lastRoundId, event)
+    round.draftedTermId = round.draftTermId.plus(round.delayedTerms)
+    round.save()
   }
 }
 
@@ -84,11 +66,11 @@ export function handleRulingAppealed(event: RulingAppealed): void {
 }
 
 export function handleRulingAppealConfirmed(event: RulingAppealConfirmed): void {
-  let manager = DisputeManager.bind(event.address)
-  let dispute = new Dispute(event.params.disputeId.toString())
-  let disputeResult = manager.getDispute(event.params.disputeId)
-  dispute.state = castDisputeState(disputeResult.value2)
-  dispute.lastRoundId = disputeResult.value4
+  const manager = DisputeManager.bind(event.address)
+  const dispute = new Dispute(event.params.disputeId.toString())
+  const disputeData = manager.getDispute(event.params.disputeId)
+  dispute.state = castDisputeState(disputeData.value2)
+  dispute.lastRoundId = disputeData.value4
   dispute.save()
 
   // RulingAppealConfirmed returns next roundId so in order to update the appeal we need the previous round
@@ -99,40 +81,40 @@ export function handleRulingAppealConfirmed(event: RulingAppealConfirmed): void 
 export function handlePenaltiesSettled(event: PenaltiesSettled): void {
   updateRound(event.params.disputeId, event.params.roundId, event)
 
-  let dispute = Dispute.load(event.params.disputeId.toString())
+  const dispute = Dispute.load(event.params.disputeId.toString())
 
   // In cases where the penalties are settled before the ruling is executed
   if (dispute.finalRuling === 0) {
-    let manager = DisputeManager.bind(event.address)
-    let disputeResult = manager.getDispute(event.params.disputeId)
-    dispute.finalRuling = disputeResult.value3
+    const manager = DisputeManager.bind(event.address)
+    const disputeData = manager.getDispute(event.params.disputeId)
+    dispute.finalRuling = disputeData.value3
   }
 
-  // update dispute settledPenalties if needed
+  // Update dispute settled penalties if needed
   if (dispute.lastRoundId == event.params.roundId) {
     dispute.settledPenalties = true
   }
 
-  // create movements for appeal fees if there were no coherent jurors
-  createAppealFeesForJurorFees(event, event.params.disputeId)
+  // Create movements for appeal fees if there were no coherent guardians
+  createAppealFeesForGuardianFees(event, event.params.disputeId)
   dispute.save()
 }
 
 export function handleRewardSettled(event: RewardSettled): void {
   updateRound(event.params.disputeId, event.params.roundId, event)
 
-  let roundId = buildRoundId(event.params.disputeId, event.params.roundId)
-  let draft = JurorDraft.load(buildDraftId(roundId, event.params.juror))
+  const roundId = buildRoundId(event.params.disputeId, event.params.roundId)
+  const draft = GuardianDraft.load(buildDraftId(roundId, event.params.guardian))
   draft.rewarded = true
   draft.rewardedAt = event.block.timestamp
   draft.save()
 
-  createFeeMovement(JUROR_FEES, event.params.juror, event.params.fees, event)
+  createFeeMovement(GUARDIAN_MOVEMENT, event.params.guardian, event.params.fees, event)
 }
 
 export function handleAppealDepositSettled(event: AppealDepositSettled): void {
-  let appealId = buildAppealId(event.params.disputeId, event.params.roundId)
-  let appeal = Appeal.load(appealId.toString())
+  const appealId = buildAppealId(event.params.disputeId, event.params.roundId)
+  const appeal = Appeal.load(appealId.toString())
   appeal.settled = true
   appeal.settledAt = event.block.timestamp
   appeal.save()
@@ -141,7 +123,7 @@ export function handleAppealDepositSettled(event: AppealDepositSettled): void {
 }
 
 export function handleRulingComputed(event: RulingComputed): void {
-  let dispute = Dispute.load(event.params.disputeId.toString())
+  const dispute = Dispute.load(event.params.disputeId.toString())
   dispute.state = 'Ruled'
   dispute.finalRuling = event.params.ruling
   dispute.ruledAt = event.block.timestamp
@@ -149,26 +131,26 @@ export function handleRulingComputed(event: RulingComputed): void {
 }
 
 function updateRound(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): void {
-  let round = loadOrCreateRound(disputeId, roundNumber, event)
-  let manager = DisputeManager.bind(event.address)
-  let result = manager.getRound(disputeId, roundNumber)
+  const round = loadOrCreateRound(disputeId, roundNumber, event)
+  const manager = DisputeManager.bind(event.address)
+  const roundData = manager.getRound(disputeId, roundNumber)
   round.number = roundNumber
   round.dispute = disputeId.toString()
-  round.draftTermId = result.value0
-  round.delayedTerms = result.value1
-  round.jurorsNumber = result.value2
-  round.selectedJurors = result.value3
-  round.jurorFees = result.value4
-  round.settledPenalties = result.value5
-  round.collectedTokens = result.value6
-  round.coherentJurors = result.value7
-  round.state = castAdjudicationState(result.value8)
-  round.stateInt = result.value8
+  round.draftTermId = roundData.value0
+  round.delayedTerms = roundData.value1
+  round.guardiansNumber = roundData.value2
+  round.selectedGuardians = roundData.value3
+  round.guardianFees = roundData.value4
+  round.settledPenalties = roundData.value5
+  round.collectedTokens = roundData.value6
+  round.coherentGuardians = roundData.value7
+  round.state = castAdjudicationState(roundData.value8)
+  round.stateInt = roundData.value8
   round.save()
 }
 
-function loadOrCreateRound(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): AdjudicationRound | null {
-  let id = buildRoundId(disputeId, roundNumber).toString()
+function loadOrCreateRound(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): AdjudicationRound {
+  const id = buildRoundId(disputeId, roundNumber).toString()
   let round = AdjudicationRound.load(id)
 
   if (round === null) {
@@ -177,34 +159,34 @@ function loadOrCreateRound(disputeId: BigInt, roundNumber: BigInt, event: ethere
     round.createdAt = event.block.timestamp
   }
 
-  return round
+  return round!
 }
 
-function createJurorDispute(disputeId: BigInt, juror: Address): JurorDispute | null {
-  let id = buildJurorDisputeId(disputeId, juror).toString()
-  let jurorDispute = JurorDispute.load(id)
+function loadOrCreateGuardianDispute(disputeId: BigInt, guardian: Address): GuardianDispute {
+  const id = buildGuardianDisputeId(disputeId, guardian).toString()
+  let guardianDispute = GuardianDispute.load(id)
 
-  if (jurorDispute === null) {
-    jurorDispute = new JurorDispute(id)
-    jurorDispute.dispute = disputeId.toString()
-    jurorDispute.juror = juror.toHexString()
-    jurorDispute.save()
+  if (guardianDispute === null) {
+    guardianDispute = new GuardianDispute(id)
+    guardianDispute.dispute = disputeId.toString()
+    guardianDispute.guardian = guardian.toHexString()
+    guardianDispute.save()
   }
 
-  return jurorDispute
+  return guardianDispute!
 }
 
 function updateAppeal(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): void {
-  let appeal = loadOrCreateAppeal(disputeId, roundNumber, event)
-  let manager = DisputeManager.bind(event.address)
-  let result = manager.getAppeal(disputeId, roundNumber)
-  let nextRound = manager.getNextRoundDetails(disputeId, roundNumber)
+  const appeal = loadOrCreateAppeal(disputeId, roundNumber, event)
+  const manager = DisputeManager.bind(event.address)
+  const appealData = manager.getAppeal(disputeId, roundNumber)
+  const nextRound = manager.getNextRoundDetails(disputeId, roundNumber)
 
   appeal.round = buildRoundId(disputeId, roundNumber).toString()
-  appeal.maker = result.value0
-  appeal.appealedRuling = result.value1
-  appeal.taker = result.value2
-  appeal.opposedRuling = result.value3
+  appeal.maker = appealData.value0
+  appeal.appealedRuling = appealData.value1
+  appeal.taker = appealData.value2
+  appeal.opposedRuling = appealData.value3
   appeal.settled = false
   appeal.appealDeposit = nextRound.value6
   appeal.confirmAppealDeposit = nextRound.value7
@@ -216,51 +198,51 @@ function updateAppeal(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Ev
 }
 
 function createAppealFeesForDeposits(disputeId: BigInt, roundNumber: BigInt, appealId: BigInt, event: ethereum.Event): void {
-  let appeal = Appeal.load(appealId.toString())
-  let manager = DisputeManager.bind(event.address)
-  let nextRound = manager.getNextRoundDetails(disputeId, roundNumber)
-  let totalFees = nextRound.value4
+  const appeal = Appeal.load(appealId.toString())
+  const manager = DisputeManager.bind(event.address)
+  const nextRound = manager.getNextRoundDetails(disputeId, roundNumber)
+  const totalFees = nextRound.value4
 
-  let maker = Address.fromString(appeal.maker.toHexString())
-  let taker = Address.fromString(appeal.taker.toHexString())
-  let totalDeposit = appeal.appealDeposit.plus(appeal.confirmAppealDeposit)
+  const maker = Address.fromString(appeal.maker.toHexString())
+  const taker = Address.fromString(appeal.taker.toHexString())
+  const totalDeposit = appeal.appealDeposit.plus(appeal.confirmAppealDeposit)
 
-  let dispute = Dispute.load(disputeId.toString())
-  let finalRuling = BigInt.fromI32(dispute.finalRuling)
+  const dispute = Dispute.load(disputeId.toString())
+  const finalRuling = BigInt.fromI32(dispute.finalRuling)
 
   if (appeal.appealedRuling == finalRuling) {
-    createFeeMovement(APPEAL_FEES, maker, totalDeposit.minus(totalFees), event)
+    createFeeMovement(APPEAL_MOVEMENT, maker, totalDeposit.minus(totalFees), event)
   } else if (appeal.opposedRuling == finalRuling) {
-    createFeeMovement(APPEAL_FEES, taker, totalDeposit.minus(totalFees), event)
+    createFeeMovement(APPEAL_MOVEMENT, taker, totalDeposit.minus(totalFees), event)
   } else {
-    let feesRefund = totalFees.div(BigInt.fromI32(2))
-    let id = buildId(event)
-    createFeeMovement(APPEAL_FEES, maker, appeal.appealDeposit.minus(feesRefund), event, id.concat('-maker'))
-    createFeeMovement(APPEAL_FEES, taker, appeal.confirmAppealDeposit.minus(feesRefund), event, id.concat('-taker'))
+    const feesRefund = totalFees.div(BigInt.fromI32(2))
+    const id = buildId(event)
+    createFeeMovement(APPEAL_MOVEMENT, maker, appeal.appealDeposit.minus(feesRefund), event, id.concat('-maker'))
+    createFeeMovement(APPEAL_MOVEMENT, taker, appeal.confirmAppealDeposit.minus(feesRefund), event, id.concat('-taker'))
   }
 }
 
-function createAppealFeesForJurorFees(event: PenaltiesSettled, disputeId: BigInt): void {
-  let dispute = Dispute.load(disputeId.toString())
-  let roundId = buildRoundId(event.params.disputeId, event.params.roundId).toString()
-  let round = AdjudicationRound.load(roundId)
-  if (round.coherentJurors.isZero()) {
+function createAppealFeesForGuardianFees(event: PenaltiesSettled, disputeId: BigInt): void {
+  const dispute = Dispute.load(disputeId.toString())
+  const roundId = buildRoundId(event.params.disputeId, event.params.roundId).toString()
+  const round = AdjudicationRound.load(roundId)
+  if (round.coherentGuardians.isZero()) {
     if (event.params.roundId.isZero()) {
-      createFeeMovement(JUROR_FEES, Address.fromString(dispute.subject), round.jurorFees, event)
+      createFeeMovement(GUARDIAN_MOVEMENT, Address.fromString(dispute.subject.toHexString()), round.guardianFees, event)
     } else {
-      let previousRoundId = event.params.roundId.minus(BigInt.fromI32(1))
-      let appealId = buildAppealId(event.params.disputeId, previousRoundId).toString()
-      let appeal = Appeal.load(appealId)
-      let refundFees = round.jurorFees.div(BigInt.fromI32(2))
-      let id = buildId(event)
-      createFeeMovement(APPEAL_FEES, Address.fromString(appeal.maker.toHexString()), refundFees, event, id.concat('-maker'))
-      createFeeMovement(APPEAL_FEES, Address.fromString(appeal.taker.toHexString()), refundFees, event, id.concat('-taker'))
+      const previousRoundId = event.params.roundId.minus(BigInt.fromI32(1))
+      const appealId = buildAppealId(event.params.disputeId, previousRoundId).toString()
+      const appeal = Appeal.load(appealId)
+      const refundFees = round.guardianFees.div(BigInt.fromI32(2))
+      const id = buildId(event)
+      createFeeMovement(APPEAL_MOVEMENT, Address.fromString(appeal.maker.toHexString()), refundFees, event, id.concat('-maker'))
+      createFeeMovement(APPEAL_MOVEMENT, Address.fromString(appeal.taker.toHexString()), refundFees, event, id.concat('-taker'))
     }
   }
 }
 
-function loadOrCreateAppeal(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): Appeal | null {
-  let id = buildAppealId(disputeId, roundNumber).toString()
+function loadOrCreateAppeal(disputeId: BigInt, roundNumber: BigInt, event: ethereum.Event): Appeal {
+  const id = buildAppealId(disputeId, roundNumber).toString()
   let appeal = Appeal.load(id)
 
   if (appeal === null) {
@@ -268,23 +250,23 @@ function loadOrCreateAppeal(disputeId: BigInt, roundNumber: BigInt, event: ether
     appeal.createdAt = event.block.timestamp
   }
 
-  return appeal
+  return appeal!
 }
 
-export function createJurorDraft(disputeManagerAddress: Address, disputeId: BigInt, roundId: BigInt, jurorAddress: Address, timestamp: BigInt): JurorDraft {
-  let manager = DisputeManager.bind(disputeManagerAddress)
-  let response = manager.getJuror(disputeId, roundId, jurorAddress)
-  let disputeRoundId = buildRoundId(disputeId, roundId)
-  let draftId = buildDraftId(disputeRoundId, jurorAddress)
-  let draft = new JurorDraft(draftId)
+export function createGuardianDraft(disputeManagerAddress: Address, disputeId: BigInt, roundId: BigInt, guardianAddress: Address, timestamp: BigInt): GuardianDraft {
+  const manager = DisputeManager.bind(disputeManagerAddress)
+  const response = manager.getGuardian(disputeId, roundId, guardianAddress)
+  const disputeRoundId = buildRoundId(disputeId, roundId)
+  const draftId = buildDraftId(disputeRoundId, guardianAddress)
+  const draft = new GuardianDraft(draftId)
   draft.round = disputeRoundId.toString()
-  draft.juror = jurorAddress.toHexString()
-  draft.locked = BigInt.fromI32(0) // will be updated in JurorLockedBalance event handler
+  draft.guardian = guardianAddress.toHexString()
+  draft.locked = BigInt.fromI32(0) // will be updated in GuardianLockedBalance event handler
   draft.weight = response.value0
   draft.rewarded = response.value1
   draft.createdAt = timestamp
-
-  return draft
+  draft.save()
+  return draft!
 }
 
 export function buildRoundId(disputeId: BigInt, roundNumber: BigInt): BigInt {
@@ -292,21 +274,20 @@ export function buildRoundId(disputeId: BigInt, roundNumber: BigInt): BigInt {
 }
 
 export function decodeDisputeRoundId(disputeRoundId: BigInt): BigInt[] {
-  let UINT128 = BigInt.fromI32(2).pow(128)
-  let disputeId = disputeRoundId.div(UINT128)
-  let roundId = disputeRoundId.mod(UINT128)
+  const disputeId = disputeRoundId.div(UINT128)
+  const roundId = disputeRoundId.mod(UINT128)
 
   return [disputeId, roundId]
 }
 
-export function buildDraftId(roundId: BigInt, juror: Address): string {
+export function buildDraftId(roundId: BigInt, guardian: Address): string {
   // @ts-ignore BigInt is actually a BytesArray under the hood
-  return crypto.keccak256(concat(roundId as Bytes, juror)).toHexString()
+  return crypto.keccak256(concat(roundId as Bytes, guardian)).toHexString()
 }
 
-export function buildJurorDisputeId(disputeId: BigInt, juror: Address): string {
+export function buildGuardianDisputeId(disputeId: BigInt, guardian: Address): string {
   // @ts-ignore BigInt is actually a BytesArray under the hood
-  return crypto.keccak256(concat(disputeId as Bytes, juror)).toHexString()
+  return crypto.keccak256(concat(disputeId as Bytes, guardian)).toHexString()
 }
 
 function buildAppealId(disputeId: BigInt, roundId: BigInt): BigInt {

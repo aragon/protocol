@@ -6,8 +6,9 @@ This package includes the deployment scripts used for Aragon Protocol
 
 Clone this monorepo and install dependencies:
 
-```sh
-git clone git@github.com:aragon/protocol.git 
+```bash
+git clone git@github.com:aragon/protocol.git
+cd protocol/packages/deployment
 yarn
 ```
 
@@ -27,12 +28,12 @@ To execute any of those commands simply run: `yarn [COMMAND] --network [NETWORK]
 All the deployment scripts are built on top of Buidler. Therefore, make sure you have a local networks config file.
 If you don't, simply follow the steps explained [here](https://buidler.dev/plugins/buidler-local-networks-config-plugin.html). 
 
-If you're working on a local environment make sure you have one running or start one running `yarn run node`.  
+If you're working on a local environment make sure you have one running or start one running `yarn ganache`.  
 
 Once you have done that, you can deploy an Aragon Protocol instance by running:
 
 ```
-yarn deploy-protocol --network localhost
+yarn deploy-protocol --network ganache
 ```
 
-If you are working on a different network simply change `localhost` by any of `rinkeby`, `ropsten`, `staging`, or `mainnet`.
+If you are working on a different network simply change `ganache` by any of `rinkeby`, `ropsten`, `staging`, or `mainnet`.
