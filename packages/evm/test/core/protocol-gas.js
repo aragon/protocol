@@ -5,7 +5,7 @@ const { printTable } = require('../helpers/utils/logging')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { getVoteId, hashVote, oppositeOutcome, SALT, OUTCOMES } = require('../helpers/utils/crvoting')
 
-const Arbitrable = artifacts.require('ArbitrableMock')
+const Arbitrable = artifacts.require('Arbitrable')
 
 contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000]) => {
   let protocolHelper, disputeManager, voting, protocol, costs = {}

@@ -5,7 +5,7 @@ const { buildHelper, DEFAULTS } = require('../helpers/wrappers/protocol')
 const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_PROTOCOL_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
-const Arbitrable = artifacts.require('ArbitrableMock')
+const Arbitrable = artifacts.require('Arbitrable')
 const DisputeManager = artifacts.require('DisputeManager')
 
 contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArbitrable]) => {

@@ -4,7 +4,7 @@ import "../../arbitration/IArbitrable.sol";
 import "../../arbitration/IArbitrator.sol";
 
 
-contract ArbitrableMock is IArbitrable {
+contract Arbitrable is IArbitrable {
     IArbitrator internal arbitrator;
 
     constructor (IArbitrator _arbitrator) public {
@@ -22,8 +22,15 @@ contract ArbitrableMock is IArbitrable {
         if (_finished) arbitrator.closeEvidencePeriod(_disputeId);
     }
 
+    function submitEvidenceFor(uint256 _disputeId, address _submitter, bytes calldata _evidence, bool _finished) external {
+        arbitrator.submitEvidence(_disputeId, _submitter, _evidence);
+        if (_finished) arbitrator.closeEvidencePeriod(_disputeId);
+    }
+
     function rule(uint256 _disputeId) external {
         (, uint256 ruling) = arbitrator.rule(_disputeId);
-        emit Ruled(arbitrator, _disputeId, ruling);
+        if (ruling > 0) {
+            emit Ruled(arbitrator, _disputeId, ruling);
+        }
     }
 }
