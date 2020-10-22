@@ -192,7 +192,7 @@ class ProtocolHelper {
 
   async dispute({ arbitrable = undefined, possibleRulings = bn(2), metadata = '0x', closeEvidence = true } = {}) {
     // create an arbitrable if no one was given
-    if (!arbitrable) arbitrable = await this.artifacts.require('ArbitrableMock').new(this.protocol.address)
+    if (!arbitrable) arbitrable = await this.artifacts.require('Arbitrable').new(this.protocol.address)
 
     // mint fee tokens for the arbitrable instance
     const { disputeFees } = await this.getDisputeFees()

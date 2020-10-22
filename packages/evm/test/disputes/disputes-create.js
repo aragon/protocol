@@ -8,7 +8,7 @@ const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS, CLOCK_ERRORS } = require('../
 const ERC20 = artifacts.require('ERC20Mock')
 const DisputeManager = artifacts.require('DisputeManager')
 const ProtocolClock = artifacts.require('ProtocolClock')
-const Arbitrable = artifacts.require('ArbitrableMock')
+const Arbitrable = artifacts.require('Arbitrable')
 
 contract('DisputeManager', ([_, fakeArbitrable]) => {
   let protocolHelper, protocol, disputeManager, feeToken, arbitrable
