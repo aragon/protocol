@@ -103,13 +103,13 @@ contract('PaymentBook', ([_, someone, payer]) => {
 
             it('computes the guardian and governor shares correctly', async () => {
               const currentPeriodId = await paymentsBook.getCurrentPeriodId()
-              const { guardiansShares: previousGuardiansShares, governorShares: previousGovernorShares } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
+              const { guardiansShares: previousGuardiansShares, governorShare: previousGovernorShare } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
 
               await paymentsBook.pay(eth.address, amount, someone, data, { from, value: amount })
-              const { guardiansShares: currentGuardiansShares, governorShares: currentGovernorShares } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
+              const { guardiansShares: currentGuardiansShares, governorShare: currentGovernorShare } = await paymentsBook.getPeriodShares(currentPeriodId, eth.address)
 
               const expectedGovernorShares = amount.mul(GOVERNOR_SHARE_PCT).div(PCT_BASE)
-              assertBn(currentGovernorShares, previousGovernorShares.add(expectedGovernorShares), 'period governor shares do not match')
+              assertBn(currentGovernorShare, previousGovernorShare.add(expectedGovernorShares), 'period governor shares do not match')
 
               const expectedGuardiansShares = amount.sub(expectedGovernorShares)
               assertBn(currentGuardiansShares, previousGuardiansShares.add(expectedGuardiansShares), 'period guardians shares do not match')
