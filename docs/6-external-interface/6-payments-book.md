@@ -15,29 +15,29 @@ The following events are emitted by the `PaymentsBook}`:
     - **Sender:** Address paying the token amount
     - **Data:** Arbitrary data
 
-#### 6.6.1.2. Guardian fees claimed
+#### 6.6.1.2. Guardian share claimed
 
-- **Name:** `GuardianFeesClaimed`
+- **Name:** `GuardianShareClaimed`
 - **Args:**
     - **Period ID:** Identification number of the payment period claimed by the guardian
-    - **Guardian:** Address of the guardian whose fees have been claimed
-    - **Token:** Address of the token used for the fees
+    - **Guardian:** Address of the guardian claiming their share
+    - **Token:** Address of the token used for the share
     - **Amount:** Amount of tokens the guardian received for the requested period
 
-#### 6.6.1.3. Governor fees transferred
+#### 6.6.1.3. Governor share transferred
 
-- **Name:** `GovernorFeesTransferred`
+- **Name:** `GovernorShareTransferred`
 - **Args:**
     - **Period ID:** Identification number of the payment period claimed by the governor
-    - **Token:** Address of the token used for the fees
+    - **Token:** Address of the token used for the share
     - **Amount:** Amount of tokens transferred to the governor address
 
 #### 6.6.1.4. Governor share changed
 
 - **Name:** `GovernorSharePctChanged`
 - **Args:**
-    - **Previous governor share:** Previous permyriad of collected fees that was being allocated to the governor
-    - **Current governor share:** Current permyriad of collected fees that will be allocated to the governor
+    - **Previous governor share:** Previous permyriad of collected payments that was being allocated to the governor
+    - **Current governor share:** Current permyriad of collected payments that will be allocated to the governor
 
 ### 6.6.2. Getters
 
@@ -55,7 +55,7 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Governor share:** Permyriad of collected fees that will be allocated to the governor of the Protocol (‱ - 1/10,000)
+    - **Governor share:** Permyriad of collected payments that will be allocated to the governor of the Protocol (‱ - 1/10,000)
 
 #### 6.6.2.3. Current period ID
 
@@ -65,15 +65,15 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Outputs:**
     - **Period ID:** Identification number of the current period
 
-#### 6.6.2.4. Period fees details
+#### 6.6.2.4. Period shares details
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Guardian fees:** Total amount of fees collected for the guardians during a period
-    - **Governor fees:** Total amount of fees collected for the governor during a period
+    - **Guardians share:** Total amount collected for the guardians during a period
+    - **Governor share:** Total amount collected for the governor during a period
 
 #### 6.6.2.5. Period balance details
 
@@ -84,32 +84,32 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Balance checkpoint:** Protocol term ID of a period used to fetch the total active balance of the guardians registry
     - **Total active balance:** Total amount of guardian tokens active in the Protocol at the corresponding period checkpoint
 
-#### 6.6.2.6. Guardian fees
+#### 6.6.2.6. Guardian share
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
-    - **Guardian:** Address of the guardian querying the owed shared fees of
+    - **Guardian:** Address of the guardian querying the owed shared of
     - **Token:** Address of the token being queried
 - **Pre-flight checks:**
     - Ensure that the balance details of the requested period have been ensured
 - **Outputs:**
-    - **Amount:** Amount of token fees owed to the given guardian for the requested period
+    - **Amount:** Share owed to the given guardian for the requested period
 
 #### 6.6.2.7. Has guardian claimed
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
-    - **Guardian:** Address of the guardian querying the owed shared fees of
+    - **Guardian:** Address of the guardian querying the owed shared of
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Claimed:** True if the guardian fees have already been claimed for the given period and token, false otherwise
+    - **Claimed:** True if the guardian's share have already been claimed for the given period and token, false otherwise
 
-#### 6.6.2.8. Governor fees
+#### 6.6.2.8. Governor share
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Total amount of governor fees collected for the given period and token
+    - **Amount:** Total amount collected for the governor for the given period and token

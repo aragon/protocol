@@ -144,9 +144,9 @@ Notes:
 
 | Relies on module    |           On           |    Expected behavior     |
 |---------------------|------------------------|--------------------------|
-| GuardiansRegistry   | `getGuardian`             | Each period should work always with the same Guardians Registry instance |
-| GuardiansRegistry   | `getGuardianShare`        | " |
-| GuardiansRegistry   | `claimFees`            | " |
+| GuardiansRegistry   | `getGuardian`          | Each period should work always with the same Guardians Registry instance |
+| GuardiansRegistry   | `getGuardianShare`     | " |
+| GuardiansRegistry   | `claimGuardianShare`   | " |
 | GuardiansRegistry   | `ensurePeriodBalance`  | " |
 
 Notes:
