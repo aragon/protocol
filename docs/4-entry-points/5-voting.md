@@ -101,7 +101,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Update the voter's cast vote object marking it as leaked
 
-### 4.5.5. Reveal
+### 4.5.7. Reveal
 
 - **Actor:** Guardian drafted for an adjudication round
 - **Inputs:**

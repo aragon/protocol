@@ -17,6 +17,7 @@ The following events are emitted by the `Voting`:
 - **Args:**
     - **Vote ID:** Identification number of the vote instance where a vote has been committed
     - **Voter:** Address of the voter that has committed the vote
+    - **Sender:** Address of the voter that has committed the vote
     - **Commitment:** Hashed outcome of the committed vote
 
 #### 6.5.1.3. Vote revealed
@@ -44,6 +45,7 @@ The following events are emitted by the `Voting`:
     - **Voter:** Address of the voter principal
     - **Representative:** Address of the representative 
     - **Allowed:** Whether the representative is allowed by the voter
+
 
 ### 6.5.2. Getters
 
