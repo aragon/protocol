@@ -85,7 +85,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
               assertAmountOfEvents({ logs: anotherLogs }, DISPUTE_MANAGER_EVENTS.RULING_COMPUTED, { expectedAmount: 0 })
             })
 
-            it.only('executes the final ruling on the arbitrable', async () => {
+            it('executes the final ruling on the arbitrable', async () => {
               const { subject } = await protocolHelper.getDispute(disputeId)
               const arbitrable = await Arbitrable.at(subject)
 

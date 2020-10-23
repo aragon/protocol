@@ -1,6 +1,7 @@
 const { sha3, toChecksumAddress } = require('web3-utils')
 
 const ACTIVATE_DATA = sha3('activate(uint256)').slice(0, 10)
+const LOCK_ACTIVATION_DATA = sha3('lockActivation(address,uint256)').slice(0, 10)
 
 const filterGuardians = (guardiansList, guardiansToFiler) => {
   const addressesToFiler = guardiansToFiler.map(j => toChecksumAddress(j.address))
@@ -29,6 +30,7 @@ const countEqualGuardians = addresses => {
 
 module.exports = {
   ACTIVATE_DATA,
+  LOCK_ACTIVATION_DATA,
   countGuardian,
   countEqualGuardians,
   filterGuardians,

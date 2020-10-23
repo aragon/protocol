@@ -39,11 +39,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     string private constant ERROR_TOTAL_ACTIVE_BALANCE_EXCEEDED = "GR_TOTAL_ACTIVE_BALANCE_EXCEEDED";
     string private constant ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK = "GR_DEACTIV_AMOUNT_EXCEEDS_LOCK";
     string private constant ERROR_CANNOT_UNLOCK_ACTIVATION = "GR_CANNOT_UNLOCK_ACTIVATION";
+    string private constant ERROR_LOCK_MANAGER_NOT_ALLOWED = "GR_LOCK_MANAGER_NOT_ALLOWED";
     string private constant ERROR_ZERO_LOCK_ACTIVATION = "GR_ZERO_LOCK_ACTIVATION";
+    string private constant ERROR_UNLOCK_ACTIVATION_ZERO = "GR_UNLOCK_ACTIVATION_ZERO";
     string private constant ERROR_WITHDRAWALS_LOCK = "GR_WITHDRAWALS_LOCK";
 
     // Address that will be used to burn guardian tokens
     address internal constant BURN_ACCOUNT = address(0x000000000000000000000000000000000000dEaD);
+
+    // Address to be used for permissions configuration
+    address internal constant ANY_ENTITY = address(-1);
 
     // Maximum number of sortition iterations allowed per draft call
     uint256 internal constant MAX_DRAFT_ITERATIONS = 10;
@@ -116,6 +121,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     // Mapping of guardian addresses indexed by id
     mapping (uint256 => address) internal guardiansAddressById;
 
+    // Mapping of whitelisted lock managers indexed by address
+    mapping (address => bool) internal allowedLockManagers;
+
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
 
@@ -132,6 +140,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     event GuardianTokensBurned(uint256 amount);
     event GuardianTokensCollected(address indexed guardian, uint256 amount, uint64 effectiveTermId);
     event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
+    event LockManagerChanged(address indexed lockManager, bool allowed);
 
     /**
     * @dev Constructor function
@@ -167,24 +176,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     * @param _amount Amount of guardian tokens to be deactivated for the next term
     */
     function deactivate(uint256 _amount) external {
-        uint64 termId = _ensureCurrentTerm();
-        Guardian storage guardian = guardiansByAddress[msg.sender];
-        uint256 unlockedActiveBalance = _lastUnlockedActiveBalanceOf(guardian);
-        uint256 amountToDeactivate = _amount == 0 ? unlockedActiveBalance : _amount;
-        require(amountToDeactivate > 0, ERROR_INVALID_ZERO_AMOUNT);
-        require(amountToDeactivate <= unlockedActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
-
-        // Check future balance is not below the total activation lock of the guardian
-        // No need for SafeMath: we already checked values above
-        uint256 futureActiveBalance = unlockedActiveBalance - amountToDeactivate;
-        uint256 totalActivationLock = guardian.activationLocks.total;
-        require(futureActiveBalance >= totalActivationLock, ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK);
-
-        // Check that the guardian is leaving or that the minimum active balance is met
-        uint256 minActiveBalance = _getMinActiveBalance(termId);
-        require(futureActiveBalance == 0 || futureActiveBalance >= minActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
-
-        _createDeactivationRequest(msg.sender, amountToDeactivate);
+        _deactivateTokens(msg.sender, _amount);
     }
 
     /**
@@ -241,14 +233,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     * @param _guardian Address of the guardian unlocking the active balance of
     * @param _lockManager Address of the lock manager controlling the lock
     * @param _amount Amount of active tokens to be unlocked
+    * @param _deactivate Whether the requested amount must be deactivated too
     */
-    function unlockActivation(address _guardian, address _lockManager, uint256 _amount) external {
+    function unlockActivation(address _guardian, address _lockManager, uint256 _amount, bool _deactivate) external {
         bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, _amount);
         require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
 
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
         uint256 lockedAmount = activationLocks.lockedBy[_lockManager];
         require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
+        require(_amount > 0, ERROR_UNLOCK_ACTIVATION_ZERO);
 
         uint256 unlockedAmount = lockedAmount > _amount ? _amount : lockedAmount;
         uint256 newLockedAmount = lockedAmount.sub(unlockedAmount);
@@ -257,6 +251,10 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         activationLocks.total = newTotalLocked;
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
         emit GuardianActivationLockDecreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
+
+        if (msg.sender == _guardian && _deactivate) {
+            _deactivateTokens(_guardian, _amount);
+        }
     }
 
     /**
@@ -455,6 +453,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
+    * @notice `_allowed ? 'Allow' : 'Disallow'` `_lockManager` as a lock manager
+    * @param _lockManager Address of the lock manager to be changed
+    * @param _allowed Whether the lock manager is allowed
+    */
+    function changeLockManager(address _lockManager, bool _allowed) external onlyConfigGovernor {
+        allowedLockManagers[_lockManager] = _allowed;
+        emit LockManagerChanged(_lockManager, _allowed);
+    }
+
+    /**
     * @dev ERC900 - Tell the address of the token used for staking
     * @return Address of the token used for staking
     */
@@ -602,6 +610,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
+    * @dev Tell whether a lock manager is allowed
+    * @param _lockManager Address of the lock manager being queried
+    * @return True if the lock manager is allowed
+    */
+    function isLockManagerAllowed(address _lockManager) external view returns (bool) {
+        return _isLockManagerAllowed(_lockManager);
+    }
+
+    /**
     * @dev ERC900 - Tell if the current registry supports historic information or not
     * @return Always false
     */
@@ -646,6 +663,32 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
 
         _updateAvailableBalanceOf(_guardian, amountToActivate, false);
         emit GuardianActivated(_guardian, nextTermId, amountToActivate, _sender);
+    }
+
+    /**
+    * @dev Internal function to deactivate a given amount of tokens for a guardian.
+    * @param _guardian Address of the guardian to deactivate tokens
+    * @param _amount Amount of guardian tokens to be deactivated for the next term
+    */
+    function _deactivateTokens(address _guardian, uint256 _amount) internal {
+        uint64 termId = _ensureCurrentTerm();
+        Guardian storage guardian = guardiansByAddress[_guardian];
+        uint256 unlockedActiveBalance = _lastUnlockedActiveBalanceOf(guardian);
+        uint256 amountToDeactivate = _amount == 0 ? unlockedActiveBalance : _amount;
+        require(amountToDeactivate > 0, ERROR_INVALID_ZERO_AMOUNT);
+        require(amountToDeactivate <= unlockedActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
+
+        // Check future balance is not below the total activation lock of the guardian
+        // No need for SafeMath: we already checked values above
+        uint256 futureActiveBalance = unlockedActiveBalance - amountToDeactivate;
+        uint256 totalActivationLock = guardian.activationLocks.total;
+        require(futureActiveBalance >= totalActivationLock, ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK);
+
+        // Check that the guardian is leaving or that the minimum active balance is met
+        uint256 minActiveBalance = _getMinActiveBalance(termId);
+        require(futureActiveBalance == 0 || futureActiveBalance >= minActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
+
+        _createDeactivationRequest(_guardian, amountToDeactivate);
     }
 
     /**
@@ -726,8 +769,10 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
     function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
+        bool isAllowed = _isLockManagerAllowed(_lockManager) || _isLockManagerAllowed(ANY_ENTITY);
+        require(isAllowed, ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
+        ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
         uint256 newTotalLocked = activationLocks.total.add(_amount);
         uint256 newLockedAmount = activationLocks.lockedBy[_lockManager].add(_amount);
 
@@ -749,6 +794,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
 
         // Activate tokens if it was requested by the sender. Note that there's no need to check
         // the activation amount since we have just added it to the available balance of the guardian.
+        // TODO: implement activators whitelist
         if (_data.toBytes4() == GuardiansRegistry(this).activate.selector) {
             _activateTokens(_guardian, _amount, _from);
         } else if (_data.toBytes4() == GuardiansRegistry(this).lockActivation.selector) {
@@ -933,6 +979,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         available = _guardian.availableBalance;
         locked = _guardian.lockedBalance;
         pendingDeactivation = _guardian.deactivationRequest.amount;
+    }
+
+    /**
+    * @dev Tell whether a lock manager is allowed
+    * @param _lockManager Address of the lock manager being queried
+    * @return True if the lock manager is allowed
+    */
+    function _isLockManagerAllowed(address _lockManager) internal view returns (bool) {
+        return allowedLockManagers[_lockManager];
     }
 
     /**
