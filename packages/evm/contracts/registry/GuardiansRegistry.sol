@@ -174,14 +174,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         require(amountToDeactivate > 0, ERROR_INVALID_ZERO_AMOUNT);
         require(amountToDeactivate <= unlockedActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
 
+        // Check future balance is not below the total activation lock of the guardian
         // No need for SafeMath: we already checked values above
         uint256 futureActiveBalance = unlockedActiveBalance - amountToDeactivate;
-        uint256 minActiveBalance = _getMinActiveBalance(termId);
-        require(futureActiveBalance == 0 || futureActiveBalance >= minActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
-
-        // Check future balance is not below the total activation lock of the guardian
         uint256 totalActivationLock = guardian.activationLocks.total;
         require(futureActiveBalance >= totalActivationLock, ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK);
+
+        // Check that the guardian is leaving or that the minimum active balance is met
+        uint256 minActiveBalance = _getMinActiveBalance(termId);
+        require(futureActiveBalance == 0 || futureActiveBalance >= minActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
 
         _createDeactivationRequest(msg.sender, amountToDeactivate);
     }
