@@ -77,10 +77,10 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Guardians can define lock managers to prevent them from deactivating tokens from the registry
+    * @dev Guardians can define lock managers to control their minimum active balance in the registry
     */
     struct ActivationLocks {
-        uint256 total;                               // Total amount of activation locked
+        uint256 total;                               // Total amount of active balance locked
         mapping (address => uint256) lockedBy;       // List of locked amounts indexed by lock manager
     }
 
