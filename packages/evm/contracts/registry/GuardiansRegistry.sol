@@ -38,8 +38,8 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     string private constant ERROR_BAD_TOTAL_ACTIVE_BALANCE_LIMIT = "GR_BAD_TOTAL_ACTIVE_BAL_LIMIT";
     string private constant ERROR_TOTAL_ACTIVE_BALANCE_EXCEEDED = "GR_TOTAL_ACTIVE_BALANCE_EXCEEDED";
     string private constant ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK = "GR_DEACTIV_AMOUNT_EXCEEDS_LOCK";
-    string private constant ERROR_CANNOT_UNLOCK_DEACTIVATION = "GR_CANNOT_UNLOCK_DEACTIVATION";
-    string private constant ERROR_SENDER_NOT_LOCK_MANAGER = "GR_SENDER_NOT_LOCK_MANAGER";
+    string private constant ERROR_CANNOT_UNLOCK_ACTIVATION = "GR_CANNOT_UNLOCK_ACTIVATION";
+    string private constant ERROR_ZERO_LOCK_ACTIVATION = "GR_ZERO_LOCK_ACTIVATION";
     string private constant ERROR_WITHDRAWALS_LOCK = "GR_WITHDRAWALS_LOCK";
 
     // Address that will be used to burn guardian tokens
@@ -67,15 +67,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         uint256 lockedBalance;                      // Maximum amount of tokens that can be slashed based on the guardian's drafts
         uint256 availableBalance;                   // Available tokens that can be withdrawn at any time
         uint64 withdrawalsLockTermId;               // Term ID until which the guardian's withdrawals will be locked
-        DeactivationLocks deactivationLocks;        // Guardian's deactivation locks
+        ActivationLocks activationLocks;            // Guardian's activation locks
         DeactivationRequest deactivationRequest;    // Guardian's pending deactivation request
     }
 
     /**
     * @dev Guardians can define lock managers to prevent them from deactivating tokens from the registry
     */
-    struct DeactivationLocks {
-        uint256 total;                               // Total amount of deactivation locked
+    struct ActivationLocks {
+        uint256 total;                               // Total amount of activation locked
         mapping (address => uint256) lockedBy;       // List of locked amounts indexed by lock manager
     }
 
@@ -123,8 +123,8 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     event GuardianDeactivationRequested(address indexed guardian, uint64 availableTermId, uint256 amount);
     event GuardianDeactivationProcessed(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 processedTermId);
     event GuardianDeactivationUpdated(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 updateTermId);
-    event GuardianDeactivationLockIncreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
-    event GuardianDeactivationLockDecreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
+    event GuardianActivationLockIncreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
+    event GuardianActivationLockDecreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
     event GuardianBalanceLocked(address indexed guardian, uint256 amount);
     event GuardianBalanceUnlocked(address indexed guardian, uint256 amount);
     event GuardianSlashed(address indexed guardian, uint256 amount, uint64 effectiveTermId);
@@ -179,9 +179,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         uint256 minActiveBalance = _getMinActiveBalance(termId);
         require(futureActiveBalance == 0 || futureActiveBalance >= minActiveBalance, ERROR_INVALID_DEACTIVATION_AMOUNT);
 
-        // Check future balance is not bellow the total deactivation locked of the guardian
-        uint256 totalDeactivationLock = guardian.deactivationLocks.total;
-        require(futureActiveBalance >= totalDeactivationLock, ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK);
+        // Check future balance is not below the total activation lock of the guardian
+        uint256 totalActivationLock = guardian.activationLocks.total;
+        require(futureActiveBalance >= totalActivationLock, ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK);
 
         _createDeactivationRequest(msg.sender, amountToDeactivate);
     }
@@ -227,34 +227,35 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @notice Lock `@tokenAmount(self.token(), _amount)` from deactivation
+    * @notice Lock `@tokenAmount(self.token(), _amount)` of sender's active balance
     * @param _lockManager Address of the lock manager that will control the lock
-    * @param _amount Amount of tokens to be locked from deactivation
+    * @param _amount Amount of active tokens to be locked
     */
-    function lockDeactivation(address _lockManager, uint256 _amount) external {
-        _lockDeactivation(msg.sender, _lockManager, _amount);
+    function lockActivation(address _lockManager, uint256 _amount) external {
+        _lockActivation(msg.sender, _lockManager, _amount);
     }
 
     /**
-    * @notice Unlock `@tokenAmount(self.token(), _amount)` from deactivation for `_guardian`
-    * @param _guardian Address of the guardian unlocking the deactivation amount of
+    * @notice Unlock `@tokenAmount(self.token(), _amount)` of `_guardian`'s active balance
+    * @param _guardian Address of the guardian unlocking the active balance of
     * @param _lockManager Address of the lock manager controlling the lock
-    * @param _amount Amount of tokens to be unlocked for deactivation
+    * @param _amount Amount of active tokens to be unlocked
     */
-    function unlockDeactivation(address _guardian, address _lockManager, uint256 _amount) external {
-        require(ILockManager(_lockManager).canUnlock(_guardian, _amount), ERROR_CANNOT_UNLOCK_DEACTIVATION);
+    function unlockActivation(address _guardian, address _lockManager, uint256 _amount) external {
+        bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, _amount);
+        require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
 
-        DeactivationLocks storage deactivationLocks = guardiansByAddress[_guardian].deactivationLocks;
-        uint256 lockedAmount = deactivationLocks.lockedBy[_lockManager];
-        require(lockedAmount > 0, ERROR_SENDER_NOT_LOCK_MANAGER);
+        ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
+        uint256 lockedAmount = activationLocks.lockedBy[_lockManager];
+        require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
 
         uint256 unlockedAmount = lockedAmount > _amount ? _amount : lockedAmount;
         uint256 newLockedAmount = lockedAmount.sub(unlockedAmount);
-        uint256 newTotalLocked = deactivationLocks.total.sub(unlockedAmount);
+        uint256 newTotalLocked = activationLocks.total.sub(unlockedAmount);
 
-        deactivationLocks.total = newTotalLocked;
-        deactivationLocks.lockedBy[_lockManager] = newLockedAmount;
-        emit GuardianDeactivationLockDecreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
+        activationLocks.total = newTotalLocked;
+        activationLocks.lockedBy[_lockManager] = newLockedAmount;
+        emit GuardianActivationLockDecreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
     }
 
     /**
@@ -561,16 +562,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Tell the deactivation amount locked for a guardian by a lock manager
+    * @dev Tell the activation amount locked for a guardian by a lock manager
     * @param _guardian Address of the guardian whose info is requested
     * @param _lockManager Address of the lock manager querying the lock of
-    * @return amount Deactivation amount locked by the lock manager
-    * @return total Total deactivation amount locked for the guardian
+    * @return amount Activation amount locked by the lock manager
+    * @return total Total activation amount locked for the guardian
     */
-    function getDeactivationLock(address _guardian, address _lockManager) external view returns (uint256 amount, uint256 total) {
-        DeactivationLocks storage deactivationLocks = guardiansByAddress[_guardian].deactivationLocks;
-        total = deactivationLocks.total;
-        amount = deactivationLocks.lockedBy[_lockManager];
+    function getActivationLock(address _guardian, address _lockManager) external view returns (uint256 amount, uint256 total) {
+        ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
+        total = activationLocks.total;
+        amount = activationLocks.lockedBy[_lockManager];
     }
 
     /**
@@ -718,20 +719,20 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Internal function to update the deactivation locked amount of a guardian
-    * @param _guardian Guardian to update the deactivation locked amount of
+    * @dev Internal function to update the activation locked amount of a guardian
+    * @param _guardian Guardian to update the activation locked amount of
     * @param _lockManager Address of the lock manager controlling the lock
-    * @param _amount Amount of tokens to be added to the deactivation locked amount of the guardian
+    * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
-    function _lockDeactivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        DeactivationLocks storage deactivationLocks = guardiansByAddress[_guardian].deactivationLocks;
+    function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
+        ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
 
-        uint256 newTotalLocked = deactivationLocks.total.add(_amount);
-        uint256 newLockedAmount = deactivationLocks.lockedBy[_lockManager].add(_amount);
+        uint256 newTotalLocked = activationLocks.total.add(_amount);
+        uint256 newLockedAmount = activationLocks.lockedBy[_lockManager].add(_amount);
 
-        deactivationLocks.total = newTotalLocked;
-        deactivationLocks.lockedBy[_lockManager] = newLockedAmount;
-        emit GuardianDeactivationLockIncreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
+        activationLocks.total = newTotalLocked;
+        activationLocks.lockedBy[_lockManager] = newLockedAmount;
+        emit GuardianActivationLockIncreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
     }
 
     /**
@@ -749,9 +750,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
         // the activation amount since we have just added it to the available balance of the guardian.
         if (_data.toBytes4() == GuardiansRegistry(this).activate.selector) {
             _activateTokens(_guardian, _amount, _from);
-        } else if (_data.toBytes4() == GuardiansRegistry(this).lockDeactivation.selector) {
+        } else if (_data.toBytes4() == GuardiansRegistry(this).lockActivation.selector) {
             _activateTokens(_guardian, _amount, _from);
-            _lockDeactivation(_guardian, _from, _amount);
+            _lockActivation(_guardian, _from, _amount);
         }
 
         emit Staked(_guardian, _amount, _totalStakedFor(_guardian), _data);

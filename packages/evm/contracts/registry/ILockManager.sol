@@ -1,7 +1,5 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
-
 
 interface ILockManager {
     /**
