@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/ERC20.sol";
+import "../../lib/standards/IERC20.sol";
 
 
 interface IConfig {
@@ -33,7 +33,7 @@ interface IConfig {
     */
     function getConfig(uint64 _termId) external view
         returns (
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256[3] memory fees,
             uint64[5] memory roundStateDurations,
             uint16[2] memory pcts,
@@ -49,7 +49,7 @@ interface IConfig {
     * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
-    function getDraftConfig(uint64 _termId) external view returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct);
+    function getDraftConfig(uint64 _termId) external view returns (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct);
 
     /**
     * @dev Tell the min active balance config at a certain term

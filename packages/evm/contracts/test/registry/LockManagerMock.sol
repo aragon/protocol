@@ -23,7 +23,7 @@ contract LockManagerMock is ILockManager, ApproveAndCallFallBack {
         address token = registry.token();
         require(_token == token, ERROR_INVALID_TOKEN);
 
-        require(ERC20(token).transferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+        require(IERC20(token).transferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
 
         bytes memory data = abi.encodePacked(GuardiansRegistry(registry).lockActivation.selector);
         registry.stakeFor(_from, _amount, data);

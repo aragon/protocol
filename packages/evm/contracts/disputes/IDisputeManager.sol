@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
+import "../lib/standards/IERC20.sol";
 import "../arbitration/IArbitrable.sol";
 
 
@@ -95,7 +95,7 @@ interface IDisputeManager {
     * @return feeToken ERC20 token used for the fees
     * @return feeAmount Total amount of fees to be paid for a dispute at the given term
     */
-    function getDisputeFees() external view returns (ERC20 feeToken, uint256 feeAmount);
+    function getDisputeFees() external view returns (IERC20 feeToken, uint256 feeAmount);
 
     /**
     * @dev Tell information of a certain dispute
@@ -166,7 +166,7 @@ interface IDisputeManager {
             uint64 nextRoundStartTerm,
             uint64 nextRoundGuardiansNumber,
             DisputeState newDisputeState,
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256 totalFees,
             uint256 guardianFees,
             uint256 appealDeposit,

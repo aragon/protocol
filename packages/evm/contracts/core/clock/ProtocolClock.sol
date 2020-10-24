@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/SafeMath64.sol";
-import "../../lib/os/TimeHelpers.sol";
+import "../../lib/math/SafeMath64.sol";
+import "../../lib/utils/TimeHelpers.sol";
 
 import "./IClock.sol";
 

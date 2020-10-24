@@ -1,8 +1,7 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/SafeMath.sol";
-
-import "../../standards/ApproveAndCall.sol";
+import "../../lib/math/SafeMath.sol";
+import "../../lib/standards/ApproveAndCall.sol";
 
 
 contract ERC20Mock {

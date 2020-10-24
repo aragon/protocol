@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/IsContract.sol";
+import "../../lib/utils/IsContract.sol";
 
 import "./Modules.sol";
 import "./IModuleCache.sol";
@@ -117,7 +117,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     constructor(
         uint64[2] memory _termParams,
         address[3] memory _governors,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -184,7 +184,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     */
     function setConfig(
         uint64 _fromTermId,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] calldata _fees,
         uint64[5] calldata _roundStateDurations,
         uint16[2] calldata _pcts,
@@ -368,7 +368,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     */
     function getConfig(uint64 _termId) external view
         returns (
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256[3] memory fees,
             uint64[5] memory roundStateDurations,
             uint16[2] memory pcts,
@@ -388,7 +388,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
-    function getDraftConfig(uint64 _termId) external view returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct) {
+    function getDraftConfig(uint64 _termId) external view returns (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct) {
         uint64 lastEnsuredTermId = _lastEnsuredTermId();
         return _getDraftConfig(_termId, lastEnsuredTermId);
     }
