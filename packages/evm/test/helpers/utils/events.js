@@ -43,6 +43,7 @@ const REGISTRY_EVENTS = {
   GUARDIAN_TOKENS_ASSIGNED: 'GuardianTokensAssigned',
   GUARDIAN_TOKENS_COLLECTED: 'GuardianTokensCollected',
   GUARDIAN_ACTIVATION_LOCK_CHANGED: 'GuardianActivationLockChanged',
+  ACTIVATOR_CHANGED: 'ActivatorChanged',
   LOCK_MANAGER_CHANGED: 'LockManagerWhitelistChanged',
   TOTAL_ACTIVE_BALANCE_LIMIT_CHANGED: 'TotalActiveBalanceLimitChanged'
 }

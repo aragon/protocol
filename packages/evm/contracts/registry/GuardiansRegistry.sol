@@ -39,9 +39,10 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     string private constant ERROR_TOTAL_ACTIVE_BALANCE_EXCEEDED = "GR_TOTAL_ACTIVE_BALANCE_EXCEEDED";
     string private constant ERROR_DEACTIVATION_AMOUNT_EXCEEDS_LOCK = "GR_DEACTIV_AMOUNT_EXCEEDS_LOCK";
     string private constant ERROR_CANNOT_UNLOCK_ACTIVATION = "GR_CANNOT_UNLOCK_ACTIVATION";
-    string private constant ERROR_LOCK_MANAGER_NOT_ALLOWED = "GR_LOCK_MANAGER_NOT_ALLOWED";
     string private constant ERROR_ZERO_LOCK_ACTIVATION = "GR_ZERO_LOCK_ACTIVATION";
     string private constant ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT = "GR_INVALID_UNLOCK_ACTIVAT_AMOUNT";
+    string private constant ERROR_LOCK_MANAGER_NOT_ALLOWED = "GR_LOCK_MANAGER_NOT_ALLOWED";
+    string private constant ERROR_ACTIVATOR_NOT_ALLOWED = "GR_ACTIVATOR_NOT_ALLOWED";
     string private constant ERROR_WITHDRAWALS_LOCK = "GR_WITHDRAWALS_LOCK";
 
     // Address that will be used to burn guardian tokens
@@ -124,6 +125,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     // Mapping of whitelisted lock managers indexed by address
     mapping (address => bool) internal whitelistedLockManagers;
 
+    // Mapping of whitelisted token activators indexed by address
+    mapping (address => bool) internal allowedActivators;
+
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
 
@@ -139,6 +143,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     event GuardianTokensBurned(uint256 amount);
     event GuardianTokensCollected(address indexed guardian, uint256 amount, uint64 effectiveTermId);
     event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
+    event ActivatorChanged(address indexed activator, bool allowed);
     event LockManagerWhitelistChanged(address indexed lockManager, bool allowed);
 
     /**
@@ -452,6 +457,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
+    * @notice `_allowed ? 'Allow' : 'Disallow'` `_activator` as an activator
+    * @param _activator Address of the activator to be changed
+    * @param _allowed Whether the activator is allowed
+    */
+    function changeActivator(address _activator, bool _allowed) external onlyConfigGovernor {
+        allowedActivators[_activator] = _allowed;
+        emit ActivatorChanged(_activator, _allowed);
+    }
+
+    /**
     * @notice `_allowed ? 'Allow' : 'Disallow'` `_lockManager` as a lock manager
     * @param _lockManager Address of the lock manager to be changed
     * @param _allowed Whether the lock manager is whitelisted
@@ -609,6 +624,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
+    * @dev Tell whether a activator is allowed
+    * @param _activator Address of the activator being queried
+    * @return True if the activator is allowed
+    */
+    function isActivatorAllowed(address _activator) external view returns (bool) {
+        return _isActivatorAllowed(_activator);
+    }
+
+    /**
     * @dev Tell whether a lock manager is whitelisted
     * @param _lockManager Address of the lock manager being queried
     * @return True if the lock manager is whitelisted
@@ -634,6 +658,10 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     */
     function _activateTokens(address _guardian, uint256 _amount, address _sender) internal {
         uint64 termId = _ensureCurrentTerm();
+
+        // Make sure the sender is allowed to activate tokens on behalf of the guardian
+        bool isAllowed = _guardian == _sender || _isActivatorAllowed(_sender) || _isActivatorAllowed(ANY_ENTITY);
+        require(isAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
 
         // Try to clean a previous deactivation request if any
         _processDeactivationRequest(_guardian, termId);
@@ -768,7 +796,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
     function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
+        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY) || _guardian == _lockManager;
         require(isAllowed, ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
@@ -793,7 +821,6 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
 
         // Activate tokens if it was requested by the sender. Note that there's no need to check
         // the activation amount since we have just added it to the available balance of the guardian.
-        // TODO: implement activators whitelist
         if (_data.toBytes4() == GuardiansRegistry(this).activate.selector) {
             _activateTokens(_guardian, _amount, _from);
         } else if (_data.toBytes4() == GuardiansRegistry(this).lockActivation.selector) {
@@ -978,6 +1005,15 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
         available = _guardian.availableBalance;
         locked = _guardian.lockedBalance;
         pendingDeactivation = _guardian.deactivationRequest.amount;
+    }
+
+    /**
+    * @dev Tell whether an activator is allowed
+    * @param _activator Address of the activator being queried
+    * @return True if the activator is allowed
+    */
+    function _isActivatorAllowed(address _activator) internal view returns (bool) {
+        return allowedActivators[_activator];
     }
 
     /**
