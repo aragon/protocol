@@ -1,8 +1,8 @@
 ## 4.7. Treasury
 
 The `Treasury` module is in charge of handling the token assets related to the disputes process.
-The ANT of the guardians and the payments fees of the users are the only assets excluded from the `Treasury`.
-Except from those, the rest of the fees, deposits, and collaterals required to back the different adjudication rounds of a dispute, are stored in the `Treasury`.
+The staked ANT of the guardians and the payments fees of the users are the only assets excluded from the `Treasury`; those are handled in the `GuardianRegistry` and `PaymentBook`, respectively.
+Except from those, the `Treasury` stores the rest of the fees, deposits, and collaterals required to back the different adjudication rounds of a dispute.
 
 ### 4.7.1. Constructor
 
