@@ -2,7 +2,7 @@ const { bn, bigExp, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper, DEFAULTS } = require('../helpers/wrappers/protocol')
-const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
+const { DISPUTE_MANAGER_EVENTS, ARBITRATOR_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_PROTOCOL_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Arbitrable = artifacts.require('Arbitrable')
@@ -130,7 +130,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
 
     context('when the sender is not the arbitrable of the dispute', () => {
       it('reverts', async () => {
-        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), ARAGON_PROTOCOL_ERRORS.ERROR_SENDER_NOT_DISPUTE_SUBJECT)
+        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), ARAGON_PROTOCOL_ERRORS.SENDER_NOT_DISPUTE_SUBJECT)
       })
     })
 

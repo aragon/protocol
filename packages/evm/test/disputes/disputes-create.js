@@ -1,8 +1,8 @@
 const { ONE_DAY, NEXT_WEEK, bn, bigExp, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { DISPUTE_MANAGER_EVENTS, CLOCK_EVENTS } = require('../helpers/utils/events')
 const { buildHelper, DEFAULTS, DISPUTE_STATES } = require('../helpers/wrappers/protocol')
+const { DISPUTE_MANAGER_EVENTS, CLOCK_EVENTS, ARBITRATOR_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS, CLOCK_ERRORS } = require('../helpers/utils/errors')
 
 const ERC20 = artifacts.require('ERC20Mock')
@@ -10,7 +10,7 @@ const DisputeManager = artifacts.require('DisputeManager')
 const ProtocolClock = artifacts.require('ProtocolClock')
 const Arbitrable = artifacts.require('Arbitrable')
 
-contract('DisputeManager', ([_, fakeArbitrable]) => {
+contract('DisputeManager', ([_, someone, fakeArbitrable]) => {
   let protocolHelper, protocol, disputeManager, feeToken, arbitrable
 
   const termDuration = bn(ONE_DAY)
@@ -161,15 +161,25 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
     })
 
     context('when the sender is not an arbitrable', () => {
-      it('creates a dispute', async () => {
+      beforeEach('create dispute', async () => {
         const { disputeFees } = await protocolHelper.getDisputeFees()
         await protocolHelper.mintFeeTokens(fakeArbitrable, disputeFees)
         await feeToken.approve(disputeManager.address, disputeFees, { from: fakeArbitrable })
+      })
 
+      it('creates a dispute', async () => {
         const receipt = await protocol.createDispute(2, '0xabcd', { from: fakeArbitrable })
 
         assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { decodeForAbi: DisputeManager.abi })
         assertEvent(receipt, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: fakeArbitrable, metadata: '0xabcd' }, decodeForAbi: DisputeManager.abi })
+      })
+
+      it('can submit evidence', async () => {
+        await protocol.createDispute(2, '0xabcd', { from: fakeArbitrable })
+        const receipt = await protocol.submitEvidence(0, fakeArbitrable, '0x1234', { from: fakeArbitrable })
+
+        assertAmountOfEvents(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED)
+        assertEvent(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { expectedArgs: { disputeId: 0, submitter: fakeArbitrable, evidence: '0x1234' } })
       })
     })
 
