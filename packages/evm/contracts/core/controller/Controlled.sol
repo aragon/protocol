@@ -14,7 +14,7 @@ import "../../disputes/IDisputeManager.sol";
 import "../../payments/IPaymentsBook.sol";
 
 
-contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
+contract Controlled is IModuleCache, IsContract, Modules, ConfigConsumer {
     string private constant ERROR_MODULE_NOT_SET = "CTD_MODULE_NOT_SET";
     string private constant ERROR_INVALID_MODULES_CACHE_INPUT = "CTD_INVALID_MODULES_CACHE_INPUT";
     string private constant ERROR_CONTROLLER_NOT_CONTRACT = "CTD_CONTROLLER_NOT_CONTRACT";
