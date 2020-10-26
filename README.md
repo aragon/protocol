@@ -6,25 +6,22 @@
 
 ## Project
 
-#### 👩‍️ [Become an Aragon Protocol guardian](https://ant.aragon.org)
-Aragon Protocol is now live on Ethereum mainnet. You can become a guardian by staking ANT.
+#### 👩‍️ [Become an Aragon Protocol guardian](https://aragon.org/token/ant)
+Aragon Protocol will soon be live on Ethereum mainnet. You can become a guardian by staking ANT.
 
 #### ⚖ [Check out the Aragon Protocol Dashboard](https://protocol.aragon.org)
 The Aragon Protocol Dashboard is the central app where all dispute-related information is available for guardians.
 
-#### 📚 [Read the User Guide](https://help.aragon.org/category/47-aragoncourt)
-Read the user guide if you have any doubts about the Aragon protocol, Protocol Dashboard, or related tools.
-
 ## Protocol
 
 #### 📓 [Read the full documentation](/docs)
-Aragon Protocol is a dispute resolution protocol that runs on Ethereum. It's one of the core components of the [Aragon Network](https://aragon.org/network/).
+Aragon Protocol is a dispute resolution protocol running on Ethereum. It is the core component of the [Aragon Network](https://aragon.org/network/).
 
 #### 🚧 Project stage: v1 implementation
-After a long research and development phase, Aragon Protocol's v1 implementation has been [released](https://www.npmjs.com/package/@aragon/protocol) and [deployed](https://etherscan.io/address/0xee4650cBe7a2B23701D416f58b41D8B76b617797#code).
+After a long research and development phase, Aragon Protocol's v1 implementation will soon be released as an upgraded version of Aragon Court.
 
-#### ✅ Security review status: audited
-Aragon Protocol v1 has already been audited by an independent security professional. You can read the audit report [here](https://github.com/gakonst/publications/blob/master/aragon_protocol_audit.pdf).
+#### 🚨 Security review status: in progress
+Aragon Protocol v1 is being audited by a security firm. We will publish the results as soon as we finish the process.
 
 #### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragon-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 Don't be shy to contribute even the smallest tweak. Everyone will be especially nice and helpful to beginners to help you get started!
@@ -33,7 +30,7 @@ Don't be shy to contribute even the smallest tweak. Everyone will be especially 
 
 #### Mainnet
 
-The mainnet instance of Aragon Protocol is deployed at [`0xee4650cBe7a2B23701D416f58b41D8B76b617797`](https://etherscan.io/address/0xee4650cBe7a2B23701D416f58b41D8B76b617797#code)
+The mainnet instance of Aragon Protocol will be deployed after we finish the security audit.
 
 #### Testing
 
@@ -41,4 +38,4 @@ There are a few testing instances deployed of Aragon Protocol, please refer to t
 
 ## Help shape Aragon Protocol
 - Discuss in [Aragon Forum](https://forum.aragon.org/tags/dispute-resolution)
-- Join the [Aragon Protocol channel](https://discord.gg/nxMejdG) on Discord.
+- Join the [Aragon Discord server](https://discord.com/invite/aragon).
