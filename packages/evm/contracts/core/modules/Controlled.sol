@@ -53,7 +53,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @dev Ensure the msg.sender is an active DisputeManager module
     */
     modifier onlyActiveDisputeManagers() {
-        require(controller.isActive(DISPUTE_MANAGER, msg.sender), ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
+        require(controller.isActive(MODULE_ID_DISPUTE_MANAGER, msg.sender), ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
         _;
     }
 
@@ -71,7 +71,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @dev Ensure the msg.sender is an active Voting module
     */
     modifier onlyActiveVoting() {
-        require(controller.isActive(VOTING, msg.sender), ERROR_SENDER_NOT_ACTIVE_VOTING);
+        require(controller.isActive(MODULE_ID_VOTING, msg.sender), ERROR_SENDER_NOT_ACTIVE_VOTING);
         _;
     }
 
@@ -143,7 +143,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the DisputeManager module
     */
     function _disputeManager() internal view returns (IDisputeManager) {
-        return IDisputeManager(_getModuleCache(DISPUTE_MANAGER));
+        return IDisputeManager(_getModuleCache(MODULE_ID_DISPUTE_MANAGER));
     }
 
     /**
@@ -151,7 +151,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the GuardianRegistry module implementation
     */
     function _guardiansRegistry() internal view returns (IGuardiansRegistry) {
-        return IGuardiansRegistry(_getModuleCache(GUARDIANS_REGISTRY));
+        return IGuardiansRegistry(_getModuleCache(MODULE_ID_GUARDIANS_REGISTRY));
     }
 
     /**
@@ -159,7 +159,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the Voting module implementation
     */
     function _voting() internal view returns (ICRVoting) {
-        return ICRVoting(_getModuleCache(VOTING));
+        return ICRVoting(_getModuleCache(MODULE_ID_VOTING));
     }
 
     /**
@@ -167,7 +167,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the Voting module owner
     */
     function _votingOwner() internal view returns (ICRVotingOwner) {
-        return ICRVotingOwner(_getModuleCache(DISPUTE_MANAGER));
+        return ICRVotingOwner(_getModuleCache(MODULE_ID_DISPUTE_MANAGER));
     }
 
     /**
@@ -175,7 +175,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the PaymentsBook module implementation
     */
     function _paymentsBook() internal view returns (IPaymentsBook) {
-        return IPaymentsBook(_getModuleCache(PAYMENTS_BOOK));
+        return IPaymentsBook(_getModuleCache(MODULE_ID_PAYMENTS_BOOK));
     }
 
     /**
@@ -183,7 +183,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the Treasury module implementation
     */
     function _treasury() internal view returns (ITreasury) {
-        return ITreasury(_getModuleCache(TREASURY));
+        return ITreasury(_getModuleCache(MODULE_ID_TREASURY));
     }
 
     /**

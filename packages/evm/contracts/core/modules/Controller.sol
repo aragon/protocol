@@ -466,7 +466,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function getDisputeManager() external view returns (address addr, bool disabled) {
-        return _getModule(DISPUTE_MANAGER);
+        return _getModule(MODULE_ID_DISPUTE_MANAGER);
     }
 
     /**
@@ -475,7 +475,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function getGuardiansRegistry() external view returns (address addr, bool disabled) {
-        return _getModule(GUARDIANS_REGISTRY);
+        return _getModule(MODULE_ID_GUARDIANS_REGISTRY);
     }
 
     /**
@@ -484,7 +484,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function getVoting() external view returns (address addr, bool disabled) {
-        return _getModule(VOTING);
+        return _getModule(MODULE_ID_VOTING);
     }
 
     /**
@@ -493,7 +493,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function getPaymentsBook() external view returns (address addr, bool disabled) {
-        return _getModule(PAYMENTS_BOOK);
+        return _getModule(MODULE_ID_PAYMENTS_BOOK);
     }
 
     /**
@@ -502,7 +502,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function getTreasury() external view returns (address addr, bool disabled) {
-        return _getModule(TREASURY);
+        return _getModule(MODULE_ID_TREASURY);
     }
 
     /**
@@ -578,7 +578,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return Current address of the DisputeManager module
     */
     function _getDisputeManager() internal view returns (address) {
-        return currentModules[DISPUTE_MANAGER];
+        return currentModules[MODULE_ID_DISPUTE_MANAGER];
     }
 
     /**
@@ -586,6 +586,6 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return Current address of the PaymentsBook module
     */
     function _getPaymentsBook() internal view returns (address) {
-        return currentModules[PAYMENTS_BOOK];
+        return currentModules[MODULE_ID_PAYMENTS_BOOK];
     }
 }

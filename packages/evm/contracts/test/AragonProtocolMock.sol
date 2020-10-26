@@ -34,30 +34,30 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
     {}
 
     function setDisputeManager(address _addr) external {
-        _setAndCacheModule(DISPUTE_MANAGER, _addr);
+        _setAndCacheModule(MODULE_ID_DISPUTE_MANAGER, _addr);
     }
 
     function setDisputeManagerMock(address _addr) external {
         // This function allows setting any address as the DisputeManager module
-        currentModules[DISPUTE_MANAGER] = _addr;
-        allModules[_addr].id = DISPUTE_MANAGER;
-        emit ModuleSet(DISPUTE_MANAGER, _addr);
+        currentModules[MODULE_ID_DISPUTE_MANAGER] = _addr;
+        allModules[_addr].id = MODULE_ID_DISPUTE_MANAGER;
+        emit ModuleSet(MODULE_ID_DISPUTE_MANAGER, _addr);
     }
 
     function setGuardiansRegistry(address _addr) external {
-        _setAndCacheModule(GUARDIANS_REGISTRY, _addr);
+        _setAndCacheModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
     }
 
     function setVoting(address _addr) external {
-        _setAndCacheModule(VOTING, _addr);
+        _setAndCacheModule(MODULE_ID_VOTING, _addr);
     }
 
     function setPaymentsBook(address _addr) external {
-        _setAndCacheModule(PAYMENTS_BOOK, _addr);
+        _setAndCacheModule(MODULE_ID_PAYMENTS_BOOK, _addr);
     }
 
     function setTreasury(address _addr) external {
-        _setAndCacheModule(TREASURY, _addr);
+        _setAndCacheModule(MODULE_ID_TREASURY, _addr);
     }
 
     function mockIncreaseTerm() external {
@@ -107,11 +107,11 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
         _setModule(_id, _addr);
 
         bytes32[] memory ids = new bytes32[](5);
-        ids[0] = DISPUTE_MANAGER;
-        ids[1] = GUARDIANS_REGISTRY;
-        ids[2] = VOTING;
-        ids[3] = PAYMENTS_BOOK;
-        ids[4] = TREASURY;
+        ids[0] = MODULE_ID_DISPUTE_MANAGER;
+        ids[1] = MODULE_ID_GUARDIANS_REGISTRY;
+        ids[2] = MODULE_ID_VOTING;
+        ids[3] = MODULE_ID_PAYMENTS_BOOK;
+        ids[4] = MODULE_ID_TREASURY;
 
         address[] memory addresses = new address[](5);
         for (uint i = 0; i < ids.length; i++) {
