@@ -91,15 +91,14 @@ Bear in mind there is a quota set for these faucets; they will only allow you to
 
 ## 8.3. Installing the Aragon Protocol dev CLI tool
 
-To interact with the deployed versions of Aragon Protocol, we built a node-based [CLI tool](https://github.com/aragonone/protocol-backend/tree/development/packages/cli) that you can use.
+To interact with the deployed versions of Aragon Protocol, we built a node-based [CLI tool](https://github.com/aragon/protocol-backend/tree/development/packages/cli) that you can use.
 Currently, there is no published version of it. But you can clone the GitHub repo and run it locally.
 To continue with the testing guide you will need to use it. First, make sure you clone it and install its dependencies as follows:
 ```
-git clone https://github.com/aragonone/protocol-backend/
+git clone https://github.com/aragon/protocol-backend/
 cd protocol-backend
 git checkout master
-npm i
-npx lerna bootstrap
+yarn
 cd packages/cli
 ```
 
@@ -215,10 +214,10 @@ node ./bin/index.js dispute -a 0xe573D236d40F331d24420075Fb2EdE84B9968E3c -m '{ 
 You can use any of the Protocol Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the protocol—and therefore can be difficult to come to a ruling you want).
 If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to guardians.
 
-Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragonone/protocol-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
-- [`draft`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/draft.js): Draft dispute and close evidence submission period if necessary
-- [`commit`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/commit.js): Commit vote for a dispute round
-- [`reveal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/reveal.js): Reveal committed vote
-- [`appeal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/appeal.js): Appeal dispute in favour of a certain outcome
-- [`confirm-appeal`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/confirm-appeal.js): Confirm an existing appeal for a dispute
-- [`execute`](https://github.com/aragonone/protocol-backend/blob/master/packages/cli/src/commands/execute.js): Execute ruling for a dispute
+Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragon/protocol-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
+- [`draft`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/draft.js): Draft dispute and close evidence submission period if necessary
+- [`commit`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/commit.js): Commit vote for a dispute round
+- [`reveal`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/reveal.js): Reveal committed vote
+- [`appeal`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/appeal.js): Appeal dispute in favour of a certain outcome
+- [`confirm-appeal`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/confirm-appeal.js): Confirm an existing appeal for a dispute
+- [`execute`](https://github.com/aragon/protocol-backend/blob/master/packages/cli/src/commands/execute.js): Execute ruling for a dispute
