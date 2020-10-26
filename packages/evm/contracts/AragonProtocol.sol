@@ -82,8 +82,7 @@ contract AragonProtocol is Controller, IArbitrator {
     */
     function createDispute(uint256 _possibleRulings, bytes calldata _metadata) external returns (uint256) {
         IArbitrable subject = IArbitrable(msg.sender);
-        IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
-        return disputeManager.createDispute(subject, _possibleRulings.toUint8(), _metadata);
+        return _disputeManager().createDispute(subject, _possibleRulings.toUint8(), _metadata);
     }
 
     /**
@@ -93,8 +92,7 @@ contract AragonProtocol is Controller, IArbitrator {
     * @param _evidence Data submitted for the evidence related to the dispute
     */
     function submitEvidence(uint256 _disputeId, address _submitter, bytes calldata _evidence) external {
-        IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
-        (IArbitrable subject ,,,,,) = disputeManager.getDispute(_disputeId);
+        (IArbitrable subject ,,,,,) = _disputeManager().getDispute(_disputeId);
         require(subject == IArbitrable(msg.sender), ERROR_SENDER_NOT_DISPUTE_SUBJECT);
         emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
     }
@@ -105,8 +103,7 @@ contract AragonProtocol is Controller, IArbitrator {
     */
     function closeEvidencePeriod(uint256 _disputeId) external {
         IArbitrable subject = IArbitrable(msg.sender);
-        IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
-        disputeManager.closeEvidencePeriod(subject, _disputeId);
+        _disputeManager().closeEvidencePeriod(subject, _disputeId);
     }
 
     /**
@@ -116,8 +113,7 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return ruling Ruling number computed for the given dispute
     */
     function rule(uint256 _disputeId) external returns (address subject, uint256 ruling) {
-        IDisputeManager disputeManager = IDisputeManager(_getDisputeManager());
-        (IArbitrable _subject, uint8 _ruling) = disputeManager.computeRuling(_disputeId);
+        (IArbitrable _subject, uint8 _ruling) = _disputeManager().computeRuling(_disputeId);
         return (address(_subject), uint256(_ruling));
     }
 
@@ -128,8 +124,8 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return feeAmount Total amount of fees that must be allowed to the recipient
     */
     function getDisputeFees() external view returns (address recipient, IERC20 feeToken, uint256 feeAmount) {
-        recipient = _getDisputeManager();
-        IDisputeManager disputeManager = IDisputeManager(recipient);
+        IDisputeManager disputeManager = _disputeManager();
+        recipient = address(disputeManager);
         (feeToken, feeAmount) = disputeManager.getDisputeFees();
     }
 
@@ -138,6 +134,14 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return Address of the payments recipient module
     */
     function getPaymentsRecipient() external view returns (address) {
-        return _getPaymentsBook();
+        return currentModules[MODULE_ID_PAYMENTS_BOOK];
+    }
+
+    /**
+    * @dev Internal function to tell the current DisputeManager module
+    * @return Current DisputeManager module
+    */
+    function _disputeManager() internal view returns (IDisputeManager) {
+        return IDisputeManager(currentModules[MODULE_ID_DISPUTE_MANAGER]);
     }
 }

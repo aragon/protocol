@@ -572,20 +572,4 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
         addr = currentModules[_id];
         disabled = allModules[addr].disabled;
     }
-
-    /**
-    * @dev Internal function to tell the address of the current DisputeManager module
-    * @return Current address of the DisputeManager module
-    */
-    function _getDisputeManager() internal view returns (address) {
-        return currentModules[MODULE_ID_DISPUTE_MANAGER];
-    }
-
-    /**
-    * @dev Internal function to tell the address of the current PaymentsBook module
-    * @return Current address of the PaymentsBook module
-    */
-    function _getPaymentsBook() internal view returns (address) {
-        return currentModules[MODULE_ID_PAYMENTS_BOOK];
-    }
 }
