@@ -33,31 +33,44 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
         public
     {}
 
-    function setDisputeManager(address _addr) external {
-        _setAndCacheModule(MODULE_ID_DISPUTE_MANAGER, _addr);
-    }
-
     function setDisputeManagerMock(address _addr) external {
-        // This function allows setting any address as the DisputeManager module
+        // This function allows setting any address as the DisputeManager module (including EOAs)
         currentModules[MODULE_ID_DISPUTE_MANAGER] = _addr;
         allModules[_addr].id = MODULE_ID_DISPUTE_MANAGER;
         emit ModuleSet(MODULE_ID_DISPUTE_MANAGER, _addr);
     }
 
+    function setDisputeManager(address _addr) external {
+        _setModule(MODULE_ID_DISPUTE_MANAGER, _addr);
+        _cacheNewModule(MODULE_ID_DISPUTE_MANAGER, _addr);
+    }
+
     function setGuardiansRegistry(address _addr) external {
-        _setAndCacheModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
+        _setModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
+        _cacheNewModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
     }
 
     function setVoting(address _addr) external {
-        _setAndCacheModule(MODULE_ID_VOTING, _addr);
+        _setModule(MODULE_ID_VOTING, _addr);
+        _cacheNewModule(MODULE_ID_VOTING, _addr);
     }
 
     function setPaymentsBook(address _addr) external {
-        _setAndCacheModule(MODULE_ID_PAYMENTS_BOOK, _addr);
+        _setModule(MODULE_ID_PAYMENTS_BOOK, _addr);
+        _cacheNewModule(MODULE_ID_PAYMENTS_BOOK, _addr);
     }
 
     function setTreasury(address _addr) external {
-        _setAndCacheModule(MODULE_ID_TREASURY, _addr);
+        _setModule(MODULE_ID_TREASURY, _addr);
+        _cacheNewModule(MODULE_ID_TREASURY, _addr);
+    }
+
+    function _cacheNewModule(bytes32 _id, address _addr) private {
+        (bytes32[] memory knownIds, address[] memory knownAddresses) = _knownModules();
+        // Update the new module's cache with the already known modules
+        _cacheModules(_toArray(_addr), knownIds);
+        // Update the already known modules' cache with the new module
+        _cacheModules(knownAddresses, _toArray(_id));
     }
 
     function mockIncreaseTerm() external {
@@ -103,23 +116,27 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
         return super._computeTermRandomness(_termId);
     }
 
-    function _setAndCacheModule(bytes32 _id, address _addr) private {
-        _setModule(_id, _addr);
-
-        bytes32[] memory ids = new bytes32[](5);
+    function _knownModules() internal view returns (bytes32[] memory ids, address[] memory addresses) {
+        ids = new bytes32[](5);
         ids[0] = MODULE_ID_DISPUTE_MANAGER;
         ids[1] = MODULE_ID_GUARDIANS_REGISTRY;
         ids[2] = MODULE_ID_VOTING;
         ids[3] = MODULE_ID_PAYMENTS_BOOK;
         ids[4] = MODULE_ID_TREASURY;
 
-        address[] memory addresses = new address[](5);
+        addresses = new address[](5);
         for (uint i = 0; i < ids.length; i++) {
             addresses[i] = currentModules[ids[i]];
         }
+    }
 
-        for (uint j = 0; j < addresses.length; j++) {
-            IModuleCache(addresses[j]).cacheModules(ids, addresses);
-        }
+    function _toArray(address _addr) private pure returns (address[] memory addresses) {
+        addresses = new address[](1);
+        addresses[0] = _addr;
+    }
+
+    function _toArray(bytes32 _word) private pure returns (bytes32[] memory words) {
+        words = new bytes32[](1);
+        words[0] = _word;
     }
 }

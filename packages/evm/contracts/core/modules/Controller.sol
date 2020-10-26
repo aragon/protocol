@@ -280,16 +280,44 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice Set many modules at once
-    * @param _ids List of ids of each module to be set
-    * @param _addresses List of addresses of each the module to be set
+    * @notice Set and cache many modules at once
+    * @param _newModuleIds List of IDs of the new modules to be set
+    * @param _newModuleAddresses List of addresses of the new modules to be set
+    * @param _newModuleIdsToBeCached List of IDs of the modules that will be cached in the new modules to be set
+    * @param _currentModulesToBeSynced List of the current modules to update their caches based on the new modules set
     */
-    function setModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyModulesGovernor {
-        require(_ids.length == _addresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
+    function setModules(
+        bytes32[] calldata _newModuleIds,
+        address[] calldata _newModuleAddresses,
+        bytes32[] calldata _newModuleIdsToBeCached,
+        address[] calldata _currentModulesToBeSynced
+    )
+        external
+        onlyModulesGovernor
+    {
+        // We only care there about the modules to be set, caches are optional
+        require(_newModuleIds.length == _newModuleAddresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
-        for (uint256 i = 0; i < _ids.length; i++) {
-            _setModule(_ids[i], _addresses[i]);
+        // First set the addresses of the new modules or the modules to be updated
+        for (uint256 i = 0; i < _newModuleIds.length; i++) {
+            _setModule(_newModuleIds[i], _newModuleAddresses[i]);
         }
+
+        // Then update the caches of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
+        _cacheModules(_newModuleAddresses, _newModuleIdsToBeCached);
+
+        // Finally update the caches of the already existing modules based on the list of IDs that have been set
+        _cacheModules(_currentModulesToBeSynced, _newModuleIds);
+    }
+
+    /**
+    * @notice Sync modules' cache for a list of modules IDs based on their current address
+    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @param _idsToBeSet List of IDs of the modules to be cached
+    */
+    function cacheModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
+        require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
+        _cacheModules(_modulesToBeSynced, _idsToBeSet);
     }
 
     /**
@@ -317,27 +345,6 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
 
         module.disabled = false;
         emit ModuleEnabled(module.id, _addr);
-    }
-
-    /**
-    * @notice Sync modules' cache for a list of modules IDs based on their current address
-    * @param _modules List of modules addresses to be synced
-    * @param _ids List of IDs of the modules to be cached
-    */
-    function cacheModules(IModuleCache[] calldata _modules, bytes32[] calldata _ids) external onlyModulesGovernor {
-        require(_ids.length > 0 && _modules.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
-        address[] memory addresses = new address[](_ids.length);
-
-        for (uint256 i = 0; i < _ids.length; i++) {
-            address moduleAddress = currentModules[_ids[i]];
-            Module storage module = allModules[moduleAddress];
-            _ensureModuleExists(module);
-            addresses[i] = moduleAddress;
-        }
-
-        for (uint256 j = 0; j < _modules.length; j++) {
-            _modules[j].cacheModules(_ids, addresses);
-        }
     }
 
     /**
@@ -544,6 +551,28 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
         currentModules[_id] = _addr;
         allModules[_addr].id = _id;
         emit ModuleSet(_id, _addr);
+    }
+
+    /**
+    * @dev Internal function to sync the modules' cache for a list of modules IDs based on their current address
+    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @param _idsToBeSet List of IDs of the modules to be cached
+    */
+    function _cacheModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
+        address[] memory addressesToBeSet = new address[](_idsToBeSet.length);
+
+        // Load the addresses of all the modules to be updated
+        for (uint256 i = 0; i < _idsToBeSet.length; i++) {
+            address moduleAddress = currentModules[_idsToBeSet[i]];
+            Module storage module = allModules[moduleAddress];
+            _ensureModuleExists(module);
+            addressesToBeSet[i] = moduleAddress;
+        }
+
+        // Update the cache of all the requested modules
+        for (uint256 j = 0; j < _modulesToBeSynced.length; j++) {
+            IModuleCache(_modulesToBeSynced[j]).cacheModules(_idsToBeSet, addressesToBeSet);
+        }
     }
 
     /**

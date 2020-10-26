@@ -1,3 +1,4 @@
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
@@ -60,10 +61,11 @@ contract('Controller', ([_, modulesGovernor]) => {
     beforeEach('load dispute managers', async () => {
       previousGuardiansRegistry = protocolHelper.guardiansRegistry
       currentGuardiansRegistry = await GuardiansRegistry.new(protocol.address, protocolHelper.guardianToken.address, 1)
-      await protocol.setModule(moduleId, currentGuardiansRegistry.address, { from: modulesGovernor })
     })
 
-    it('does not affect modules cache', async () => {
+    it('does not affect modules cache if it is not requested', async () => {
+      await protocol.setModule(moduleId, currentGuardiansRegistry.address, { from: modulesGovernor })
+
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
       assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the treasury module does not match')
@@ -73,7 +75,10 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
-      await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
+      await protocol.setModules([moduleId], [currentGuardiansRegistry.address], [MODULE_IDS.disputes], targets, { from: modulesGovernor })
+
+      assert.equal(await currentGuardiansRegistry.modulesCache(MODULE_IDS.disputes), protocolHelper.disputeManager.address, 'dispute manager cached of the registry does not match')
+      assert.equal(await currentGuardiansRegistry.modulesCache(moduleId), ZERO_ADDRESS, 'registry cached of the registry does not match')
 
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentGuardiansRegistry.address, 'registry cached for the treasury module does not match')
@@ -90,10 +95,11 @@ contract('Controller', ([_, modulesGovernor]) => {
     beforeEach('load dispute managers', async () => {
       previousPaymentsBook = protocolHelper.paymentsBook
       currentPaymentsBook = await PaymentsBook.new(protocol.address, protocolHelper.paymentPeriodDuration, protocolHelper.paymentsGovernorSharePct)
-      await protocol.setModule(moduleId, currentPaymentsBook.address, { from: modulesGovernor })
     })
 
-    it('does not affect modules cache', async () => {
+    it('does not affect modules cache if it is not requested', async () => {
+      await protocol.setModule(moduleId, currentPaymentsBook.address, { from: modulesGovernor })
+
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached of the dispute manager does not match')
       assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the treasury module does not match')
@@ -103,7 +109,10 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
-      await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
+      await protocol.setModules([moduleId], [currentPaymentsBook.address], [MODULE_IDS.disputes], targets, { from: modulesGovernor })
+
+      assert.equal(await currentPaymentsBook.modulesCache(MODULE_IDS.disputes), protocolHelper.disputeManager.address, 'dispute manager cached of the payments book does not match')
+      assert.equal(await currentPaymentsBook.modulesCache(moduleId), ZERO_ADDRESS, 'payments book cached of the payments book does not match')
 
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentPaymentsBook.address, 'payments book cached of the dispute manager does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentPaymentsBook.address, 'payments book cached for the treasury module does not match')
@@ -120,10 +129,11 @@ contract('Controller', ([_, modulesGovernor]) => {
     beforeEach('load dispute managers', async () => {
       previousVoting = protocolHelper.voting
       currentVoting = await Voting.new(protocol.address)
-      await protocol.setModule(moduleId, currentVoting.address, { from: modulesGovernor })
     })
 
-    it('does not affect modules cache', async () => {
+    it('does not affect modules cache if it is not requested', async () => {
+      await protocol.setModule(moduleId, currentVoting.address, { from: modulesGovernor })
+
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousVoting.address, 'voting cached of the dispute manager does not match')
       assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousVoting.address, 'voting cached for the treasury module does not match')
@@ -133,7 +143,10 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
-      await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
+      await protocol.setModules([moduleId], [currentVoting.address], [MODULE_IDS.disputes], targets, { from: modulesGovernor })
+
+      assert.equal(await currentVoting.modulesCache(MODULE_IDS.disputes), protocolHelper.disputeManager.address, 'voting cached of the payments book does not match')
+      assert.equal(await currentVoting.modulesCache(moduleId), ZERO_ADDRESS, 'voting cached of the voting does not match')
 
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentVoting.address, 'voting cached of the dispute manager does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentVoting.address, 'voting cached for the treasury module does not match')
@@ -150,10 +163,11 @@ contract('Controller', ([_, modulesGovernor]) => {
     beforeEach('load dispute managers', async () => {
       previousTreasury = protocolHelper.treasury
       currentTreasury = await Treasury.new(protocol.address)
-      await protocol.setModule(moduleId, currentTreasury.address, { from: modulesGovernor })
     })
 
-    it('does not affect modules cache', async () => {
+    it('does not affect modules cache if it is not requested', async () => {
+      await protocol.setModule(moduleId, currentTreasury.address, { from: modulesGovernor })
+
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousTreasury.address, 'treasury cached of the dispute manager does not match')
       assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the treasury module does not match')
@@ -163,7 +177,10 @@ contract('Controller', ([_, modulesGovernor]) => {
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
-      await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
+      await protocol.setModules([moduleId], [currentTreasury.address], [MODULE_IDS.disputes], targets, { from: modulesGovernor })
+
+      assert.equal(await currentTreasury.modulesCache(MODULE_IDS.disputes), protocolHelper.disputeManager.address, 'dispute manager cached of the treasury does not match')
+      assert.equal(await currentTreasury.modulesCache(moduleId), ZERO_ADDRESS, 'treasury cached of the treasury does not match')
 
       assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentTreasury.address, 'treasury cached of the dispute manager does not match')
       assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentTreasury.address, 'treasury cached for the treasury module does not match')

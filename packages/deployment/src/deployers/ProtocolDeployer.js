@@ -98,9 +98,7 @@ module.exports = class extends BaseDeployer {
       logger.info('Setting modules...')
       const ids = [MODULES.DISPUTE_MANAGER, MODULES.GUARDIANS_REGISTRY, MODULES.VOTING, MODULES.PAYMENTS_BOOK, MODULES.TREASURY]
       const implementations = [this.disputes, this.registry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
-      await this.protocol.setModules(ids, implementations)
-      logger.info('Caching modules...')
-      await this.protocol.cacheModules(implementations, ids)
+      await this.protocol.setModules(ids, implementations, ids, [])
       logger.success('Modules set successfully')
     } else {
       logger.warn('Cannot set modules since sender is no longer the modules governor')

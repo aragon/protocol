@@ -547,7 +547,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
         context('when all the given modules where set', () => {
           beforeEach('set all modules', async () => {
-            controller.setModules(IDs, [firstModule.address, secondModule.address, thirdModule.address], { from: modulesGovernor })
+            controller.setModules(IDs, [firstModule.address, secondModule.address, thirdModule.address], [], [], { from: modulesGovernor })
           })
 
           it('caches the requested modules in the requested targets', async () => {

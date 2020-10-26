@@ -396,8 +396,7 @@ class ProtocolHelper {
 
     const ids = Object.values(MODULE_IDS)
     const implementations = [this.disputeManager, this.guardiansRegistry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
-    await this.protocol.setModules(ids, implementations, { from: this.modulesGovernor })
-    await this.protocol.cacheModules(implementations, ids, { from: this.modulesGovernor })
+    await this.protocol.setModules(ids, implementations, ids, [], { from: this.modulesGovernor })
 
     const zeroTermStartTime = this.firstTermStartTime.sub(this.termDuration)
     await this.setTimestamp(zeroTermStartTime)
