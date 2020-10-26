@@ -22,7 +22,7 @@ contract ModuleMock is Controlled {
         emit EtherReceived(msg.sender, msg.value);
     }
 
-    function setModule(bytes32, address) external {
+    function setModule(bytes32, address) external pure {
         revert('CONTROLLED_MALICIOUS_SET_MODULE');
     }
 

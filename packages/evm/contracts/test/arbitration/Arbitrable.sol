@@ -4,7 +4,7 @@ import "../../arbitration/IArbitrable.sol";
 import "../../arbitration/IArbitrator.sol";
 
 
-contract Arbitrable is IArbitrable {
+contract ArbitrableMock is IArbitrable {
     IArbitrator internal arbitrator;
 
     constructor (IArbitrator _arbitrator) public {
@@ -29,8 +29,6 @@ contract Arbitrable is IArbitrable {
 
     function rule(uint256 _disputeId) external {
         (, uint256 ruling) = arbitrator.rule(_disputeId);
-        if (ruling > 0) {
-            emit Ruled(arbitrator, _disputeId, ruling);
-        }
+        emit Ruled(arbitrator, _disputeId, ruling);
     }
 }
