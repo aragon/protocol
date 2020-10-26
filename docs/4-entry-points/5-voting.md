@@ -30,7 +30,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Vote ID:** Vote identification number
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only the current `DisputeManager` module
 - **Pre-flight checks:**
     - Ensure there is no other existing vote for the given vote ID
 - **State transitions:**

@@ -164,7 +164,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian to add an amount of tokens to
     - **Amount:** Amount of tokens to be added to the available balance of a guardian
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Increase the guardian's available balance
@@ -174,7 +174,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Amount:** Amount of tokens to be burned
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Increase the burn address's available balance
@@ -191,7 +191,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
         - **Batch requested guardians:** Number of guardians to be selected in the given batch of the draft
         - **Draft requested guardians:** Total number of guardians requested to be drafted
         - **Draft locking permyriad:** ‱ of the minimum active balance to be locked for the draft (1/10,000)
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure that the requested number of guardians to be drafted is greater than zero
     - Ensure each drafted guardian has enough active balance to be locked for the draft
@@ -208,7 +208,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardians:** List of guardian addresses to be slashed
     - **Locked amounts:** List of amounts locked for each corresponding guardian that will be either slashed or returned
     - **Rewarded guardians:** List of booleans to tell whether a guardian's active balance has to be slashed or not
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure that both lists lengths match
     - Ensure that each guardian has enough locked balance to be unlocked
@@ -223,7 +223,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian to collect the tokens from
     - **Amount:** Amount of tokens to be collected from the given guardian and for the requested term id
     - **Term ID:** Current term identification number
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure the guardian has enough active balance based on the requested amount
 - **State transitions:**
@@ -236,7 +236,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian to locked the withdrawals of
     - **Term ID:** Term identification number until which the guardian's withdrawals will be locked
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Update the guardian's state with the term ID until which their withdrawals will be locked
