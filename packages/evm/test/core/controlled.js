@@ -19,7 +19,7 @@ contract('Controlled', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       it('initializes the controlled', async () => {
         controlled = await Controlled.new(controller.address)
 
-        assert.equal(await controlled.getController(), controller.address, 'controller does not match')
+        assert.equal(await controlled.controller(), controller.address, 'controller does not match')
       })
     })
 

@@ -64,7 +64,7 @@ function loadOrCreateGuardianDraft(draftId: string, disputeRoundId: BigInt, guar
 
   if (draft === null) {
     const voting = Voting.bind(event.address)
-    const controllerAddress = voting.getController()
+    const controllerAddress = voting.controller()
     const controller = Controller.bind(controllerAddress)
     const disputeManagerAddress = controller.getDisputeManager().value0
     const disputeRoundIdArray = decodeDisputeRoundId(disputeRoundId)

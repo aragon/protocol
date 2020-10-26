@@ -26,7 +26,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     string private constant ERROR_SENDER_NOT_CURRENT_DISPUTE_MANAGER = "CTD_SEND_NOT_CURRENT_DISPUTE_MGR";
 
     // Address of the controller
-    Controller internal controller;
+    Controller public controller;
 
     // List of module caches indexed by ID
     mapping (bytes32 => address) internal modulesCache;
@@ -96,14 +96,6 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
             modulesCache[_ids[i]] = _addresses[i];
             emit ModuleCached(_ids[i], _addresses[i]);
         }
-    }
-
-    /**
-    * @dev Tell the address of the controller
-    * @return Address of the controller
-    */
-    function getController() external view returns (Controller) {
-        return controller;
     }
 
     /**
