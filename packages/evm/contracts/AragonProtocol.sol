@@ -92,9 +92,19 @@ contract AragonProtocol is Controller, IArbitrator {
     * @param _evidence Data submitted for the evidence related to the dispute
     */
     function submitEvidence(uint256 _disputeId, address _submitter, bytes calldata _evidence) external {
-        (IArbitrable subject ,,,,,) = _disputeManager().getDispute(_disputeId);
-        require(subject == IArbitrable(msg.sender), ERROR_SENDER_NOT_DISPUTE_SUBJECT);
-        emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
+        _submitEvidence(_disputeManager(), _disputeId, _submitter, _evidence);
+    }
+
+    /**
+    * @notice Submit `_evidence` as evidence from `_submitter` for dispute #`_disputeId`
+    * @dev This entry point can be used to submit evidences for previous Dispute Manager instances
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Id of the dispute in the Protocol
+    * @param _submitter Address of the account submitting the evidence
+    * @param _evidence Data submitted for the evidence related to the dispute
+    */
+    function submitEvidence(IDisputeManager _disputeManager, uint256 _disputeId, address _submitter, bytes calldata _evidence) external {
+        _submitEvidence(_disputeManager, _disputeId, _submitter, _evidence);
     }
 
     /**
@@ -102,8 +112,17 @@ contract AragonProtocol is Controller, IArbitrator {
     * @param _disputeId Identification number of the dispute to close its evidence submitting period
     */
     function closeEvidencePeriod(uint256 _disputeId) external {
-        IArbitrable subject = IArbitrable(msg.sender);
-        _disputeManager().closeEvidencePeriod(subject, _disputeId);
+        _closeEvidencePeriod(_disputeManager(), _disputeId);
+    }
+
+    /**
+    * @notice Close the evidence period of dispute #`_disputeId`
+    * @dev This entry point can be used to close evidence periods for previous Dispute Manager instances
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Identification number of the dispute to close its evidence submitting period
+    */
+    function closeEvidencePeriod(IDisputeManager _disputeManager, uint256 _disputeId) external {
+        _closeEvidencePeriod(_disputeManager, _disputeId);
     }
 
     /**
@@ -113,8 +132,19 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return ruling Ruling number computed for the given dispute
     */
     function rule(uint256 _disputeId) external returns (address subject, uint256 ruling) {
-        (IArbitrable _subject, uint8 _ruling) = _disputeManager().computeRuling(_disputeId);
-        return (address(_subject), uint256(_ruling));
+        return _rule(_disputeManager(), _disputeId);
+    }
+
+    /**
+    * @notice Rule dispute #`_disputeId` if ready
+    * @dev This entry point can be used to rule disputes for previous Dispute Manager instances
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Identification number of the dispute to be ruled
+    * @return subject Arbitrable instance associated to the dispute
+    * @return ruling Ruling number computed for the given dispute
+    */
+    function rule(IDisputeManager _disputeManager, uint256 _disputeId) external returns (address subject, uint256 ruling) {
+        return _rule(_disputeManager, _disputeId);
     }
 
     /**
@@ -135,6 +165,41 @@ contract AragonProtocol is Controller, IArbitrator {
     */
     function getPaymentsRecipient() external view returns (address) {
         return currentModules[MODULE_ID_PAYMENTS_BOOK];
+    }
+
+    /**
+    * @dev Internal function to submit evidence for a dispute
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Id of the dispute in the Protocol
+    * @param _submitter Address of the account submitting the evidence
+    * @param _evidence Data submitted for the evidence related to the dispute
+    */
+    function _submitEvidence(IDisputeManager _disputeManager, uint256 _disputeId, address _submitter, bytes memory _evidence) internal {
+        (IArbitrable subject ,,,,,) = _disputeManager.getDispute(_disputeId);
+        require(subject == IArbitrable(msg.sender), ERROR_SENDER_NOT_DISPUTE_SUBJECT);
+        emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
+    }
+
+    /**
+    * @dev Internal function to close the evidence period of a dispute
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Identification number of the dispute to close its evidence submitting period
+    */
+    function _closeEvidencePeriod(IDisputeManager _disputeManager, uint256 _disputeId) internal {
+        IArbitrable subject = IArbitrable(msg.sender);
+        _disputeManager.closeEvidencePeriod(subject, _disputeId);
+    }
+
+    /**
+    * @dev Internal function to rule a dispute
+    * @param _disputeManager Dispute manager to be used
+    * @param _disputeId Identification number of the dispute to be ruled
+    * @return subject Arbitrable instance associated to the dispute
+    * @return ruling Ruling number computed for the given dispute
+    */
+    function _rule(IDisputeManager _disputeManager, uint256 _disputeId) internal returns (address subject, uint256 ruling) {
+        (IArbitrable _subject, uint8 _ruling) = _disputeManager.computeRuling(_disputeId);
+        return (address(_subject), uint256(_ruling));
     }
 
     /**
