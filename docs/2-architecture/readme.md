@@ -62,7 +62,7 @@ Detailed information about `AragonProtocol` can be found in [section 4](../4-ent
 |--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
 | Dispute Manager    | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting cache                 |
 | Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute manager cache        |    
-| Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | Disable previous instance and update Dispute manager cache        |
+| Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | " |
 | PaymentsBook       | Leave the previous instance active until all funds are claimed                                                                        |  
 | Guardians Registry | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |  
 
@@ -130,11 +130,11 @@ Notes:
 | Relies on module |           On           |    Expected behavior     |
 |------------------|------------------------|--------------------------|
 | DisputesManager  | `assignTokens`         | Any active Dispute Manager should be able to manage guardian tokens |
-| DisputesManager  | `burnTokens`           | Any active Dispute Manager should be able to manage guardian tokens |
-| DisputesManager  | `draft`                | Any active Dispute Manager should be able to manage guardian tokens |
-| DisputesManager  | `clashOrUnlock`        | Any active Dispute Manager should be able to manage guardian tokens |
-| DisputesManager  | `collectTokens`        | Any active Dispute Manager should be able to manage guardian tokens |
-| DisputesManager  | `lockWithdrawals`      | Any active Dispute Manager should be able to manage guardian tokens |
+| DisputesManager  | `burnTokens`           | " |
+| DisputesManager  | `draft`                | " |
+| DisputesManager  | `clashOrUnlock`        | " |
+| DisputesManager  | `collectTokens`        | " |
+| DisputesManager  | `lockWithdrawals`      | " |
 
 Notes:
 - The Guardians Registry shouldn't reference any particular Dispute Manager instance, deploying a new Dispute Manager is not a problem
