@@ -1,7 +1,7 @@
-const { sha3, toChecksumAddress } = require('web3-utils')
+const { toChecksumAddress } = require('web3-utils')
 
-const ACTIVATE_DATA = sha3('activate(uint256)').slice(0, 10)
-const LOCK_ACTIVATION_DATA = sha3('lockActivation(address,uint256)').slice(0, 10)
+const ACTIVATE_DATA = web3.eth.abi.encodeFunctionSignature('activate(uint256)')
+const LOCK_ACTIVATION_DATA = web3.eth.abi.encodeFunctionSignature('lockActivation(address,uint256)')
 
 const filterGuardians = (guardiansList, guardiansToFiler) => {
   const addressesToFiler = guardiansToFiler.map(j => toChecksumAddress(j.address))

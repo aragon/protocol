@@ -57,39 +57,30 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Available term ID:** Identification number of the term in which the requested tokens will be deactivated
     - **Updated term ID:** Identification number of the term in which the given deactivation was updated
 
-#### 6.4.1.7. Guardian activation lock increased
+#### 6.4.1.7. Guardian activation lock changed
 
-- **Name:** `GuardianActivationLockIncreased`
+- **Name:** `GuardianActivationLockChanged`
 - **Args:**
-    - **Guardian:** Address of the guardian whose activation was increased
+    - **Guardian:** Address of the guardian whose activation was changed
     - **Lock manager:** Address of the lock manager controlling the lock
     - **Amount:** New activation locked amount of the guardian
     - **Total:** New total activation lock of the guardian
 
-#### 6.4.1.8. Guardian activation lock decreased
-
-- **Name:** `GuardianActivationLockDecreased`
-- **Args:**
-    - **Guardian:** Address of the guardian whose activation was decreased
-    - **Lock manager:** Address of the lock manager controlling the lock
-    - **Amount:** New activation locked amount of the guardian
-    - **Total:** New total activation lock of the guardian
-
-#### 6.4.1.9. Guardian balance locked
+#### 6.4.1.8. Guardian balance locked
 
 - **Name:** `GuardianBalanceLocked`
 - **Args:**
     - **Guardian:** Address of the guardian whose active balance was locked
     - **Amount:** New amount locked to the guardian
 
-#### 6.4.1.10. Guardian balance unlocked
+#### 6.4.1.9. Guardian balance unlocked
 
 - **Name:** `GuardianBalanceUnlocked`
 - **Args:**
     - **Guardian:** Address of the guardian whose active balance was unlocked
     - **Amount:** Amount of active locked that was unlocked to the guardian
 
-#### 6.4.1.11. Guardian slashed
+#### 6.4.1.10. Guardian slashed
 
 - **Name:** `GuardianSlashed`
 - **Args:**
@@ -97,20 +88,20 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Amount:** Amount of guardian tokens slashed from the guardian active tokens
     - **Effective term ID:** Identification number of the term when the guardian active balance will be updated
 
-#### 6.4.1.12. Guardian tokens assigned
+#### 6.4.1.11. Guardian tokens assigned
 
 - **Name:** `GuardianTokensAssigned`
 - **Args:**
     - **Guardian:** Address of the guardian receiving tokens
     - **Amount:** Amount of guardian tokens assigned to the staked balance of the guardian
 
-#### 6.4.1.13. Guardian tokens burned
+#### 6.4.1.12. Guardian tokens burned
 
 - **Name:** `GuardianTokensBurned`
 - **Args:**
     - **Amount:** Amount of guardian tokens burned to the zero address
 
-#### 6.4.1.14. Guardian tokens collected
+#### 6.4.1.13. Guardian tokens collected
 
 - **Name:** `GuardianTokensCollected`
 - **Args:**
@@ -118,16 +109,16 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Amount:** Amount of guardian tokens collected from the guardian active tokens
     - **Effective term ID:** Identification number of the term when the guardian active balance will be updated
 
-#### 6.4.1.15. Total active balance limit changed
+#### 6.4.1.14. Total active balance limit changed
 
 - **Name:** `TotalActiveBalanceLimitChanged`
 - **Args:**
     - **Previous limit:** Previous total active balance limit
     - **Current limit:** Current total active balance limit
 
-#### 6.4.1.16. Lock manager changed
+#### 6.4.1.15. Lock manager whitelist changed
 
-- **Name:** `LockManagerChanged`
+- **Name:** `LockManagerWhitelistChanged`
 - **Args:**
     - **Lock manager:** Address of the lock manager whose status was changed
     - **Allowed:** Whether the lock manager is allowed
@@ -228,13 +219,20 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 - **Outputs:**
     - **Term ID:** Term ID in which the guardian's withdrawals will be unlocked (due to final rounds)
 
-#### 6.4.2.13. Total active balance limit
+#### 6.4.2.13. Is lock manager whitelisted
+- **Inputs:**
+    - **Lock manager:** Address of the lock manager being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Allowed:** Whether the lock manager is whitelisted
+
+#### 6.4.2.14. Total active balance limit
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Total active balance limit:** Maximum amount of total active balance that can be held in the registry
 
-#### 6.4.2.14. Guardian ID
+#### 6.4.2.15. Guardian ID
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the ID of
 - **Pre-flight checks:** None

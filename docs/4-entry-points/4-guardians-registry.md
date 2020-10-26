@@ -133,7 +133,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian unlocking the active balance of
     - **Lock manager:** Address of the lock manager controlling the lock
     - **Amount:** Amount of active tokens to be unlocked
-    - **Deactivate:** Whether the requested amount must be deactivated too
+    - **Deactivate:** Whether the requested amount should be deactivated immediately
 - **Authentication:** Open. Implicitly, only the lock manager or any account in case the lock manager allows the unlock
 - **Pre-flight checks:**
     - Ensure that the requested amount can be unlocked

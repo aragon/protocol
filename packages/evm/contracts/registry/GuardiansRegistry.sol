@@ -41,7 +41,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     string private constant ERROR_CANNOT_UNLOCK_ACTIVATION = "GR_CANNOT_UNLOCK_ACTIVATION";
     string private constant ERROR_LOCK_MANAGER_NOT_ALLOWED = "GR_LOCK_MANAGER_NOT_ALLOWED";
     string private constant ERROR_ZERO_LOCK_ACTIVATION = "GR_ZERO_LOCK_ACTIVATION";
-    string private constant ERROR_UNLOCK_ACTIVATION_ZERO = "GR_UNLOCK_ACTIVATION_ZERO";
+    string private constant ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT = "GR_INVALID_UNLOCK_ACTIVAT_AMOUNT";
     string private constant ERROR_WITHDRAWALS_LOCK = "GR_WITHDRAWALS_LOCK";
 
     // Address that will be used to burn guardian tokens
@@ -122,7 +122,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     mapping (uint256 => address) internal guardiansAddressById;
 
     // Mapping of whitelisted lock managers indexed by address
-    mapping (address => bool) internal allowedLockManagers;
+    mapping (address => bool) internal whitelistedLockManagers;
 
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
@@ -131,8 +131,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     event GuardianDeactivationRequested(address indexed guardian, uint64 availableTermId, uint256 amount);
     event GuardianDeactivationProcessed(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 processedTermId);
     event GuardianDeactivationUpdated(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 updateTermId);
-    event GuardianActivationLockIncreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
-    event GuardianActivationLockDecreased(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
+    event GuardianActivationLockChanged(address indexed guardian, address indexed lockManager, uint256 amount, uint256 total);
     event GuardianBalanceLocked(address indexed guardian, uint256 amount);
     event GuardianBalanceUnlocked(address indexed guardian, uint256 amount);
     event GuardianSlashed(address indexed guardian, uint256 amount, uint64 effectiveTermId);
@@ -140,7 +139,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     event GuardianTokensBurned(uint256 amount);
     event GuardianTokensCollected(address indexed guardian, uint256 amount, uint64 effectiveTermId);
     event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
-    event LockManagerChanged(address indexed lockManager, bool allowed);
+    event LockManagerWhitelistChanged(address indexed lockManager, bool allowed);
 
     /**
     * @dev Constructor function
@@ -236,21 +235,21 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     * @param _deactivate Whether the requested amount must be deactivated too
     */
     function unlockActivation(address _guardian, address _lockManager, uint256 _amount, bool _deactivate) external {
-        bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, _amount);
-        require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
-
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
         uint256 lockedAmount = activationLocks.lockedBy[_lockManager];
         require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
-        require(_amount > 0, ERROR_UNLOCK_ACTIVATION_ZERO);
 
-        uint256 unlockedAmount = lockedAmount > _amount ? _amount : lockedAmount;
-        uint256 newLockedAmount = lockedAmount.sub(unlockedAmount);
-        uint256 newTotalLocked = activationLocks.total.sub(unlockedAmount);
+        uint256 amountToUnlock = _amount == 0 ? lockedAmount : _amount;
+        bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, amountToUnlock);
+        require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
+        require(amountToUnlock <= lockedAmount, ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT);
+
+        uint256 newLockedAmount = lockedAmount.sub(amountToUnlock);
+        uint256 newTotalLocked = activationLocks.total.sub(amountToUnlock);
 
         activationLocks.total = newTotalLocked;
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
-        emit GuardianActivationLockDecreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
+        emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
         if (msg.sender == _guardian && _deactivate) {
             _deactivateTokens(_guardian, _amount);
@@ -455,11 +454,11 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     /**
     * @notice `_allowed ? 'Allow' : 'Disallow'` `_lockManager` as a lock manager
     * @param _lockManager Address of the lock manager to be changed
-    * @param _allowed Whether the lock manager is allowed
+    * @param _allowed Whether the lock manager is whitelisted
     */
-    function changeLockManager(address _lockManager, bool _allowed) external onlyConfigGovernor {
-        allowedLockManagers[_lockManager] = _allowed;
-        emit LockManagerChanged(_lockManager, _allowed);
+    function updateLockManagerWhitelist(address _lockManager, bool _allowed) external onlyConfigGovernor {
+        whitelistedLockManagers[_lockManager] = _allowed;
+        emit LockManagerWhitelistChanged(_lockManager, _allowed);
     }
 
     /**
@@ -610,12 +609,12 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Tell whether a lock manager is allowed
+    * @dev Tell whether a lock manager is whitelisted
     * @param _lockManager Address of the lock manager being queried
-    * @return True if the lock manager is allowed
+    * @return True if the lock manager is whitelisted
     */
-    function isLockManagerAllowed(address _lockManager) external view returns (bool) {
-        return _isLockManagerAllowed(_lockManager);
+    function isLockManagerWhitelisted(address _lockManager) external view returns (bool) {
+        return _isLockManagerWhitelisted(_lockManager);
     }
 
     /**
@@ -769,7 +768,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
     function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        bool isAllowed = _isLockManagerAllowed(_lockManager) || _isLockManagerAllowed(ANY_ENTITY);
+        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
         require(isAllowed, ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
@@ -778,7 +777,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
 
         activationLocks.total = newTotalLocked;
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
-        emit GuardianActivationLockIncreased(_guardian, _lockManager, newLockedAmount, newTotalLocked);
+        emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
     }
 
     /**
@@ -982,12 +981,12 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     }
 
     /**
-    * @dev Tell whether a lock manager is allowed
+    * @dev Tell whether a lock manager is whitelisted
     * @param _lockManager Address of the lock manager being queried
-    * @return True if the lock manager is allowed
+    * @return True if the lock manager is whitelisted
     */
-    function _isLockManagerAllowed(address _lockManager) internal view returns (bool) {
-        return allowedLockManagers[_lockManager];
+    function _isLockManagerWhitelisted(address _lockManager) internal view returns (bool) {
+        return whitelistedLockManagers[_lockManager];
     }
 
     /**

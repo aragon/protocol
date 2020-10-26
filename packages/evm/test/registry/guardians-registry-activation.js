@@ -639,7 +639,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = currentActiveBalance
 
               beforeEach('create activation lock', async () => {
-                await registry.changeLockManager(guardian, true, { from: governor })
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
                 await registry.lockActivation(guardian, amount, { from: guardian })
               })
 
@@ -684,7 +684,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = currentActiveBalance
 
               beforeEach('create activation lock', async () => {
-                await registry.changeLockManager(guardian, true, { from: governor })
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
                 await registry.lockActivation(guardian, amount, { from: guardian })
               })
 
@@ -730,7 +730,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = currentActiveBalance
 
               beforeEach('create activation lock', async () => {
-                await registry.changeLockManager(guardian, true, { from: governor })
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
                 await registry.lockActivation(guardian, amount, { from: guardian })
               })
 

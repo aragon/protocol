@@ -705,16 +705,17 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
 
     context('when the guardian requests to activate the tokens and lock activation', () => {
       const data = LOCK_ACTIVATION_DATA
+      const lockManager = guardian
 
       beforeEach('allow lock manager', async () => {
-        await registry.changeLockManager(guardian, true, { from: governor })
+        await registry.updateLockManagerWhitelist(lockManager, true, { from: governor })
       })
 
       const itHandlesStakesWithLockActivationProperlyFor = (recipient, amount, data) => {
         it('creates the lock', async () => {
           await registry.stakeFor(recipient, amount, data, { from })
 
-          const { amount: lockedAmount, total } = await registry.getActivationLock(recipient, guardian)
+          const { amount: lockedAmount, total } = await registry.getActivationLock(recipient, lockManager)
           assertBn(lockedAmount, amount, 'locked amount does not match')
           assertBn(total, amount, 'total locked amount does not match')
         })
@@ -743,6 +744,14 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
         })
 
         if (recipient !== from) {
+          it('does not lock the sender', async () => {
+            await registry.stakeFor(recipient, amount, data, { from })
+
+            const { amount: lockedAmount, total } = await registry.getActivationLock(from, lockManager)
+            assertBn(lockedAmount, 0, 'locked amount does not match')
+            assertBn(total, 0, 'total locked amount does not match')
+          })
+
           it('does not affect the sender balances', async () => {
             const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(from)
 
