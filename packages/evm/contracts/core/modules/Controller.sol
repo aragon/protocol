@@ -43,7 +43,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     // List of current modules registered for the system indexed by ID
     mapping (bytes32 => address) internal currentModules;
 
-    // List of all modules registered for the system indexed by address
+    // List of all historical modules registered for the system indexed by address
     mapping (address => Module) internal allModules;
 
     // List of custom functions indexed by signature
@@ -293,7 +293,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice Disabled module `_addr`
+    * @notice Disable module `_addr`
     * @dev Current modules can be disabled to allow pausing the protocol. However, these can be enabled back again, see `enableModule`
     * @param _addr Address of the module to be disabled
     */
@@ -453,7 +453,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     /**
     * @dev Tell the current address and disable status of a module based on a given ID
     * @param _id ID of the module being queried
-    * @return addr Current address of the requested module
+    * @return addr information for the requested module
     * @return disabled Whether the module has been disabled
     */
     function getModule(bytes32 _id) external view returns (address addr, bool disabled) {
@@ -461,7 +461,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the address of the current DisputeManager module
+    * @dev Tell the information for the current DisputeManager module
     * @return addr Current address of the DisputeManager module
     * @return disabled Whether the module has been disabled
     */
@@ -470,7 +470,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current GuardiansRegistry module
+    * @dev Tell the information for  the current GuardiansRegistry module
     * @return addr Current address of the GuardiansRegistry module
     * @return disabled Whether the module has been disabled
     */
@@ -479,7 +479,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current Voting module
+    * @dev Tell the information for the current Voting module
     * @return addr Current address of the Voting module
     * @return disabled Whether the module has been disabled
     */
@@ -488,7 +488,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current PaymentsBook module
+    * @dev Tell the information for the current PaymentsBook module
     * @return addr Current a of the PaymentsBook module
     * @return disabled Whether the module has been disabled
     */
@@ -497,7 +497,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current Treasury module
+    * @dev Tell the information for the current Treasury module
     * @return addr Current address of the Treasury module
     * @return disabled Whether the module has been disabled
     */
@@ -563,7 +563,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Internal function to tell the current address registered for a module based on a given ID
+    * @dev Internal function to tell the information for a module based on a given ID
     * @param _id ID of the module being queried
     * @return addr Current address of the requested module
     * @return disabled Whether the module has been disabled
