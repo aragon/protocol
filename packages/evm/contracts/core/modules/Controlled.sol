@@ -29,7 +29,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     Controller public controller;
 
     // List of module caches indexed by ID
-    mapping (bytes32 => address) internal modulesCache;
+    mapping (bytes32 => address) public modulesCache;
 
     event ModuleCached(bytes32 id, address addr);
 

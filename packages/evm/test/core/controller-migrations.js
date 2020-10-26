@@ -1,7 +1,7 @@
 const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { MODULE_IDS, getCachedAddress } = require('../helpers/utils/modules')
+const { MODULE_IDS } = require('../helpers/utils/modules')
 const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS } = require('../helpers/utils/errors')
 
 const DisputeManager = artifacts.require('DisputeManager')
@@ -64,23 +64,23 @@ contract('Controller', ([_, modulesGovernor]) => {
     })
 
     it('does not affect modules cache', async () => {
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), previousGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), previousGuardiansRegistry.address, 'registry cached for the treasury module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the treasury module does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
     })
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
       await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
 
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), currentGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), currentGuardiansRegistry.address, 'registry cached for the treasury module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentGuardiansRegistry.address, 'registry cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentGuardiansRegistry.address, 'registry cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousGuardiansRegistry.address, 'registry cached for the payments book module does not match')
     })
   })
 
@@ -94,23 +94,23 @@ contract('Controller', ([_, modulesGovernor]) => {
     })
 
     it('does not affect modules cache', async () => {
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), previousPaymentsBook.address, 'payments book cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), previousPaymentsBook.address, 'payments book cached for the treasury module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the treasury module does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
     })
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
       await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
 
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), currentPaymentsBook.address, 'payments book cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), currentPaymentsBook.address, 'payments book cached for the treasury module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentPaymentsBook.address, 'payments book cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentPaymentsBook.address, 'payments book cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousPaymentsBook.address, 'payments book cached for the payments book module does not match')
     })
   })
 
@@ -124,23 +124,23 @@ contract('Controller', ([_, modulesGovernor]) => {
     })
 
     it('does not affect modules cache', async () => {
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), previousVoting.address, 'voting cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), previousVoting.address, 'voting cached for the treasury module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousVoting.address, 'voting cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousVoting.address, 'voting cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousVoting.address, 'voting cached for the treasury module does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousVoting.address, 'voting cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
     })
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
       await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
 
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), currentVoting.address, 'voting cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), currentVoting.address, 'voting cached for the treasury module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentVoting.address, 'voting cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentVoting.address, 'voting cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousVoting.address, 'voting cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousVoting.address, 'voting cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousVoting.address, 'voting cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousVoting.address, 'voting cached for the payments book module does not match')
     })
   })
 
@@ -154,23 +154,23 @@ contract('Controller', ([_, modulesGovernor]) => {
     })
 
     it('does not affect modules cache', async () => {
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), previousTreasury.address, 'treasury cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), previousTreasury.address, 'treasury cached for the treasury module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), previousTreasury.address, 'treasury cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the treasury module does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
     })
 
     it('allows to update other modules cache', async () => {
       const targets = [protocolHelper.disputeManager.address, protocolHelper.treasury.address]
       await protocol.cacheModules(targets, [moduleId], { from: modulesGovernor })
 
-      assert.equal(await getCachedAddress(protocolHelper.disputeManager, moduleId), currentTreasury.address, 'treasury cached of the dispute manager does not match')
-      assert.equal(await getCachedAddress(protocolHelper.treasury, moduleId), currentTreasury.address, 'treasury cached for the treasury module does not match')
+      assert.equal(await protocolHelper.disputeManager.modulesCache(moduleId), currentTreasury.address, 'treasury cached of the dispute manager does not match')
+      assert.equal(await protocolHelper.treasury.modulesCache(moduleId), currentTreasury.address, 'treasury cached for the treasury module does not match')
 
-      assert.equal(await getCachedAddress(protocolHelper.guardiansRegistry, moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
-      assert.equal(await getCachedAddress(protocolHelper.voting, moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
-      assert.equal(await getCachedAddress(protocolHelper.paymentsBook, moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
+      assert.equal(await protocolHelper.guardiansRegistry.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the guardians registry does not match')
+      assert.equal(await protocolHelper.voting.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the voting module does not match')
+      assert.equal(await protocolHelper.paymentsBook.modulesCache(moduleId), previousTreasury.address, 'treasury cached for the payments book module does not match')
     })
   })
 })

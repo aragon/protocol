@@ -3,7 +3,6 @@ const { ZERO_ADDRESS, ZERO_BYTES32, bigExp } = require('@aragon/contract-helpers
 const { assertRevert, assertAmountOfEvents, assertEvent, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { getCachedAddress } = require('../helpers/utils/modules')
 const { CONTROLLER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 const { CONTROLLER_EVENTS, CONTROLLED_EVENTS } = require('../helpers/utils/events')
 
@@ -568,17 +567,17 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             const newFirstModule = await Controlled.new(controller.address)
             await controller.setModule(firstID, newFirstModule.address, { from })
 
-            assert.equal(await getCachedAddress(firstModule, firstID), ZERO_ADDRESS, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(firstModule, secondID), ZERO_ADDRESS, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(firstModule, thirdID), ZERO_ADDRESS, 'third module cache for third module does not match')
+            assert.equal(await firstModule.modulesCache(firstID), ZERO_ADDRESS, 'first module cache for first module does not match')
+            assert.equal(await firstModule.modulesCache(secondID), ZERO_ADDRESS, 'second module cache for second module does not match')
+            assert.equal(await firstModule.modulesCache(thirdID), ZERO_ADDRESS, 'third module cache for third module does not match')
 
-            assert.equal(await getCachedAddress(secondModule, firstID), firstModule.address, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(secondModule, secondID), secondModule.address, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(secondModule, thirdID), thirdModule.address, 'third module cache for third module does not match')
+            assert.equal(await secondModule.modulesCache(firstID), firstModule.address, 'first module cache for first module does not match')
+            assert.equal(await secondModule.modulesCache(secondID), secondModule.address, 'second module cache for second module does not match')
+            assert.equal(await secondModule.modulesCache(thirdID), thirdModule.address, 'third module cache for third module does not match')
 
-            assert.equal(await getCachedAddress(thirdModule, firstID), firstModule.address, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(thirdModule, secondID), secondModule.address, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(thirdModule, thirdID), thirdModule.address, 'third module cache for third module does not match')
+            assert.equal(await thirdModule.modulesCache(firstID), firstModule.address, 'first module cache for first module does not match')
+            assert.equal(await thirdModule.modulesCache(secondID), secondModule.address, 'second module cache for second module does not match')
+            assert.equal(await thirdModule.modulesCache(thirdID), thirdModule.address, 'third module cache for third module does not match')
           })
         })
 
