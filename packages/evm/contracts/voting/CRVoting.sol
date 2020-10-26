@@ -421,6 +421,14 @@ contract CRVoting is Controlled, ICRVoting {
     }
 
     /**
+    * @dev Internal function to fetch the address of the Voting module's owner
+    * @return Address of the Voting module's owner
+    */
+    function _votingOwner() internal view returns (ICRVotingOwner) {
+        return ICRVotingOwner(address(_disputeManager()));
+    }
+
+    /**
     * @dev Internal function to check if a vote can be revealed for the given outcome and salt
     * @param _castVote Cast vote to be revealed
     * @param _outcome Outcome of the cast vote to be proved

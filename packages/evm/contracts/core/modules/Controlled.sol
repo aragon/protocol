@@ -155,14 +155,6 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the address of the Voting module owner
-    * @return Address of the Voting module owner
-    */
-    function _votingOwner() internal view returns (ICRVotingOwner) {
-        return ICRVotingOwner(_getModuleCache(MODULE_ID_DISPUTE_MANAGER));
-    }
-
-    /**
     * @dev Internal function to fetch the address of the PaymentsBook module implementation
     * @return Address of the PaymentsBook module implementation
     */
