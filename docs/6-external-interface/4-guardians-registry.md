@@ -123,7 +123,7 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Lock manager:** Address of the lock manager whose status was changed
     - **Allowed:** Whether the lock manager is allowed
 
-#### 6.4.1.17. Total active balance limit changed
+#### 6.4.1.16. Total active balance limit changed
 
 - **Name:** `TotalActiveBalanceLimitChanged`
 - **Args:**

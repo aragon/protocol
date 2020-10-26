@@ -142,9 +142,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     event GuardianTokensAssigned(address indexed guardian, uint256 amount);
     event GuardianTokensBurned(uint256 amount);
     event GuardianTokensCollected(address indexed guardian, uint256 amount, uint64 effectiveTermId);
-    event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
     event ActivatorChanged(address indexed activator, bool allowed);
     event LockManagerWhitelistChanged(address indexed lockManager, bool allowed);
+    event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
 
     /**
     * @dev Constructor function
@@ -796,7 +796,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
     function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY) || _guardian == _lockManager;
+        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
         require(isAllowed, ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
