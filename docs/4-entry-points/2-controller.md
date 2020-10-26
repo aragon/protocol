@@ -1,6 +1,6 @@
 ## 4.2. Controller
 
-The `Controller` is core component of the architecture whose main responsibilities are permissions, modules, Protocol terms, Protocol configurations management.
+The `Controller` is core component of the architecture whose main responsibilities are permissions, modules, Protocol terms, and Protocol configurations management.
 To read more information about its responsibilities and structure, go to [section 2](../2-architecture).
 
 ### 4.2.1. Constructor
@@ -64,7 +64,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.3. Set config
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **From term ID:** Identification number of the term in which the config will be effective at
     - **Settings:** Object containing
@@ -106,7 +106,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.4. Delay start time
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **New first-term start time:** New timestamp in seconds when the Protocol will start
 - **Authentication:** Allowed only to the config governor
@@ -160,7 +160,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.9. Change funds governor
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:**
     - **New funds governor:** Address of the new funds governor to be set
 - **Authentication:** Only funds governor
@@ -171,7 +171,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.10. Change config governor
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **New config governor:** Address of the new config governor to be set
 - **Authentication:** Allowed only to the config governor
@@ -182,7 +182,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.11. Change modules governor
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **New modules governor:** Address of the new modules governor to be set
 - **Authentication:** Allowed only to the modules governor
@@ -193,7 +193,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.12. Eject funds governor
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:** None
 - **Authentication:** Only funds governor
 - **Pre-flight checks:** None
@@ -202,7 +202,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.13. Eject modules governor
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:** None
 - **Authentication:** Only modules governor
 - **Pre-flight checks:** None
@@ -211,7 +211,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.14. Set custom function
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **Signature:** Signature of the function to be customized
     - **Address:** Address of the target that will be forwarded with the function call
@@ -222,7 +222,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.15. Set module
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **Module ID:** Identification word of the module to be set
     - **Address:** Address of the module to be set
@@ -234,7 +234,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.16. Set modules
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **New modules' IDs:** List of IDs of the new modules to be set
     - **New modules' address:** List of addresses of the new modules to be set
@@ -252,7 +252,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.17. Link modules
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **Current modules to be synced:** List of addresses of current modules to be linked based on the implementations of the modules to be set
     - **IDs to be set :** List of IDs of the modules whose references will be linked in the requested list of modules
@@ -265,7 +265,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.18. Disable module
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **Address:** Address of the module to be disabled
 - **Authentication:** Only modules governor
@@ -277,7 +277,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.19. Enable module
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **Address:** Address of the module to be enabled
 - **Authentication:** Only modules governor

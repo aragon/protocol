@@ -236,7 +236,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
 
 ### 4.3.14. Set max guardians per draft batch
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **New max guardians per draft batch:** New max number of guardians to be drafted in each batch
 - **Authentication:** Only config governor
@@ -247,7 +247,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
 
 ### 4.3.15. Recover funds
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `DisputeManager` module
     - **Recipient:** Address that will receive the funds of the `DisputeManager` module
