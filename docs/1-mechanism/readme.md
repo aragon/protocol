@@ -16,7 +16,6 @@ Even though the Aragon Protocol could theoretically resolve any type of binary d
 
 ### 1.2. High-level flow
 
-- Guardians deposit ANT into a bonding curve to generate ANT tokens.
 - Guardians stake ANT to the Protocol contract and schedule their activation and deactivation for the time period in which they can be drafted to rule on disputes.
 - Protocol fees and configuration parameters are controlled by a governor (eventually the Aragon Network), but can only be modified for future terms to ensure that parameters can’t change for ongoing disputes.
 - The creator of a dispute must pay fees to cover the maintenance gas costs of the Protocol and the guardians that will adjudicate their dispute. The governor of the Protocol receives a share of all fees paid to the Protocol.
