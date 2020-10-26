@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
 
-contract Modules {
+contract ModuleIds {
     // DisputeManager module ID - keccak256(abi.encodePacked("DISPUTE_MANAGER"))
     bytes32 internal constant DISPUTE_MANAGER = 0x14a6c70f0f6d449c014c7bbc9e68e31e79e8474fb03b7194df83109a2d888ae6;
 

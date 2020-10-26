@@ -2,13 +2,13 @@ pragma solidity ^0.5.17;
 
 import "../../lib/utils/IsContract.sol";
 
-import "./Modules.sol";
+import "./ModuleIds.sol";
 import "./IModuleCache.sol";
 import "../clock/ProtocolClock.sol";
 import "../config/ProtocolConfig.sol";
 
 
-contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
+contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
