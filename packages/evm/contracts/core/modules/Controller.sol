@@ -46,7 +46,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     // List of all historical modules registered for the system indexed by address
     mapping (address => Module) internal allModules;
 
-    // List of custom functions indexed by signature
+    // List of custom function targets indexed by signature
     mapping (bytes4 => address) internal customFunctions;
 
     event ModuleSet(bytes32 id, address addr);
@@ -510,6 +510,15 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     */
     function getTreasury() external view returns (address addr, bool disabled) {
         return _getModule(MODULE_ID_TREASURY);
+    }
+
+    /**
+    * @dev Tell the target registered for a custom function
+    * @param _sig Signature of the function being queried
+    * @return Address of the target where the function call will be forwarded
+    */
+    function getCustomFunction(bytes4 _sig) external view returns (address) {
+        return customFunctions[_sig];
     }
 
     /**
