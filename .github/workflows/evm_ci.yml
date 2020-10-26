@@ -35,7 +35,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Controller
-      run: yarn workspace @aragon/protocol-evm test:controller
+      run: yarn workspace @aragon/protocol-evm test:core
 
   disputes:
     runs-on: ubuntu-latest

@@ -1,10 +1,10 @@
 const { NOW, ONE_DAY, bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { CONFIG_EVENTS } = require('../../helpers/utils/events')
-const { assertConfig, buildNewConfig } = require('../../helpers/utils/config')
-const { CLOCK_ERRORS, CONFIG_ERRORS, CONTROLLER_ERRORS } = require('../../helpers/utils/errors')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { CONFIG_EVENTS } = require('../helpers/utils/events')
+const { assertConfig, buildNewConfig } = require('../helpers/utils/config')
+const { CLOCK_ERRORS, CONFIG_ERRORS, CONTROLLER_ERRORS } = require('../helpers/utils/errors')
 
 contract('Controller', ([_, configGovernor, someone, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian3000]) => {
   let protocolHelper, controller

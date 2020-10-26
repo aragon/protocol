@@ -1,8 +1,8 @@
 const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { MODULE_IDS, getCachedAddress } = require('../../helpers/utils/modules')
-const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS } = require('../../helpers/utils/errors')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { MODULE_IDS, getCachedAddress } = require('../helpers/utils/modules')
+const { CONTROLLED_ERRORS, DISPUTE_MANAGER_ERRORS } = require('../helpers/utils/errors')
 
 const DisputeManager = artifacts.require('DisputeManager')
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')

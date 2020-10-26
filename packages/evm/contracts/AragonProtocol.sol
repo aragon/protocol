@@ -4,7 +4,7 @@ import "./lib/utils/Uint256Helpers.sol";
 
 import "./arbitration/IArbitrator.sol";
 import "./arbitration/IArbitrable.sol";
-import "./core/controller/Controller.sol";
+import "./core/modules/Controller.sol";
 import "./disputes/IDisputeManager.sol";
 import "./payments/IPaymentsBook.sol";
 

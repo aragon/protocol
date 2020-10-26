@@ -9,8 +9,8 @@ import "../lib/standards/IERC20.sol";
 
 import "./IPaymentsBook.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../core/controller/Controller.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {

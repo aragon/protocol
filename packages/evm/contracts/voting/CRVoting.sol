@@ -4,8 +4,8 @@ import "../lib/math/SafeMath.sol";
 
 import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
-import "../core/controller/Controlled.sol";
-import "../core/controller/Controller.sol";
+import "../core/modules/Controlled.sol";
+import "../core/modules/Controller.sol";
 
 
 contract CRVoting is Controlled, ICRVoting {

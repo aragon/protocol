@@ -16,7 +16,7 @@
     "lint:js": "eslint .",
     "lint:solidity": "solium --dir ./contracts",
     "test": "buidler test",
-    "test:controller": "yarn test test/core/**/*.js test/core/*.js",
+    "test:core": "yarn test test/core/*.js",
     "test:disputes": "yarn test test/disputes/disputes-create.js test/disputes/disputes-evidence.js test/disputes/disputes-draft.js",
     "test:appeals": "yarn test test/disputes/disputes-voting.js test/disputes/disputes-appeal.js test/disputes/disputes-confirm-appeal.js",
     "test:settle-rounds": "yarn test test/disputes/disputes-settle-round.js",

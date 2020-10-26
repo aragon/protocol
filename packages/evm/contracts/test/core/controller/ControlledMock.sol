@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../../core/controller/Controlled.sol";
+import "../../../core/modules/Controlled.sol";
 
 
 contract ControlledMock is Controlled {

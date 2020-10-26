@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
-import "../../core/controller/Controlled.sol";
-import "../../core/controller/Controller.sol";
+import "../../core/modules/Controlled.sol";
+import "../../core/modules/Controller.sol";
 
 
 contract DisputeManagerMockForRegistry is Controlled {
