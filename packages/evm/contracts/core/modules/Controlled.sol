@@ -131,14 +131,6 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the controller's modules governor
-    * @return Address of the controller's modules governor
-    */
-    function _modulesGovernor() internal view returns (address) {
-        return controller.getModulesGovernor();
-    }
-
-    /**
     * @dev Internal function to fetch the address of the DisputeManager module
     * @return Address of the DisputeManager module
     */
