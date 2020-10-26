@@ -10,13 +10,13 @@ const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS } = require('../helpers/utils/erro
 const CRVoting = artifacts.require('CRVoting')
 const DisputeManager = artifacts.require('DisputeManagerMockForVoting')
 
-contract('CRVoting', ([_, voter, anotherVoter, representative, anotherRepresentative]) => {
+contract('CRVoting', ([_, voter, anotherVoter, representative, anotherRepresentative, governor]) => {
   let controller, voting, disputeManager
 
   const POSSIBLE_OUTCOMES = 2
 
   beforeEach('create base contracts', async () => {
-    controller = await buildHelper().deploy()
+    controller = await buildHelper().deploy({ modulesGovernor: governor })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
   })
