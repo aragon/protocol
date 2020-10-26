@@ -2,7 +2,7 @@ const { bn, bigExp, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper, DEFAULTS } = require('../helpers/wrappers/protocol')
-const { DISPUTE_MANAGER_EVENTS, ARBITRATOR_EVENTS } = require('../helpers/utils/events')
+const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
 const { ARAGON_PROTOCOL_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Arbitrable = artifacts.require('Arbitrable')

@@ -10,7 +10,7 @@ const DisputeManager = artifacts.require('DisputeManager')
 const ProtocolClock = artifacts.require('ProtocolClock')
 const Arbitrable = artifacts.require('Arbitrable')
 
-contract('DisputeManager', ([_, someone, fakeArbitrable]) => {
+contract('DisputeManager', ([_, fakeArbitrable]) => {
   let protocolHelper, protocol, disputeManager, feeToken, arbitrable
 
   const termDuration = bn(ONE_DAY)
