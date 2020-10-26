@@ -50,14 +50,6 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
     }
 
     /**
-    * @dev Ensure the msg.sender is an active Voting module
-    */
-    modifier onlyActiveVoting() {
-        require(controller.isActive(VOTING, msg.sender), ERROR_SENDER_NOT_ACTIVE_VOTING);
-        _;
-    }
-
-    /**
     * @dev Ensure the msg.sender is an active DisputeManager module
     */
     modifier onlyActiveDisputeManagers() {
@@ -72,6 +64,14 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
         (address addr, bool disabled) = controller.getDisputeManager();
         require(msg.sender == addr, ERROR_SENDER_NOT_CURRENT_DISPUTE_MANAGER);
         require(!disabled, ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
+        _;
+    }
+
+    /**
+    * @dev Ensure the msg.sender is an active Voting module
+    */
+    modifier onlyActiveVoting() {
+        require(controller.isActive(VOTING, msg.sender), ERROR_SENDER_NOT_ACTIVE_VOTING);
         _;
     }
 
@@ -155,11 +155,11 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the address of the Treasury module implementation
-    * @return Address of the Treasury module implementation
+    * @dev Internal function to fetch the address of the GuardianRegistry module implementation
+    * @return Address of the GuardianRegistry module implementation
     */
-    function _treasury() internal view returns (ITreasury) {
-        return ITreasury(_getModuleCache(TREASURY));
+    function _guardiansRegistry() internal view returns (IGuardiansRegistry) {
+        return IGuardiansRegistry(_getModuleCache(GUARDIANS_REGISTRY));
     }
 
     /**
@@ -179,19 +179,19 @@ contract Controlled is IsContract, IModuleCache, Modules, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to fetch the address of the GuardianRegistry module implementation
-    * @return Address of the GuardianRegistry module implementation
-    */
-    function _guardiansRegistry() internal view returns (IGuardiansRegistry) {
-        return IGuardiansRegistry(_getModuleCache(GUARDIANS_REGISTRY));
-    }
-
-    /**
     * @dev Internal function to fetch the address of the PaymentsBook module implementation
     * @return Address of the PaymentsBook module implementation
     */
     function _paymentsBook() internal view returns (IPaymentsBook) {
         return IPaymentsBook(_getModuleCache(PAYMENTS_BOOK));
+    }
+
+    /**
+    * @dev Internal function to fetch the address of the Treasury module implementation
+    * @return Address of the Treasury module implementation
+    */
+    function _treasury() internal view returns (ITreasury) {
+        return ITreasury(_getModuleCache(TREASURY));
     }
 
     /**

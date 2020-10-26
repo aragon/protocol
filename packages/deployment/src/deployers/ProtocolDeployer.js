@@ -8,10 +8,10 @@ const logger = require('../helpers/logger')('ProtocolDeployer')
 
 const MODULES = {
   DISPUTE_MANAGER:    '0x14a6c70f0f6d449c014c7bbc9e68e31e79e8474fb03b7194df83109a2d888ae6',
-  TREASURY:           '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7',
-  VOTING:             '0x7cbb12e82a6d63ff16fe43977f43e3e2b247ecd4e62c0e340da8800a48c67346',
   GUARDIANS_REGISTRY: '0x8af7b7118de65da3b974a3fd4b0c702b66442f74b9dff6eaed1037254c0b79fe',
-  PAYMENTS_BOOK:      '0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5ac0d1892b418'
+  VOTING:             '0x7cbb12e82a6d63ff16fe43977f43e3e2b247ecd4e62c0e340da8800a48c67346',
+  PAYMENTS_BOOK:      '0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5ac0d1892b418',
+  TREASURY:           '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7'
 }
 
 module.exports = class extends BaseDeployer {
@@ -96,8 +96,8 @@ module.exports = class extends BaseDeployer {
 
     if (modulesGovernor === sender) {
       logger.info('Setting modules...')
-      const ids = [MODULES.DISPUTE_MANAGER, MODULES.TREASURY, MODULES.VOTING, MODULES.GUARDIANS_REGISTRY, MODULES.PAYMENTS_BOOK]
-      const implementations = [this.disputes, this.treasury, this.voting, this.registry, this.paymentsBook].map(i => i.address)
+      const ids = [MODULES.DISPUTE_MANAGER, MODULES.GUARDIANS_REGISTRY, MODULES.VOTING, MODULES.PAYMENTS_BOOK, MODULES.TREASURY]
+      const implementations = [this.disputes, this.registry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
       await this.protocol.setModules(ids, implementations)
       logger.info('Caching modules...')
       await this.protocol.cacheModules(implementations, ids)

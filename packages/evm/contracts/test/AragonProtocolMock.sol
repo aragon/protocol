@@ -44,20 +44,20 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
         emit ModuleSet(DISPUTE_MANAGER, _addr);
     }
 
-    function setTreasury(address _addr) external {
-        _setAndCacheModule(TREASURY, _addr);
+    function setGuardiansRegistry(address _addr) external {
+        _setAndCacheModule(GUARDIANS_REGISTRY, _addr);
     }
 
     function setVoting(address _addr) external {
         _setAndCacheModule(VOTING, _addr);
     }
 
-    function setGuardiansRegistry(address _addr) external {
-        _setAndCacheModule(GUARDIANS_REGISTRY, _addr);
-    }
-
     function setPaymentsBook(address _addr) external {
         _setAndCacheModule(PAYMENTS_BOOK, _addr);
+    }
+
+    function setTreasury(address _addr) external {
+        _setAndCacheModule(TREASURY, _addr);
     }
 
     function mockIncreaseTerm() external {
@@ -108,10 +108,10 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
 
         bytes32[] memory ids = new bytes32[](5);
         ids[0] = DISPUTE_MANAGER;
-        ids[1] = VOTING;
-        ids[2] = TREASURY;
-        ids[3] = GUARDIANS_REGISTRY;
-        ids[4] = PAYMENTS_BOOK;
+        ids[1] = GUARDIANS_REGISTRY;
+        ids[2] = VOTING;
+        ids[3] = PAYMENTS_BOOK;
+        ids[4] = TREASURY;
 
         address[] memory addresses = new address[](5);
         for (uint i = 0; i < ids.length; i++) {

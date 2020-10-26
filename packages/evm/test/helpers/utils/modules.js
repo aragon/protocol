@@ -3,10 +3,10 @@ const { sha3, soliditySha3, padLeft, toHex, toChecksumAddress } = require('web3-
 
 const MODULE_IDS = {
   disputes: sha3('DISPUTE_MANAGER'),
-  treasury: sha3('TREASURY'),
-  voting: sha3('VOTING'),
   registry: sha3('GUARDIANS_REGISTRY'),
-  payments: sha3('PAYMENTS_BOOK')
+  voting: sha3('VOTING'),
+  payments: sha3('PAYMENTS_BOOK'),
+  treasury: sha3('TREASURY')
 }
 
 const getCachedAddress = async (target, moduleId) => {

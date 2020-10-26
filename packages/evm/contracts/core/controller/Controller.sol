@@ -470,12 +470,12 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current Treasury module
-    * @return addr Current address of the Treasury module
+    * @dev Tell the current address of the current GuardiansRegistry module
+    * @return addr Current address of the GuardiansRegistry module
     * @return disabled Whether the module has been disabled
     */
-    function getTreasury() external view returns (address addr, bool disabled) {
-        return _getModule(TREASURY);
+    function getGuardiansRegistry() external view returns (address addr, bool disabled) {
+        return _getModule(GUARDIANS_REGISTRY);
     }
 
     /**
@@ -488,21 +488,21 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the current address of the current GuardiansRegistry module
-    * @return addr Current address of the GuardiansRegistry module
-    * @return disabled Whether the module has been disabled
-    */
-    function getGuardiansRegistry() external view returns (address addr, bool disabled) {
-        return _getModule(GUARDIANS_REGISTRY);
-    }
-
-    /**
     * @dev Tell the current address of the current PaymentsBook module
     * @return addr Current a of the PaymentsBook module
     * @return disabled Whether the module has been disabled
     */
     function getPaymentsBook() external view returns (address addr, bool disabled) {
         return _getModule(PAYMENTS_BOOK);
+    }
+
+    /**
+    * @dev Tell the current address of the current Treasury module
+    * @return addr Current address of the Treasury module
+    * @return disabled Whether the module has been disabled
+    */
+    function getTreasury() external view returns (address addr, bool disabled) {
+        return _getModule(TREASURY);
     }
 
     /**

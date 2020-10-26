@@ -395,7 +395,7 @@ class ProtocolHelper {
     }
 
     const ids = Object.values(MODULE_IDS)
-    const implementations = [this.disputeManager, this.treasury, this.voting, this.guardiansRegistry, this.paymentsBook].map(i => i.address)
+    const implementations = [this.disputeManager, this.guardiansRegistry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
     await this.protocol.setModules(ids, implementations, { from: this.modulesGovernor })
     await this.protocol.cacheModules(implementations, ids, { from: this.modulesGovernor })
 
