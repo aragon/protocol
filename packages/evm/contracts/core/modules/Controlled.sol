@@ -3,8 +3,8 @@ pragma solidity ^0.5.17;
 import "../../lib/utils/IsContract.sol";
 
 import "./ModuleIds.sol";
-import "./IModuleCache.sol";
 import "./Controller.sol";
+import "./IModulesLinker.sol";
 import "../clock/IClock.sol";
 import "../config/ConfigConsumer.sol";
 import "../../voting/ICRVoting.sol";
@@ -14,9 +14,9 @@ import "../../disputes/IDisputeManager.sol";
 import "../../payments/IPaymentsBook.sol";
 
 
-contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
+contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     string private constant ERROR_MODULE_NOT_SET = "CTD_MODULE_NOT_SET";
-    string private constant ERROR_INVALID_MODULES_CACHE_INPUT = "CTD_INVALID_MODULES_CACHE_INPUT";
+    string private constant ERROR_INVALID_MODULES_LINK_INPUT = "CTD_INVALID_MODULES_LINK_INPUT";
     string private constant ERROR_CONTROLLER_NOT_CONTRACT = "CTD_CONTROLLER_NOT_CONTRACT";
     string private constant ERROR_SENDER_NOT_ALLOWED = "CTD_SENDER_NOT_ALLOWED";
     string private constant ERROR_SENDER_NOT_CONTROLLER = "CTD_SENDER_NOT_CONTROLLER";
@@ -28,10 +28,10 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     // Address of the controller
     Controller public controller;
 
-    // List of module caches indexed by ID
-    mapping (bytes32 => address) public modulesCache;
+    // List of modules linked indexed by ID
+    mapping (bytes32 => address) public linkedModules;
 
-    event ModuleCached(bytes32 id, address addr);
+    event ModuleLinked(bytes32 id, address addr);
 
     /**
     * @dev Ensure the msg.sender is the controller's config governor
@@ -85,16 +85,16 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
-    * @notice Update the implementations cache of a list of modules
+    * @notice Update the implementation links of a list of modules
     * @param _ids List of IDs of the modules to be updated
     * @param _addresses List of module addresses to be updated
     */
-    function cacheModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyController {
-        require(_ids.length == _addresses.length, ERROR_INVALID_MODULES_CACHE_INPUT);
+    function linkModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyController {
+        require(_ids.length == _addresses.length, ERROR_INVALID_MODULES_LINK_INPUT);
 
         for (uint256 i = 0; i < _ids.length; i++) {
-            modulesCache[_ids[i]] = _addresses[i];
-            emit ModuleCached(_ids[i], _addresses[i]);
+            linkedModules[_ids[i]] = _addresses[i];
+            emit ModuleLinked(_ids[i], _addresses[i]);
         }
     }
 
@@ -135,7 +135,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the DisputeManager module
     */
     function _disputeManager() internal view returns (IDisputeManager) {
-        return IDisputeManager(_getModuleCache(MODULE_ID_DISPUTE_MANAGER));
+        return IDisputeManager(_getLinkedModule(MODULE_ID_DISPUTE_MANAGER));
     }
 
     /**
@@ -143,7 +143,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the GuardianRegistry module implementation
     */
     function _guardiansRegistry() internal view returns (IGuardiansRegistry) {
-        return IGuardiansRegistry(_getModuleCache(MODULE_ID_GUARDIANS_REGISTRY));
+        return IGuardiansRegistry(_getLinkedModule(MODULE_ID_GUARDIANS_REGISTRY));
     }
 
     /**
@@ -151,7 +151,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the Voting module implementation
     */
     function _voting() internal view returns (ICRVoting) {
-        return ICRVoting(_getModuleCache(MODULE_ID_VOTING));
+        return ICRVoting(_getLinkedModule(MODULE_ID_VOTING));
     }
 
     /**
@@ -159,7 +159,7 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the PaymentsBook module implementation
     */
     function _paymentsBook() internal view returns (IPaymentsBook) {
-        return IPaymentsBook(_getModuleCache(MODULE_ID_PAYMENTS_BOOK));
+        return IPaymentsBook(_getLinkedModule(MODULE_ID_PAYMENTS_BOOK));
     }
 
     /**
@@ -167,16 +167,16 @@ contract Controlled is IModuleCache, IsContract, ModuleIds, ConfigConsumer {
     * @return Address of the Treasury module implementation
     */
     function _treasury() internal view returns (ITreasury) {
-        return ITreasury(_getModuleCache(MODULE_ID_TREASURY));
+        return ITreasury(_getLinkedModule(MODULE_ID_TREASURY));
     }
 
     /**
-    * @dev Internal function to tell the address cached for a module based on a given ID
+    * @dev Internal function to tell the address linked for a module based on a given ID
     * @param _id ID of the module being queried
-    * @return Cached address of the requested module
+    * @return Linked address of the requested module
     */
-    function _getModuleCache(bytes32 _id) internal view returns (address) {
-        address module = modulesCache[_id];
+    function _getLinkedModule(bytes32 _id) internal view returns (address) {
+        address module = linkedModules[_id];
         require(module != address(0), ERROR_MODULE_NOT_SET);
         return module;
     }

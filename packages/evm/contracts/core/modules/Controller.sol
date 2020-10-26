@@ -3,7 +3,7 @@ pragma solidity ^0.5.17;
 import "../../lib/utils/IsContract.sol";
 
 import "./ModuleIds.sol";
-import "./IModuleCache.sol";
+import "./IModulesLinker.sol";
 import "../clock/ProtocolClock.sol";
 import "../config/ProtocolConfig.sol";
 
@@ -280,22 +280,22 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice Set and cache many modules at once
+    * @notice Set and link many modules at once
     * @param _newModuleIds List of IDs of the new modules to be set
     * @param _newModuleAddresses List of addresses of the new modules to be set
-    * @param _newModuleIdsToBeCached List of IDs of the modules that will be cached in the new modules to be set
-    * @param _currentModulesToBeSynced List of the current modules to update their caches based on the new modules set
+    * @param _newModuleIdsToBeLinked List of IDs of the modules that will be linked in the new modules to be set
+    * @param _currentModulesToBeSynced List of the current modules to update their links based on the new modules set
     */
     function setModules(
         bytes32[] calldata _newModuleIds,
         address[] calldata _newModuleAddresses,
-        bytes32[] calldata _newModuleIdsToBeCached,
+        bytes32[] calldata _newModuleIdsToBeLinked,
         address[] calldata _currentModulesToBeSynced
     )
         external
         onlyModulesGovernor
     {
-        // We only care there about the modules to be set, caches are optional
+        // We only care there about the modules to be set, links are optional
         require(_newModuleIds.length == _newModuleAddresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
         // First set the addresses of the new modules or the modules to be updated
@@ -303,21 +303,21 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
             _setModule(_newModuleIds[i], _newModuleAddresses[i]);
         }
 
-        // Then update the caches of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
-        _cacheModules(_newModuleAddresses, _newModuleIdsToBeCached);
+        // Then update the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
+        _linkModules(_newModuleAddresses, _newModuleIdsToBeLinked);
 
-        // Finally update the caches of the already existing modules based on the list of IDs that have been set
-        _cacheModules(_currentModulesToBeSynced, _newModuleIds);
+        // Finally update the links of the already existing modules based on the list of IDs that have been set
+        _linkModules(_currentModulesToBeSynced, _newModuleIds);
     }
 
     /**
-    * @notice Sync modules' cache for a list of modules IDs based on their current address
+    * @notice Sync modules for a list of modules IDs based on their current address
     * @param _modulesToBeSynced List of modules addresses to be synced
-    * @param _idsToBeSet List of IDs of the modules to be cached
+    * @param _idsToBeSet List of IDs of the modules to be linked
     */
-    function cacheModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
+    function linkModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
         require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
-        _cacheModules(_modulesToBeSynced, _idsToBeSet);
+        _linkModules(_modulesToBeSynced, _idsToBeSet);
     }
 
     /**
@@ -554,11 +554,11 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Internal function to sync the modules' cache for a list of modules IDs based on their current address
+    * @dev Internal function to sync the modules for a list of modules IDs based on their current address
     * @param _modulesToBeSynced List of modules addresses to be synced
-    * @param _idsToBeSet List of IDs of the modules to be cached
+    * @param _idsToBeSet List of IDs of the modules to be linked
     */
-    function _cacheModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
+    function _linkModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
         address[] memory addressesToBeSet = new address[](_idsToBeSet.length);
 
         // Load the addresses of all the modules to be updated
@@ -569,9 +569,9 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
             addressesToBeSet[i] = moduleAddress;
         }
 
-        // Update the cache of all the requested modules
+        // Update the links of all the requested modules
         for (uint256 j = 0; j < _modulesToBeSynced.length; j++) {
-            IModuleCache(_modulesToBeSynced[j]).cacheModules(_idsToBeSet, addressesToBeSet);
+            IModulesLinker(_modulesToBeSynced[j]).linkModules(_idsToBeSet, addressesToBeSet);
         }
     }
 

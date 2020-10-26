@@ -66,7 +66,7 @@ const CONTROLLER_EVENTS = {
 }
 
 const CONTROLLED_EVENTS = {
-  MODULE_CACHED: 'ModuleCached',
+  MODULE_LINKED: 'ModuleLinked',
   RECOVER_FUNDS: 'RecoverFunds'
 }
 

@@ -42,35 +42,35 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
 
     function setDisputeManager(address _addr) external {
         _setModule(MODULE_ID_DISPUTE_MANAGER, _addr);
-        _cacheNewModule(MODULE_ID_DISPUTE_MANAGER, _addr);
+        _linkNewModule(MODULE_ID_DISPUTE_MANAGER, _addr);
     }
 
     function setGuardiansRegistry(address _addr) external {
         _setModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
-        _cacheNewModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
+        _linkNewModule(MODULE_ID_GUARDIANS_REGISTRY, _addr);
     }
 
     function setVoting(address _addr) external {
         _setModule(MODULE_ID_VOTING, _addr);
-        _cacheNewModule(MODULE_ID_VOTING, _addr);
+        _linkNewModule(MODULE_ID_VOTING, _addr);
     }
 
     function setPaymentsBook(address _addr) external {
         _setModule(MODULE_ID_PAYMENTS_BOOK, _addr);
-        _cacheNewModule(MODULE_ID_PAYMENTS_BOOK, _addr);
+        _linkNewModule(MODULE_ID_PAYMENTS_BOOK, _addr);
     }
 
     function setTreasury(address _addr) external {
         _setModule(MODULE_ID_TREASURY, _addr);
-        _cacheNewModule(MODULE_ID_TREASURY, _addr);
+        _linkNewModule(MODULE_ID_TREASURY, _addr);
     }
 
-    function _cacheNewModule(bytes32 _id, address _addr) private {
+    function _linkNewModule(bytes32 _id, address _addr) private {
         (bytes32[] memory knownIds, address[] memory knownAddresses) = _knownModules();
-        // Update the new module's cache with the already known modules
-        _cacheModules(_toArray(_addr), knownIds);
-        // Update the already known modules' cache with the new module
-        _cacheModules(knownAddresses, _toArray(_id));
+        // Update the new module's link with the already known modules
+        _linkModules(_toArray(_addr), knownIds);
+        // Update the already known modules' links with the new module
+        _linkModules(knownAddresses, _toArray(_id));
     }
 
     function mockIncreaseTerm() external {

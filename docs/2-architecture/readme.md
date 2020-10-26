@@ -60,8 +60,8 @@ Detailed information about `AragonProtocol` can be found in [section 4](../4-ent
 
 | Module             |                          Ongoing disputes                         |                              No disputes                          |                      
 |--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
-| Dispute Manager    | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting cache                 |
-| Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute manager cache        |    
+| Dispute Manager    | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting linked module         |
+| Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute Manager linked module|    
 | Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | " |
 | PaymentsBook       | Leave the previous instance active until all funds are claimed                                                                        |  
 | Guardians Registry | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |  
