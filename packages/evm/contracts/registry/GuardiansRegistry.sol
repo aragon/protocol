@@ -126,7 +126,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     mapping (address => bool) internal whitelistedLockManagers;
 
     // Mapping of whitelisted token activators indexed by address
-    mapping (address => bool) internal allowedActivators;
+    mapping (address => bool) internal whitelistedActivators;
 
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
@@ -142,7 +142,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     event GuardianTokensAssigned(address indexed guardian, uint256 amount);
     event GuardianTokensBurned(uint256 amount);
     event GuardianTokensCollected(address indexed guardian, uint256 amount, uint64 effectiveTermId);
-    event ActivatorChanged(address indexed activator, bool allowed);
+    event ActivatorWhitelistChanged(address indexed activator, bool allowed);
     event LockManagerWhitelistChanged(address indexed lockManager, bool allowed);
     event TotalActiveBalanceLimitChanged(uint256 previousTotalActiveBalanceLimit, uint256 currentTotalActiveBalanceLimit);
 
@@ -449,21 +449,13 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
-    * @notice Set new limit of total active balance of guardian tokens
-    * @param _totalActiveBalanceLimit New limit of total active balance of guardian tokens
-    */
-    function setTotalActiveBalanceLimit(uint256 _totalActiveBalanceLimit) external onlyConfigGovernor {
-        _setTotalActiveBalanceLimit(_totalActiveBalanceLimit);
-    }
-
-    /**
     * @notice `_allowed ? 'Allow' : 'Disallow'` `_activator` as an activator
     * @param _activator Address of the activator to be changed
-    * @param _allowed Whether the activator is allowed
+    * @param _allowed Whether the activator is whitelisted
     */
-    function changeActivator(address _activator, bool _allowed) external onlyConfigGovernor {
-        allowedActivators[_activator] = _allowed;
-        emit ActivatorChanged(_activator, _allowed);
+    function updateActivatorWhitelist(address _activator, bool _allowed) external onlyConfigGovernor {
+        whitelistedActivators[_activator] = _allowed;
+        emit ActivatorWhitelistChanged(_activator, _allowed);
     }
 
     /**
@@ -474,6 +466,14 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     function updateLockManagerWhitelist(address _lockManager, bool _allowed) external onlyConfigGovernor {
         whitelistedLockManagers[_lockManager] = _allowed;
         emit LockManagerWhitelistChanged(_lockManager, _allowed);
+    }
+
+    /**
+    * @notice Set new limit of total active balance of guardian tokens
+    * @param _totalActiveBalanceLimit New limit of total active balance of guardian tokens
+    */
+    function setTotalActiveBalanceLimit(uint256 _totalActiveBalanceLimit) external onlyConfigGovernor {
+        _setTotalActiveBalanceLimit(_totalActiveBalanceLimit);
     }
 
     /**
@@ -616,20 +616,12 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
-    * @dev Tell the maximum amount of total active balance that can be held in the registry
-    * @return Maximum amount of total active balance that can be held in the registry
-    */
-    function totalGuardiansActiveBalanceLimit() external view returns (uint256) {
-        return totalActiveBalanceLimit;
-    }
-
-    /**
-    * @dev Tell whether a activator is allowed
+    * @dev Tell whether an activator is whitelisted
     * @param _activator Address of the activator being queried
-    * @return True if the activator is allowed
+    * @return True if the activator is whitelisted
     */
-    function isActivatorAllowed(address _activator) external view returns (bool) {
-        return _isActivatorAllowed(_activator);
+    function isActivatorWhitelisted(address _activator) external view returns (bool) {
+        return _isActivatorWhitelisted(_activator);
     }
 
     /**
@@ -639,6 +631,14 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     */
     function isLockManagerWhitelisted(address _lockManager) external view returns (bool) {
         return _isLockManagerWhitelisted(_lockManager);
+    }
+
+    /**
+    * @dev Tell the maximum amount of total active balance that can be held in the registry
+    * @return Maximum amount of total active balance that can be held in the registry
+    */
+    function totalGuardiansActiveBalanceLimit() external view returns (uint256) {
+        return totalActiveBalanceLimit;
     }
 
     /**
@@ -660,7 +660,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
         uint64 termId = _ensureCurrentTerm();
 
         // Make sure the sender is allowed to activate tokens on behalf of the guardian
-        bool isAllowed = _guardian == _sender || _isActivatorAllowed(_sender) || _isActivatorAllowed(ANY_ENTITY);
+        bool isAllowed = _guardian == _sender || _isActivatorWhitelisted(_sender);
         require(isAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
 
         // Try to clean a previous deactivation request if any
@@ -1008,12 +1008,12 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
-    * @dev Tell whether an activator is allowed
+    * @dev Tell whether an activator is whitelisted
     * @param _activator Address of the activator being queried
-    * @return True if the activator is allowed
+    * @return True if the activator is whitelisted
     */
-    function _isActivatorAllowed(address _activator) internal view returns (bool) {
-        return allowedActivators[_activator];
+    function _isActivatorWhitelisted(address _activator) internal view returns (bool) {
+        return whitelistedActivators[_activator];
     }
 
     /**

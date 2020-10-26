@@ -679,8 +679,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
 
           context('when the sender is allowed as activator', () => {
             beforeEach('allow activator', async () => {
-              const receipt = await registry.changeActivator(from, true, { from: governor })
+              const receipt = await registry.updateActivatorWhitelist(from, true, { from: governor })
 
+              assert.equal(await registry.isActivatorWhitelisted(from), true)
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
               assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: from, allowed: true } })
             })
@@ -688,8 +689,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
             itHandlesStakesWithActivationProperlyForDifferentAmounts(recipient, data)
           })
 
-          context('when the sender is allowed as activator', () => {
+          context('when the sender is not allowed as activator', () => {
             it('reverts', async () => {
+              assert.equal(await registry.isActivatorWhitelisted(from), false)
               await assertRevert(registry.stakeFor(recipient, MIN_ACTIVE_AMOUNT, data, { from }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
             })
           })
@@ -700,8 +702,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
 
           context('when the sender is allowed as activator', () => {
             beforeEach('allow activator', async () => {
-              const receipt = await registry.changeActivator(from, true, { from: governor })
+              const receipt = await registry.updateActivatorWhitelist(from, true, { from: governor })
 
+              assert.equal(await registry.isActivatorWhitelisted(from), true)
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
               assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: from, allowed: true } })
             })
@@ -709,8 +712,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
             itHandlesStakesWithActivationProperlyForDifferentAmounts(recipient, data)
           })
 
-          context('when the sender is allowed as activator', () => {
+          context('when the sender is not allowed as activator', () => {
             it('reverts', async () => {
+              assert.equal(await registry.isActivatorWhitelisted(from), false)
               await assertRevert(registry.stakeFor(recipient, MIN_ACTIVE_AMOUNT, data, { from }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
             })
           })
@@ -935,8 +939,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
 
           context('when the sender is allowed as activator', () => {
             beforeEach('allow activator', async () => {
-              const receipt = await registry.changeActivator(from, true, { from: governor })
+              const receipt = await registry.updateActivatorWhitelist(from, true, { from: governor })
 
+              assert.equal(await registry.isActivatorWhitelisted(from), true)
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
               assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: from, allowed: true } })
             })
@@ -944,8 +949,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
             itHandlesStakesWithLockActivationProperlyForDifferentAmounts(recipient, data)
           })
 
-          context('when the sender is allowed as activator', () => {
+          context('when the sender is not allowed as activator', () => {
             it('reverts', async () => {
+              assert.equal(await registry.isActivatorWhitelisted(from), false)
               await assertRevert(registry.stakeFor(recipient, MIN_ACTIVE_AMOUNT, data, { from }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
             })
           })
@@ -956,8 +962,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
 
           context('when the sender is allowed as activator', () => {
             beforeEach('allow activator', async () => {
-              const receipt = await registry.changeActivator(from, true, { from: governor })
+              const receipt = await registry.updateActivatorWhitelist(from, true, { from: governor })
 
+              assert.equal(await registry.isActivatorWhitelisted(from), true)
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
               assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: from, allowed: true } })
             })
@@ -965,8 +972,9 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
             itHandlesStakesWithLockActivationProperlyForDifferentAmounts(recipient, data)
           })
 
-          context('when the sender is allowed as activator', () => {
+          context('when the sender is not allowed as activator', () => {
             it('reverts', async () => {
+              assert.equal(await registry.isActivatorWhitelisted(from), false)
               await assertRevert(registry.stakeFor(recipient, MIN_ACTIVE_AMOUNT, data, { from }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
             })
           })

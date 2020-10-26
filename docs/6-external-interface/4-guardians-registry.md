@@ -109,19 +109,19 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Amount:** Amount of guardian tokens collected from the guardian active tokens
     - **Effective term ID:** Identification number of the term when the guardian active balance will be updated
 
-#### 6.4.1.14. Activator changed
+#### 6.4.1.14. Activator whitelist changed
 
-- **Name:** `ActivatorChanged`
+- **Name:** `ActivatorWhitelistChanged`
 - **Args:**
     - **Activator:** Address of the activator whose status was changed
-    - **Allowed:** Whether the activator is allowed
+    - **Allowed:** Whether the activator is whitelisted
 
 #### 6.4.1.15. Lock manager whitelist changed
 
 - **Name:** `LockManagerWhitelistChanged`
 - **Args:**
     - **Lock manager:** Address of the lock manager whose status was changed
-    - **Allowed:** Whether the lock manager is allowed
+    - **Allowed:** Whether the lock manager is whitelisted
 
 #### 6.4.1.16. Total active balance limit changed
 
@@ -226,12 +226,12 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 - **Outputs:**
     - **Term ID:** Term ID in which the guardian's withdrawals will be unlocked (due to final rounds)
 
-#### 6.4.2.13. Is activator allowed
+#### 6.4.2.13. Is activator whitelisted
 - **Inputs:**
     - **Activator:** Address of the activator being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Allowed:** Whether the activator is allowed
+    - **Allowed:** Whether the activator is whitelisted
 
 #### 6.4.2.14. Is lock manager whitelisted
 - **Inputs:**
