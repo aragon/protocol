@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/ERC20.sol";
+import "../../lib/standards/IERC20.sol";
 
 import "./IConfig.sol";
 import "./ProtocolConfigData.sol";
@@ -19,7 +19,7 @@ contract ConfigConsumer is ProtocolConfigData {
     * @return Protocol config for the given term
     */
     function _getConfigAt(uint64 _termId) internal view returns (Config memory) {
-        (ERC20 _feeToken,
+        (IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -63,7 +63,7 @@ contract ConfigConsumer is ProtocolConfigData {
     * @return Draft config for the given term
     */
     function _getDraftConfig(uint64 _termId) internal view returns (DraftConfig memory) {
-        (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct) = _protocolConfig().getDraftConfig(_termId);
+        (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct) = _protocolConfig().getDraftConfig(_termId);
         return DraftConfig({ feeToken: feeToken, draftFee: draftFee, penaltyPct: penaltyPct });
     }
 

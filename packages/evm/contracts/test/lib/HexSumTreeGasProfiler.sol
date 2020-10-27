@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/HexSumTree.sol";
+import "../../lib/tree/HexSumTree.sol";
 
 
 contract HexSumTreeGasProfiler {

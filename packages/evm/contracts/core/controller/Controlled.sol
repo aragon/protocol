@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/IsContract.sol";
+import "../../lib/utils/IsContract.sol";
 
 import "./Modules.sol";
 import "./IModuleCache.sol";

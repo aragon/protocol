@@ -11,7 +11,7 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
     constructor(
         uint64[2] memory _termParams,
         address[3] memory _governors,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,

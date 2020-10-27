@@ -1,23 +1,23 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/SafeERC20.sol";
-import "../lib/os/ERC20.sol";
-import "../lib/os/SafeMath.sol";
+import "../lib/math/SafeMath.sol";
+import "../lib/utils/SafeERC20.sol";
+import "../lib/utils/BytesHelpers.sol";
+import "../lib/utils/PctHelpers.sol";
+import "../lib/tree/HexSumTree.sol";
+import "../lib/tree/GuardiansTreeSortition.sol";
+import "../lib/standards/IERC20.sol";
+import "../lib/standards/IERC900.sol";
+import "../lib/standards/ApproveAndCall.sol";
 
 import "./IGuardiansRegistry.sol";
 import "./ILockManager.sol";
-import "../lib/BytesHelpers.sol";
-import "../lib/HexSumTree.sol";
-import "../lib/PctHelpers.sol";
-import "../lib/GuardiansTreeSortition.sol";
-import "../standards/ERC900.sol";
-import "../standards/ApproveAndCall.sol";
 import "../core/controller/Controller.sol";
 import "../core/controller/ControlledRecoverable.sol";
 
 
-contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900, ApproveAndCallFallBack {
-    using SafeERC20 for ERC20;
+contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900, ApproveAndCallFallBack {
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PctHelpers for uint256;
     using BytesHelpers for bytes;
@@ -113,7 +113,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     uint256 internal totalActiveBalanceLimit;
 
     // Guardian ERC20 token
-    ERC20 internal guardiansToken;
+    IERC20 internal guardiansToken;
 
     // Mapping of guardian data indexed by address
     mapping (address => Guardian) internal guardiansByAddress;
@@ -144,17 +144,17 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, ERC900,
     /**
     * @dev Constructor function
     * @param _controller Address of the controller
-    * @param _guardianToken Address of the ERC20 token to be used as guardian token for the registry
+    * @param _guardiansToken Address of the ERC20 token to be used as guardian token for the registry
     * @param _totalActiveBalanceLimit Maximum amount of total active balance that can be held in the registry
     */
-    constructor(Controller _controller, ERC20 _guardianToken, uint256 _totalActiveBalanceLimit)
+    constructor(Controller _controller, IERC20 _guardiansToken, uint256 _totalActiveBalanceLimit)
         ControlledRecoverable(_controller)
         public
     {
         // No need to explicitly call `Controlled` constructor since `ControlledRecoverable` is already doing it
-        require(isContract(address(_guardianToken)), ERROR_NOT_CONTRACT);
+        require(isContract(address(_guardiansToken)), ERROR_NOT_CONTRACT);
 
-        guardiansToken = _guardianToken;
+        guardiansToken = _guardiansToken;
         _setTotalActiveBalanceLimit(_totalActiveBalanceLimit);
 
         tree.init();

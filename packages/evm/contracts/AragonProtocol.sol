@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "./lib/os/Uint256Helpers.sol";
+import "./lib/utils/Uint256Helpers.sol";
 
 import "./arbitration/IArbitrator.sol";
 import "./arbitration/IArbitrable.sol";
@@ -50,7 +50,7 @@ contract AragonProtocol is Controller, IArbitrator {
     constructor(
         uint64[2] memory _termParams,
         address[3] memory _governors,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -127,7 +127,7 @@ contract AragonProtocol is Controller, IArbitrator {
     * @return feeToken ERC20 token used for the fees
     * @return feeAmount Total amount of fees that must be allowed to the recipient
     */
-    function getDisputeFees() external view returns (address recipient, ERC20 feeToken, uint256 feeAmount) {
+    function getDisputeFees() external view returns (address recipient, IERC20 feeToken, uint256 feeAmount) {
         recipient = _getDisputeManager();
         IDisputeManager disputeManager = IDisputeManager(recipient);
         (feeToken, feeAmount) = disputeManager.getDisputeFees();

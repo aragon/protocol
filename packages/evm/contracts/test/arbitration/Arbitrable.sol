@@ -12,7 +12,7 @@ contract Arbitrable is IArbitrable {
     }
 
     function createDispute(uint8 _possibleRulings, bytes calldata _metadata) external {
-        (address recipient, ERC20 feeToken, uint256 disputeFees) = arbitrator.getDisputeFees();
+        (address recipient, IERC20 feeToken, uint256 disputeFees) = arbitrator.getDisputeFees();
         feeToken.approve(recipient, disputeFees);
         arbitrator.createDispute(_possibleRulings, _metadata);
     }
