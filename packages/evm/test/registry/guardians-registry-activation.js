@@ -9,14 +9,14 @@ const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('GuardiansRegistry', ([_, guardian]) => {
+contract('GuardiansRegistry', ([_, guardian, governor]) => {
   let controller, registry, disputeManager, ANT
 
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
   before('create base contracts', async () => {
-    controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT })
+    controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT, configGovernor: governor })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
     ANT = await ERC20.new('ANT Token', 'ANT', 18)
@@ -634,6 +634,19 @@ contract('GuardiansRegistry', ([_, guardian]) => {
 
               itHandlesDeactivationRequestFor(amount, amount)
             })
+
+            context('when the guardian has an activation lock', () => {
+              const amount = currentActiveBalance
+
+              beforeEach('create activation lock', async () => {
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
+                await registry.lockActivation(guardian, amount, { from: guardian })
+              })
+
+              it('reverts', async () => {
+                await assertRevert(registry.deactivate(amount, { from }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+              })
+            })
           })
 
           context('when the deactivation request is for the current term', () => {
@@ -665,6 +678,19 @@ contract('GuardiansRegistry', ([_, guardian]) => {
               const amount = currentActiveBalance
 
               itHandlesDeactivationRequestFor(amount, amount, previousDeactivationAmount)
+            })
+
+            context('when the guardian has an activation lock', () => {
+              const amount = currentActiveBalance
+
+              beforeEach('create activation lock', async () => {
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
+                await registry.lockActivation(guardian, amount, { from: guardian })
+              })
+
+              it('reverts', async () => {
+                await assertRevert(registry.deactivate(amount, { from }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+              })
             })
           })
 
@@ -698,6 +724,19 @@ contract('GuardiansRegistry', ([_, guardian]) => {
               const amount = currentActiveBalance
 
               itHandlesDeactivationRequestFor(amount, amount, previousDeactivationAmount)
+            })
+
+            context('when the guardian has an activation lock', () => {
+              const amount = currentActiveBalance
+
+              beforeEach('create activation lock', async () => {
+                await registry.updateLockManagerWhitelist(guardian, true, { from: governor })
+                await registry.lockActivation(guardian, amount, { from: guardian })
+              })
+
+              it('reverts', async () => {
+                await assertRevert(registry.deactivate(amount, { from }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+              })
             })
           })
         })

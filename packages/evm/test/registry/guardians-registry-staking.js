@@ -2,22 +2,22 @@ const { ZERO_ADDRESS, bn, bigExp, decodeEvents } = require('@aragon/contract-hel
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { ACTIVATE_DATA } = require('../helpers/utils/guardians')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { REGISTRY_ERRORS } = require('../helpers/utils/errors')
+const { ACTIVATE_DATA, LOCK_ACTIVATION_DATA } = require('../helpers/utils/guardians')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
+contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
   let controller, registry, disputeManager, ANT
 
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
   before('create protocol and custom disputes module', async () => {
-    controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT })
+    controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT, configGovernor: governor })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
     ANT = await ERC20.new('ANT Token', 'ANT', 18)
@@ -684,6 +684,232 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian]) => {
           const recipient = ZERO_ADDRESS
 
           itHandlesStakesWithActivationProperlyForDifferentAmounts(recipient, data)
+        })
+      }
+
+      context('when the guardian has not staked before', () => {
+        itHandlesStakesProperlyForDifferentRecipients(data)
+      })
+
+      context('when the guardian has already staked some tokens before', () => {
+        beforeEach('stake some tokens', async () => {
+          const initialAmount = bigExp(50, 18)
+          await ANT.generateTokens(from, initialAmount)
+          await ANT.approve(registry.address, initialAmount, { from })
+          await registry.stake(initialAmount, '0x', { from })
+        })
+
+        itHandlesStakesProperlyForDifferentRecipients(data)
+      })
+    })
+
+    context('when the guardian requests to activate the tokens and lock activation', () => {
+      const data = LOCK_ACTIVATION_DATA
+      const lockManager = guardian
+
+      beforeEach('allow lock manager', async () => {
+        await registry.updateLockManagerWhitelist(lockManager, true, { from: governor })
+      })
+
+      const itHandlesStakesWithLockActivationProperlyFor = (recipient, amount, data) => {
+        it('creates the lock', async () => {
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          const { amount: lockedAmount, total } = await registry.getActivationLock(recipient, lockManager)
+          assertBn(lockedAmount, amount, 'locked amount does not match')
+          assertBn(total, amount, 'total locked amount does not match')
+        })
+
+        it('adds the staked amount to the active balance of the recipient', async () => {
+          const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+          assertBn(previousActiveBalance.add(amount), currentActiveBalance, 'recipient active balances do not match')
+
+          assertBn(previousLockedBalance, currentLockedBalance, 'recipient locked balances do not match')
+          assertBn(previousAvailableBalance, currentAvailableBalance, 'recipient available balances do not match')
+          assertBn(previousDeactivationBalance, currentDeactivationBalance, 'recipient deactivation balances do not match')
+        })
+
+        it('does not affect the active balance of the current term', async () => {
+          const termId = await controller.getLastEnsuredTermId()
+          const currentTermPreviousBalance = await registry.activeBalanceOfAt(recipient, termId)
+
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          const currentTermCurrentBalance = await registry.activeBalanceOfAt(recipient, termId)
+          assertBn(currentTermPreviousBalance, currentTermCurrentBalance, 'current term active balances do not match')
+        })
+
+        if (recipient !== from) {
+          it('does not lock the sender', async () => {
+            await registry.stakeFor(recipient, amount, data, { from })
+
+            const { amount: lockedAmount, total } = await registry.getActivationLock(from, lockManager)
+            assertBn(lockedAmount, 0, 'locked amount does not match')
+            assertBn(total, 0, 'total locked amount does not match')
+          })
+
+          it('does not affect the sender balances', async () => {
+            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(from)
+
+            await registry.stakeFor(recipient, amount, data, { from })
+
+            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(from)
+            assertBn(previousActiveBalance, currentActiveBalance, 'sender active balances do not match')
+            assertBn(previousLockedBalance, currentLockedBalance, 'sender locked balances do not match')
+            assertBn(previousAvailableBalance, currentAvailableBalance, 'sender available balances do not match')
+            assertBn(previousDeactivationBalance, currentDeactivationBalance, 'deactivation balances do not match')
+          })
+        }
+
+        it('updates the unlocked balance of the recipient', async () => {
+          const previousSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(from)
+          const previousRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          await controller.mockIncreaseTerm()
+          const currentRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+          assertBn(previousRecipientUnlockedActiveBalance.add(amount), currentRecipientUnlockedActiveBalance, 'recipient unlocked balances do not match')
+
+          if (recipient !== from) {
+            const currentSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(from)
+            assertBn(previousSenderUnlockedActiveBalance, currentSenderUnlockedActiveBalance, 'sender unlocked balances do not match')
+          }
+        })
+
+        it('updates the total staked for the recipient', async () => {
+          const previousSenderTotalStake = await registry.totalStakedFor(from)
+          const previousRecipientTotalStake = await registry.totalStakedFor(recipient)
+
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          const currentRecipientTotalStake = await registry.totalStakedFor(recipient)
+          assertBn(previousRecipientTotalStake.add(amount), currentRecipientTotalStake, 'recipient total stake amounts do not match')
+
+          if (recipient !== from) {
+            const currentSenderTotalStake = await registry.totalStakedFor(from)
+            assertBn(previousSenderTotalStake, currentSenderTotalStake, 'sender total stake amounts do not match')
+          }
+        })
+
+        it('updates the total staked', async () => {
+          const previousTotalStake = await registry.totalStaked()
+
+          await registry.stake(amount, data, { from })
+
+          const currentTotalStake = await registry.totalStaked()
+          assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
+        })
+
+        it('transfers the tokens to the registry', async () => {
+          const previousSenderBalance = await ANT.balanceOf(from)
+          const previousRegistryBalance = await ANT.balanceOf(registry.address)
+          const previousRecipientBalance = await ANT.balanceOf(recipient)
+
+          await registry.stakeFor(recipient, amount, data, { from })
+
+          const currentSenderBalance = await ANT.balanceOf(from)
+          assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
+
+          const currentRegistryBalance = await ANT.balanceOf(registry.address)
+          assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
+
+          if (recipient !== from) {
+            const currentRecipientBalance = await ANT.balanceOf(recipient)
+            assertBn(previousRecipientBalance, currentRecipientBalance, 'recipient balances do not match')
+          }
+        })
+
+        it('emits a stake event', async () => {
+          const previousTotalStake = await registry.totalStakedFor(recipient)
+
+          const receipt = await registry.stakeFor(recipient, amount, data, { from })
+
+          assertAmountOfEvents(receipt, REGISTRY_EVENTS.STAKED)
+          assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { user: recipient, amount, total: previousTotalStake.add(amount), data } })
+        })
+
+        it('emits an activation event', async () => {
+          const termId = await controller.getCurrentTermId()
+
+          const receipt = await registry.stakeFor(recipient, amount, data, { from })
+
+          assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
+          assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount, sender: from } })
+        })
+      }
+
+      const itHandlesStakesWithLockActivationProperlyForDifferentAmounts = (recipient, data) => {
+        context('when the given amount is zero', () => {
+          const amount = bn(0)
+
+          it('reverts', async () => {
+            await assertRevert(registry.stakeFor(recipient, amount, data, { from }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+          })
+        })
+
+        context('when the given amount is lower than the minimum active value', () => {
+          const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
+
+          context('when the guardian has enough token balance', () => {
+            beforeEach('mint and approve tokens', async () => {
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
+            })
+
+            it('reverts', async () => {
+              await assertRevert(registry.stakeFor(recipient, amount, data, { from }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+            })
+          })
+
+          context('when the guardian does not have enough token balance', () => {
+            it('reverts', async () => {
+              await assertRevert(registry.stakeFor(recipient, amount, data, { from }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+            })
+          })
+        })
+
+        context('when the given amount is greater than the minimum active value', () => {
+          const amount = MIN_ACTIVE_AMOUNT.mul(bn(2))
+
+          context('when the guardian has enough token balance', () => {
+            beforeEach('mint and approve tokens', async () => {
+              await ANT.generateTokens(from, amount)
+              await ANT.approve(registry.address, amount, { from })
+            })
+
+            itHandlesStakesWithLockActivationProperlyFor(recipient, amount, data)
+          })
+
+          context('when the guardian does not have enough token balance', () => {
+            it('reverts', async () => {
+              await assertRevert(registry.stakeFor(recipient, amount, data, { from }), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
+            })
+          })
+        })
+      }
+
+      const itHandlesStakesProperlyForDifferentRecipients = (data) => {
+        context('when the recipient and the sender are the same', async () => {
+          const recipient = from
+
+          itHandlesStakesWithLockActivationProperlyForDifferentAmounts(recipient, data)
+        })
+
+        context('when the recipient and the sender are not the same', async () => {
+          const recipient = anotherGuardian
+
+          itHandlesStakesWithLockActivationProperlyForDifferentAmounts(recipient, data)
+        })
+
+        context('when the recipient is the zero address', async () => {
+          const recipient = ZERO_ADDRESS
+
+          itHandlesStakesWithLockActivationProperlyForDifferentAmounts(recipient, data)
         })
       }
 
