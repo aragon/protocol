@@ -2,6 +2,10 @@ const ARBITRABLE_EVENTS = {
   RULED: 'Ruled'
 }
 
+const ARBITRATOR_EVENTS = {
+  EVIDENCE_SUBMITTED: 'EvidenceSubmitted'
+}
+
 const DISPUTE_MANAGER_EVENTS = {
   DISPUTE_STATE_CHANGED: 'DisputeStateChanged',
   NEW_DISPUTE: 'NewDispute',
@@ -66,7 +70,7 @@ const CONTROLLER_EVENTS = {
 }
 
 const CONTROLLED_EVENTS = {
-  MODULE_CACHED: 'ModuleCached',
+  MODULE_LINKED: 'ModuleLinked',
   RECOVER_FUNDS: 'RecoverFunds'
 }
 
@@ -90,5 +94,6 @@ module.exports = {
   CONTROLLED_EVENTS,
   CONFIG_EVENTS,
   CLOCK_EVENTS,
+  ARBITRATOR_EVENTS,
   ARBITRABLE_EVENTS
 }

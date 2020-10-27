@@ -3,9 +3,9 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { filterGuardians } = require('../helpers/utils/guardians')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
-const { VOTING_ERRORS, DISPUTE_MANAGER_ERRORS } = require('../helpers/utils/errors')
 const { buildHelper, ROUND_STATES, DEFAULTS } = require('../helpers/wrappers/protocol')
 const { getVoteId, hashVote, outcomeFor, SALT, OUTCOMES } = require('../helpers/utils/crvoting')
+const { VOTING_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000]) => {
   let protocolHelper, voting
@@ -24,7 +24,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
   before('create base contracts and activate guardians', async () => {
     protocolHelper = buildHelper()
-    await protocolHelper.deploy()
+    await protocolHelper.deploy({ modulesGovernor: _ })
     voting = protocolHelper.voting
     await protocolHelper.activate(guardians)
   })
@@ -94,11 +94,29 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
         itFailsToRevealVotes(false, false)
 
         context('when the sender was drafted', () => {
-          it('allows to commit a vote', async () => {
-            for (const { address } of draftedGuardians) {
-              const receipt = await voting.commit(voteId, vote, { from: address })
-              assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_COMMITTED)
-            }
+          context('when the voting module is disabled', () => {
+            beforeEach('disable voting module', async () => {
+              await protocolHelper.protocol.disableModule(voting.address)
+            })
+
+            it('reverts', async () => {
+              for (const { address } of draftedGuardians) {
+                await assertRevert(voting.commit(voteId, vote, { from: address }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_VOTING)
+              }
+            })
+          })
+
+          context('when the voting module is enabled', () => {
+            beforeEach('enable voting module', async () => {
+              await protocolHelper.protocol.enableModule(voting.address)
+            })
+
+            it('allows to commit a vote', async () => {
+              for (const { address } of draftedGuardians) {
+                const receipt = await voting.commit(voteId, vote, { from: address })
+                assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_COMMITTED)
+              }
+            })
           })
         })
 

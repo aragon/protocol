@@ -211,7 +211,7 @@ It is also in charge of computing the final ruling for each dispute, and to sett
 - **Actor:** Any entity incentivized to check if it is possible to commit votes for a certain dispute adjudication round
 - **Inputs:**
     - **Vote ID:** Vote identification number
-- **Authentication:** Only `Voting` module
+- **Authentication:** Only active `Voting` modules
 - **Pre-flight checks:**
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure a dispute and adjudication round exists with that vote ID

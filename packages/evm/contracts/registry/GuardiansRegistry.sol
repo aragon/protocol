@@ -12,8 +12,8 @@ import "../lib/standards/ApproveAndCall.sol";
 
 import "./IGuardiansRegistry.sol";
 import "./ILockManager.sol";
-import "../core/controller/Controller.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900, ApproveAndCallFallBack {

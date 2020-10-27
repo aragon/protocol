@@ -6,7 +6,7 @@ import "../payments/IPaymentsBook.sol";
 
 interface IArbitrator {
     /**
-    * @dev Emitted when new evidence is submitted for the IArbitrable instance's dispute
+    * @dev Emitted when new evidence is submitted for a dispute
     * @param disputeId Identification number of the dispute receiving new evidence
     * @param submitter Address of the account submitting the evidence
     * @param evidence Data submitted for the evidence of the dispute

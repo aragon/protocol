@@ -1,9 +1,9 @@
 const { ZERO_ADDRESS, bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { CONTROLLED_EVENTS } = require('../../helpers/utils/events')
-const { CONTROLLED_ERRORS } = require('../../helpers/utils/errors')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { CONTROLLED_EVENTS } = require('../helpers/utils/events')
+const { CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const ERC20 = artifacts.require('ERC20Mock')
 const ControlledRecoverable = artifacts.require('ControlledRecoverableMock')

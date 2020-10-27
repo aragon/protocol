@@ -4,8 +4,8 @@ import "../lib/math/SafeMath.sol";
 
 import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
-import "../core/controller/Controlled.sol";
-import "../core/controller/Controller.sol";
+import "../core/modules/Controlled.sol";
+import "../core/modules/Controller.sol";
 
 
 contract CRVoting is Controlled, ICRVoting {
@@ -418,6 +418,14 @@ contract CRVoting is Controlled, ICRVoting {
         ICRVotingOwner owner = _votingOwner();
         uint64 weight = owner.ensureCanReveal(_voteId, _voter);
         return uint256(weight);
+    }
+
+    /**
+    * @dev Internal function to fetch the address of the Voting module's owner
+    * @return Address of the Voting module's owner
+    */
+    function _votingOwner() internal view returns (ICRVotingOwner) {
+        return ICRVotingOwner(address(_disputeManager()));
     }
 
     /**

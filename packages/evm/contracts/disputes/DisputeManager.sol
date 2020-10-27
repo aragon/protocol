@@ -13,7 +13,7 @@ import "../voting/ICRVotingOwner.sol";
 import "../treasury/ITreasury.sol";
 import "../arbitration/IArbitrable.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManager {

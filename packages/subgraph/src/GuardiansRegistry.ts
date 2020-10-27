@@ -191,7 +191,7 @@ export function loadOrCreateGuardiansRegistryModule(address: Address): Guardians
   if (module === null) {
     const registry = GuardiansRegistry.bind(address)
     module = new GuardiansRegistryModule(address.toHexString())
-    module.protocol = registry.getController().toHexString()
+    module.protocol = registry.controller().toHexString()
     module.totalStaked = BigInt.fromI32(0)
     module.totalActive = BigInt.fromI32(0)
     module.totalDeactivation = BigInt.fromI32(0)

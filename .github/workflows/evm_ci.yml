@@ -2,13 +2,11 @@ name: CI
 
 on:
   push:
-    branches:
-    - 'master'
     paths:
     - 'packages/evm/**'
-  pull_request:
     branches:
-    - '*'
+    - 'master'
+  pull_request:
     paths:
     - 'packages/evm/**'
 
@@ -37,7 +35,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Controller
-      run: yarn workspace @aragon/protocol-evm test:controller
+      run: yarn workspace @aragon/protocol-evm test:core
 
   disputes:
     runs-on: ubuntu-latest

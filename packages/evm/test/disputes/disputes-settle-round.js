@@ -8,7 +8,7 @@ const { buildHelper, ROUND_STATES, DISPUTE_STATES, DEFAULTS } = require('../help
 const { ARBITRABLE_EVENTS, DISPUTE_MANAGER_EVENTS, REGISTRY_EVENTS } = require('../helpers/utils/events')
 
 const DisputeManager = artifacts.require('DisputeManager')
-const Arbitrable = artifacts.require('Arbitrable')
+const Arbitrable = artifacts.require('ArbitrableMock')
 
 contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000, anyone]) => {
   let protocolHelper, protocol, disputeManager, voting

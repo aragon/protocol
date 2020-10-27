@@ -5,8 +5,8 @@ import "../lib/utils/SafeERC20.sol";
 import "../lib/standards/IERC20.sol";
 
 import "./ITreasury.sol";
-import "../core/controller/Controller.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract ProtocolTreasury is ControlledRecoverable, ITreasury {
