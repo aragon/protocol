@@ -1276,7 +1276,7 @@ contract('GuardiansRegistry', ([_, guardian, anotherGuardian, governor]) => {
         const data = LOCK_ACTIVATION_DATA
 
         beforeEach('allow lock manager', async () => {
-          await registry.changeLockManager(from, true, { from: governor })
+          await registry.updateLockManagerWhitelist(from, true, { from: governor })
         })
 
         const itHandlesStakesProperlyFor = (amount, data) => {
