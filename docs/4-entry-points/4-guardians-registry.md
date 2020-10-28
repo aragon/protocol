@@ -252,7 +252,18 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the total active balance limit
 
-### 4.4.18. Change lock manager
+### 4.4.18. Change activator whitelist
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Activator:** Address of the activator to be changed
+    - **Allowed:** Whether the activator is allowed
+- **Authentication:** Only config governor
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Update the activator status
+
+### 4.4.19. Change lock manager whitelist
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -263,7 +274,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the lock manager status
 
-### 4.4.19. Recover funds
+### 4.4.20. Recover funds
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
