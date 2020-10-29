@@ -3,7 +3,6 @@ const { ONE_DAY, NEXT_WEEK, MAX_UINT64, bn, bigExp, getEvents, getEventArgument,
 
 const { MODULE_IDS } = require('../utils/modules')
 const { advanceBlocks } = require('../utils/blocks')
-const { ACTIVATE_DATA } = require('../utils/guardians')
 const { DISPUTE_MANAGER_EVENTS } = require('../utils/events')
 const { SALT, OUTCOMES, getVoteId, hashVote, oppositeOutcome, outcomeFor } = require('../utils/crvoting')
 
@@ -186,7 +185,8 @@ class ProtocolHelper {
   async activate(guardians) {
     for (const { address, initialActiveBalance } of guardians) {
       await this.guardianToken.generateTokens(address, initialActiveBalance)
-      await this.guardianToken.approveAndCall(this.guardiansRegistry.address, initialActiveBalance, ACTIVATE_DATA, { from: address })
+      await this.guardianToken.approve(this.guardiansRegistry.address, initialActiveBalance, { from: address })
+      await this.guardiansRegistry.stakeAndActivate(address, initialActiveBalance, '0x', { from: address })
     }
   }
 

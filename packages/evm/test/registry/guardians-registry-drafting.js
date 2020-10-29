@@ -4,9 +4,9 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { simulateDraft } = require('../helpers/utils/registry')
+const { countEqualGuardians } = require('../helpers/utils/guardians')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, TREE_ERRORS } = require('../helpers/utils/errors')
-const { ACTIVATE_DATA, countEqualGuardians } = require('../helpers/utils/guardians')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistryMock')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
@@ -123,7 +123,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
 
     const deactivateFirstExpectedGuardian = async ({ disputeId = DISPUTE_ID, batchRequestedGuardians, roundRequestedGuardians }) => {
       const guardian = await getFirstExpectedGuardianAddress({ disputeId, batchRequestedGuardians, roundRequestedGuardians })
-      await registry.deactivate(0, { from: guardian })
+      await registry.deactivate(guardian, 0, { from: guardian })
       const { active } = await registry.balanceOf(guardian)
       assertBn(active, 0, 'first expected guardian active balance does not match')
     }
@@ -309,7 +309,9 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
       context('when there are some activated guardians', () => {
         context('when there is only one guardian activated', () => {
           beforeEach('activate', async () => {
-            await ANT.approveAndCall(registry.address, bigExp(500, 18), ACTIVATE_DATA, { from: guardian500 })
+            const amount = bigExp(500, 18)
+            await ANT.approve(registry.address, amount, { from: guardian500 })
+            await registry.stakeAndActivate(guardian500, amount, '0x', { from: guardian500 })
           })
 
           context('when no guardians were requested', () => {
@@ -401,7 +403,8 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
         context('when there are many guardians activated', () => {
           beforeEach('activate', async () => {
             for (let i = 0; i < guardians.length; i++) {
-              await ANT.approveAndCall(registry.address, guardians[i].initialActiveBalance, ACTIVATE_DATA, { from: guardians[i].address })
+              await ANT.approve(registry.address, guardians[i].initialActiveBalance, { from: guardians[i].address })
+              await registry.stakeAndActivate(guardians[i].address, guardians[i].initialActiveBalance, '0x', { from: guardians[i].address })
             }
           })
 

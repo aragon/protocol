@@ -24,7 +24,7 @@ jobs:
     - name: Lint
       run: yarn workspace @aragon/protocol-evm lint
 
-  controller:
+  core:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -34,7 +34,7 @@ jobs:
         node-version: 12
     - name: Install
       run: yarn --frozen-lockfile
-    - name: Controller
+    - name: Core
       run: yarn workspace @aragon/protocol-evm test:core
 
   disputes:

@@ -4,36 +4,42 @@ import "../../registry/ILockManager.sol";
 import "../../registry/GuardiansRegistry.sol";
 
 
-contract LockManagerMock is ILockManager, ApproveAndCallFallBack {
+contract LockManagerMock is ILockManager {
     string private constant ERROR_INVALID_TOKEN = "LM_INVALID_TOKEN";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "LM_TOKEN_DEPOSIT_FAILED";
+    string private constant ERROR_TOKEN_APPROVAL_FAILED = "LM_TOKEN_APPROVAL_FAILED";
 
     bool internal canUnlockMock;
-    GuardiansRegistry public registry;
+    GuardiansRegistry public guardiansRegistry;
 
-    constructor(GuardiansRegistry _registry) public {
-        registry = _registry;
+    constructor(GuardiansRegistry _guardiansRegistry) public {
+        guardiansRegistry = _guardiansRegistry;
     }
 
-    function unlock(address _user, uint256 _amount) external {
-        registry.unlockActivation(_user, address(this), _amount, false);
+    function unlock(address _guardian, uint256 _amount) external {
+        guardiansRegistry.unlockActivation(_guardian, address(this), _amount, false);
     }
 
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes calldata /* _data */) external {
+    function lockActivation(address _guardian, uint256 _amount) external {
+        guardiansRegistry.lockActivation(_guardian, address(this), _amount);
+    }
+
+    function activateAndLock(address _guardian, uint256 _amount) external {
+        GuardiansRegistry registry = guardiansRegistry;
         address token = registry.token();
-        require(_token == token, ERROR_INVALID_TOKEN);
 
-        require(IERC20(token).transferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+        require(IERC20(token).transferFrom(_guardian, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+        require(IERC20(token).approve(address(registry), _amount), ERROR_TOKEN_APPROVAL_FAILED);
 
-        bytes memory data = abi.encodePacked(GuardiansRegistry(registry).lockActivation.selector);
-        registry.stakeFor(_from, _amount, data);
+        registry.stakeAndActivate(_guardian, _amount, new bytes(0));
+        registry.lockActivation(_guardian, address(this), _amount);
     }
 
     function mockCanUnlock(bool _canUnlock) external {
         canUnlockMock = _canUnlock;
     }
 
-    function canUnlock(address /* _user */, uint256 /* _amount */) external view returns (bool) {
+    function canUnlock(address /* _guardian */, uint256 /* _amount */) external view returns (bool) {
         return canUnlockMock;
     }
 }

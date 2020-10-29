@@ -3,7 +3,7 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { getVoteId, oppositeOutcome, OUTCOMES } = require('../helpers/utils/crvoting')
 const { DISPUTE_MANAGER_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
-const { filterGuardians, filterWinningGuardians, ACTIVATE_DATA } = require('../helpers/utils/guardians')
+const { filterGuardians, filterWinningGuardians } = require('../helpers/utils/guardians')
 const { buildHelper, ROUND_STATES, DISPUTE_STATES, DEFAULTS } = require('../helpers/wrappers/protocol')
 const { ARBITRABLE_EVENTS, DISPUTE_MANAGER_EVENTS, REGISTRY_EVENTS } = require('../helpers/utils/events')
 
@@ -317,13 +317,13 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     // settle reward and deactivate
                     for (const guardian of expectedWinningGuardians) {
                       await disputeManager.settleReward(disputeId, roundId, guardian.address)
-                      await protocolHelper.guardiansRegistry.deactivate(0, { from: guardian.address }) // deactivate all
+                      await protocolHelper.guardiansRegistry.deactivate(guardian.address, 0, { from: guardian.address }) // deactivate all
                     }
 
                     // fails to withdraw on next term
                     await protocolHelper.passTerms(bn(1))
                     for (const guardian of expectedWinningGuardians) {
-                      await assertRevert(protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // fails to withdraw on last locked term
@@ -331,13 +331,13 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     const lastLockedTermId = draftTerm.add(protocolHelper.commitTerms).add(protocolHelper.revealTerms).add(protocolHelper.finalRoundLockTerms)
                     await protocolHelper.setTerm(lastLockedTermId)
                     for (const guardian of expectedWinningGuardians) {
-                      await assertRevert(protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // succeeds to withdraw after locked term
                     await protocolHelper.passTerms(bn(1))
                     for (const guardian of expectedWinningGuardians) {
-                      const receipt = await protocolHelper.guardiansRegistry.unstake(amount, '0x0', { from: guardian.address })
+                      const receipt = await protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address })
                       assertAmountOfEvents(receipt, REGISTRY_EVENTS.UNSTAKED)
                       assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { user: guardian.address, amount: amount.toString() } })
                     }
@@ -730,13 +730,14 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
 
                         if (unlockedBalance.gt(initialActiveBalance)) {
                           const amount = unlockedBalance.sub(initialActiveBalance)
-                          await guardiansRegistry.deactivate(amount, { from: address })
+                          await guardiansRegistry.deactivate(address, amount, { from: address })
                         }
 
                         if (unlockedBalance.lt(initialActiveBalance)) {
                           const amount = initialActiveBalance.sub(unlockedBalance)
                           await guardianToken.generateTokens(address, amount)
-                          await guardianToken.approveAndCall(guardiansRegistry.address, amount, ACTIVATE_DATA, { from: address })
+                          await guardianToken.approve(guardiansRegistry.address, amount, { from: address })
+                          await guardiansRegistry.stakeAndActivate(address, amount, '0x', { from: address })
                         }
                       }
 

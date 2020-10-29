@@ -6,7 +6,7 @@ The following events are emitted by the `GuardiansRegistry`:
 
 #### 6.4.1.1. Staked
 
-- **Name:** `Staked` (ERC900)
+- **Name:** `Staked`
 - **Args:**
     - **User:** Address of the guardian to stake the tokens to
     - **Amount:** Amount of tokens to be staked
@@ -15,7 +15,7 @@ The following events are emitted by the `GuardiansRegistry`:
 
 #### 6.4.1.2. Unstaked
 
-- **Name:** `Unstaked` (ERC900)
+- **Name:** `Unstaked`
 - **Args:**
     - **User:** Address of the guardian to unstake the tokens of
     - **Amount:** Amount of tokens to be unstaked

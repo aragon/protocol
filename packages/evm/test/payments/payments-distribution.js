@@ -3,7 +3,6 @@ const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { ACTIVATE_DATA } = require('../helpers/utils/guardians')
 const { PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 
@@ -46,15 +45,18 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
     beforeEach('activate guardians', async () => {
       await controller.mockSetTerm(0) // tokens are activated for the next term
       await guardianToken.generateTokens(guardianPeriod0Term1, guardianPeriod0Term0Balance)
-      await guardianToken.approveAndCall(guardiansRegistry.address, guardianPeriod0Term0Balance, ACTIVATE_DATA, { from: guardianPeriod0Term1 })
+      await guardianToken.approve(guardiansRegistry.address, guardianPeriod0Term0Balance, { from: guardianPeriod0Term1 })
+      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term1, guardianPeriod0Term0Balance, '0x', { from: guardianPeriod0Term1 })
 
       await controller.mockSetTerm(2) // tokens are activated for the next term
       await guardianToken.generateTokens(guardianPeriod0Term3, guardianPeriod0Term3Balance)
-      await guardianToken.approveAndCall(guardiansRegistry.address, guardianPeriod0Term3Balance, ACTIVATE_DATA, { from: guardianPeriod0Term3 })
+      await guardianToken.approve(guardiansRegistry.address, guardianPeriod0Term3Balance, { from: guardianPeriod0Term3 })
+      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term3, guardianPeriod0Term3Balance, '0x', { from: guardianPeriod0Term3 })
 
       await controller.mockSetTerm(PERIOD_DURATION * 1.5 - 1)
       await guardianToken.generateTokens(guardianMidPeriod1, guardianMidPeriod1Balance)
-      await guardianToken.approveAndCall(guardiansRegistry.address, guardianMidPeriod1Balance, ACTIVATE_DATA, { from: guardianMidPeriod1 })
+      await guardianToken.approve(guardiansRegistry.address, guardianMidPeriod1Balance, { from: guardianMidPeriod1 })
+      await guardiansRegistry.stakeAndActivate(guardianMidPeriod1, guardianMidPeriod1Balance, '0x', { from: guardianMidPeriod1 })
     })
 
     beforeEach('create payments book module', async () => {

@@ -1,10 +1,10 @@
 const abi = require('web3-eth-abi')
-const { ecsign } = require('ethereumjs-util')
+const { soliditySha3 } = require('web3-utils')
 const { bn, ZERO_BYTES32 } = require('@aragon/contract-helpers-test')
-const { keccak256, toHex, padLeft, soliditySha3 } = require('web3-utils')
 const { assertAmountOfEvents, assertEvent, assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { SIGNATURES_VALIDATOR_ERRORS } = require('../helpers/utils/errors')
+const { sign, encodeExtraCalldata, encodeAuthorization } = require('../helpers/utils/modules')
 
 const SignaturesValidator = artifacts.require('SignaturesValidatorMock')
 
@@ -13,19 +13,6 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
   const wallet = web3.eth.accounts.create('erc3009')
   const externalAccount = wallet.address
   const externalAccountPK = wallet.privateKey
-
-  const sign = message => {
-    const { v, r, s } = ecsign(Buffer.from(message.replace('0x', ''), 'hex'), Buffer.from(externalAccountPK.replace('0x', ''), 'hex'))
-    return { v, r: `0x${r.toString('hex')}`, s: `0x${s.toString('hex')}`}
-  }
-
-  const encodeSignature = (calldata, deadline, { v, r, s }) => {
-    const encodedDeadline = padLeft(toHex(deadline).slice(2), 64)
-    const encodedV = padLeft(toHex(v).slice(2), 64)
-    const encodedR = r.slice(2)
-    const encodedS = s.slice(2)
-    return `${calldata}${encodedDeadline}${encodedV}${encodedR}${encodedS}`
-  }
 
   before('deploy validator', async () => {
     validator = await SignaturesValidator.new()
@@ -47,8 +34,8 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
       const deadline = 15
 
       it('decodes it properly', async () => {
-        const signature = sign(soliditySha3('message'))
-        const calldataWithSignature = encodeSignature(calldata, deadline, signature)
+        const signature = sign(soliditySha3('message'), externalAccountPK)
+        const calldataWithSignature = encodeExtraCalldata(calldata, deadline, signature)
 
         const receipt = await validator.sendTransaction({ data: calldataWithSignature, from: sender })
 
@@ -69,7 +56,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
 
     const itReverts = (extraCalldata = undefined) => {
       it('reverts', async () => {
-        const data = await encodeCalldata(extraCalldata)
+        const data = await buildCalldata(extraCalldata)
         await assertRevert(validator.sendTransaction({ from: sender, data }), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
       })
     }
@@ -78,7 +65,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
       it('allows the sender', async () => {
         const previousNonce = await validator.getNextNonce(user)
 
-        const data = await encodeCalldata(extraCalldata)
+        const data = await buildCalldata(extraCalldata)
         const receipt = await validator.sendTransaction({ from: sender, data })
 
         assertAmountOfEvents(receipt, 'Authenticated')
@@ -89,27 +76,14 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
       })
     }
 
-    const encodeCalldata = async (extraCalldata = undefined) => {
-      const ABI = validator.abi.find(i => i.name === 'authenticateCall')
-      const calldata = abi.encodeFunctionCall(ABI, [user])
-      return extraCalldata === undefined ? encodeExtraCalldata(calldata) : `${calldata}${extraCalldata}`
-    }
+    const buildCalldata = async (extraCalldata = undefined) => {
+      const callABI = validator.abi.find(i => i.name === 'authenticateCall')
+      const calldata = abi.encodeFunctionCall(callABI, [user])
+      if (extraCalldata !== undefined) return `${calldata}${extraCalldata}`
 
-    const encodeExtraCalldata = async (calldata) => {
-      const domainSeparator = await validator.getDomainSeparator()
-      const ABI = validator.abi.find(i => i.name === allowedFunctionality)
-      const allowedData = abi.encodeFunctionCall(ABI, [user])
-      const encodedData = keccak256(abi.encodeParameters(['bytes', 'address', 'uint256', 'uint256'], [allowedData, allowedSender, nonce, deadline]))
-
-      const digest = soliditySha3(
-        { type: 'bytes1', value: '0x19' },
-        { type: 'bytes1', value: '0x01' },
-        { type: 'bytes32', value: domainSeparator },
-        { type: 'bytes32', value: encodedData }
-      )
-
-      const signature = sign(digest)
-      return encodeSignature(calldata, deadline, signature)
+      const allowedCallABI = validator.abi.find(i => i.name === allowedFunctionality)
+      const allowedData = abi.encodeFunctionCall(allowedCallABI, [user])
+      return encodeAuthorization(validator, user, externalAccountPK, calldata, allowedSender, allowedData, nonce, deadline)
     }
 
     const setUser = address => {
@@ -117,7 +91,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
         user = address
       })
     }
-    
+
     const setAuthorizedSender = address => {
       beforeEach(`set authorized sender ${address}`, async () => {
         allowedSender = address
@@ -146,7 +120,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
 
     context('when there is no extra calldata given', () => {
       const extraCalldata = ''
-      
+
       context('when there sender and the user are the same', () => {
         setUser(sender)
         itAllowsTheSender(extraCalldata)

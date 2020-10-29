@@ -7,16 +7,15 @@ import "../lib/utils/PctHelpers.sol";
 import "../lib/tree/HexSumTree.sol";
 import "../lib/tree/GuardiansTreeSortition.sol";
 import "../lib/standards/IERC20.sol";
-import "../lib/standards/IERC900.sol";
-import "../lib/standards/ApproveAndCall.sol";
 
-import "./IGuardiansRegistry.sol";
 import "./ILockManager.sol";
+import "./IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
+import "../core/modules/SignaturesValidator.sol";
 import "../core/modules/ControlledRecoverable.sol";
 
 
-contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900, ApproveAndCallFallBack {
+contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, SignaturesValidator {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PctHelpers for uint256;
@@ -131,6 +130,8 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
 
+    event Staked(address indexed user, uint256 amount, uint256 total, bytes data);
+    event Unstaked(address indexed user, uint256 amount, uint256 total, bytes data);
     event GuardianActivated(address indexed guardian, uint64 fromTermId, uint256 amount, address sender);
     event GuardianDeactivationRequested(address indexed guardian, uint64 availableTermId, uint256 amount);
     event GuardianDeactivationProcessed(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 processedTermId);
@@ -168,78 +169,82 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
-    * @notice Activate `_amount == 0 ? 'all available tokens' : @tokenAmount(self.token(), _amount)` for the next term
-    * @param _amount Amount of guardian tokens to be activated for the next term
-    */
-    function activate(uint256 _amount) external {
-        _activateTokens(msg.sender, _amount, msg.sender);
-    }
-
-    /**
-    * @notice Deactivate `_amount == 0 ? 'all unlocked tokens' : @tokenAmount(self.token(), _amount)` for the next term
-    * @param _amount Amount of guardian tokens to be deactivated for the next term
-    */
-    function deactivate(uint256 _amount) external {
-        _deactivateTokens(msg.sender, _amount);
-    }
-
-    /**
-    * @notice Stake `@tokenAmount(self.token(), _amount)` for the sender to the Protocol
+    * @notice Stake `@tokenAmount(self.token(), _amount)` for `_guardian`
+    * @param _guardian Address of the guardian to stake tokens to
     * @param _amount Amount of tokens to be staked
-    * @param _data Optional data that can be used to request the activation of the transferred tokens
+    * @param _data Optional data is never used by this function, only logged
     */
-    function stake(uint256 _amount, bytes calldata _data) external {
-        _stake(msg.sender, msg.sender, _amount, _data);
+    function stake(address _guardian, uint256 _amount, bytes calldata _data) external {
+        _stake(_guardian, _amount, _data);
     }
 
     /**
-    * @notice Stake `@tokenAmount(self.token(), _amount)` for `_to` to the Protocol
-    * @param _to Address to stake an amount of tokens to
-    * @param _amount Amount of tokens to be staked
-    * @param _data Optional data that can be used to request the activation of the transferred tokens
-    */
-    function stakeFor(address _to, uint256 _amount, bytes calldata _data) external {
-        _stake(msg.sender, _to, _amount, _data);
-    }
-
-    /**
-    * @notice Unstake `@tokenAmount(self.token(), _amount)` for `_to` from the Protocol
+    * @notice Unstake `@tokenAmount(self.token(), _amount)` from `_guardian`
+    * @param _guardian Address of the guardian to unstake tokens from
     * @param _amount Amount of tokens to be unstaked
     * @param _data Optional data is never used by this function, only logged
     */
-    function unstake(uint256 _amount, bytes calldata _data) external {
-        _unstake(msg.sender, _amount, _data);
+    function unstake(address _guardian, uint256 _amount, bytes calldata _data) external authenticate(_guardian) {
+        _unstake(_guardian, _amount, _data);
     }
 
     /**
-    * @dev Callback of approveAndCall, allows staking directly with a transaction to the token contract.
-    * @param _from Address making the transfer
-    * @param _amount Amount of tokens to transfer
-    * @param _token Address of the token
-    * @param _data Optional data that can be used to request the activation of the transferred tokens
+    * @notice Activate `@tokenAmount(self.token(), _amount)` for `_guardian`
+    * @param _guardian Address of the guardian activating the tokens for
+    * @param _amount Amount of guardian tokens to be activated for the next term
     */
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes calldata _data) external {
-        require(msg.sender == _token && _token == address(guardiansToken), ERROR_TOKEN_APPROVE_NOT_ALLOWED);
-        _stake(_from, _from, _amount, _data);
+    function activate(address _guardian, uint256 _amount) external authenticate(_guardian) {
+        _activate(_guardian, _amount);
     }
 
     /**
-    * @notice Lock `@tokenAmount(self.token(), _amount)` of sender's active balance
+    * @notice Deactivate `_amount == 0 ? 'all unlocked tokens' : @tokenAmount(self.token(), _amount)` for `_guardian`
+    * @param _guardian Address of the guardian deactivating the tokens for
+    * @param _amount Amount of guardian tokens to be deactivated for the next term
+    */
+    function deactivate(address _guardian, uint256 _amount) external authenticate(_guardian) {
+        _deactivate(_guardian, _amount);
+    }
+
+    /**
+    * @notice Stake and activate `@tokenAmount(self.token(), _amount)` for `_guardian`
+    * @param _guardian Address of the guardian staking and activating tokens for
+    * @param _amount Amount of tokens to be staked and activated
+    * @param _data Optional data is never used by this function, only logged
+    */
+    function stakeAndActivate(address _guardian, uint256 _amount, bytes calldata _data) external {
+        // Make sure the sender is the guardian or someone allowed by the guardian, and that the activator is whitelisted
+        bool isActivatorAllowed = _isSignatureValid(_guardian) || _isActivatorWhitelisted(msg.sender);
+        require(isActivatorAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
+
+        _stake(_guardian, _amount, _data);
+        _activate(_guardian, _amount);
+    }
+
+    /**
+    * @notice Lock `@tokenAmount(self.token(), _amount)` of `_guardian`'s active balance
+    * @param _guardian Address of the guardian locking the activation for
     * @param _lockManager Address of the lock manager that will control the lock
     * @param _amount Amount of active tokens to be locked
     */
-    function lockActivation(address _lockManager, uint256 _amount) external {
-        _lockActivation(msg.sender, _lockManager, _amount);
+    function lockActivation(address _guardian, address _lockManager, uint256 _amount) external {
+        // Make sure the sender is the guardian, someone allowed by the guardian, or the lock manager itself
+        bool isLockManagerAllowed = msg.sender == _lockManager || _isSignatureValid(_guardian);
+        // Make sure that the given lock manager is whitelisted or that any entity actually is
+        bool isLockManagerWhitelisted = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
+        require(isLockManagerAllowed && isLockManagerWhitelisted, ERROR_LOCK_MANAGER_NOT_ALLOWED);
+
+        _lockActivation(_guardian, _lockManager, _amount);
     }
 
     /**
-    * @notice Unlock `@tokenAmount(self.token(), _amount)` of `_guardian`'s active balance
+    * @notice Unlock  `_amount == 0 ? 'all unlocked tokens' : @tokenAmount(self.token(), _amount)` of `_guardian`'s active balance
     * @param _guardian Address of the guardian unlocking the active balance of
     * @param _lockManager Address of the lock manager controlling the lock
     * @param _amount Amount of active tokens to be unlocked
-    * @param _deactivate Whether the requested amount must be deactivated too
+    * @param _requestDeactivation Whether the unlocked amount must be requested for deactivation immediately
     */
-    function unlockActivation(address _guardian, address _lockManager, uint256 _amount, bool _deactivate) external {
+    function unlockActivation(address _guardian, address _lockManager, uint256 _amount, bool _requestDeactivation) external {
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
         uint256 lockedAmount = activationLocks.lockedBy[_lockManager];
         require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
@@ -256,8 +261,9 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
         emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
-        if (msg.sender == _guardian && _deactivate) {
-            _deactivateTokens(_guardian, _amount);
+        if (_requestDeactivation) {
+            _validateSignature(_guardian);
+            _deactivate(_guardian, _amount);
         }
     }
 
@@ -642,26 +648,13 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     }
 
     /**
-    * @dev ERC900 - Tell if the current registry supports historic information or not
-    * @return Always false
-    */
-    function supportsHistory() external pure returns (bool) {
-        return false;
-    }
-
-    /**
     * @dev Internal function to activate a given amount of tokens for a guardian.
     *      This function assumes that the given term is the current term and has already been ensured.
     * @param _guardian Address of the guardian to activate tokens
     * @param _amount Amount of guardian tokens to be activated
-    * @param _sender Address of the account requesting the activation
     */
-    function _activateTokens(address _guardian, uint256 _amount, address _sender) internal {
+    function _activate(address _guardian, uint256 _amount) internal {
         uint64 termId = _ensureCurrentTerm();
-
-        // Make sure the sender is allowed to activate tokens on behalf of the guardian
-        bool isAllowed = _guardian == _sender || _isActivatorWhitelisted(_sender);
-        require(isAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
 
         // Try to clean a previous deactivation request if any
         _processDeactivationRequest(_guardian, termId);
@@ -689,7 +682,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
         }
 
         _updateAvailableBalanceOf(_guardian, amountToActivate, false);
-        emit GuardianActivated(_guardian, nextTermId, amountToActivate, _sender);
+        emit GuardianActivated(_guardian, nextTermId, amountToActivate, msg.sender);
     }
 
     /**
@@ -697,7 +690,7 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     * @param _guardian Address of the guardian to deactivate tokens
     * @param _amount Amount of guardian tokens to be deactivated for the next term
     */
-    function _deactivateTokens(address _guardian, uint256 _amount) internal {
+    function _deactivate(address _guardian, uint256 _amount) internal {
         uint64 termId = _ensureCurrentTerm();
         Guardian storage guardian = guardiansByAddress[_guardian];
         uint256 unlockedActiveBalance = _lastUnlockedActiveBalanceOf(guardian);
@@ -796,9 +789,6 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
     * @param _amount Amount of tokens to be added to the activation locked amount of the guardian
     */
     function _lockActivation(address _guardian, address _lockManager, uint256 _amount) internal {
-        bool isAllowed = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
-        require(isAllowed, ERROR_LOCK_MANAGER_NOT_ALLOWED);
-
         ActivationLocks storage activationLocks = guardiansByAddress[_guardian].activationLocks;
         uint256 newTotalLocked = activationLocks.total.add(_amount);
         uint256 newLockedAmount = activationLocks.lockedBy[_lockManager].add(_amount);
@@ -810,26 +800,16 @@ contract GuardiansRegistry is ControlledRecoverable, IGuardiansRegistry, IERC900
 
     /**
     * @dev Internal function to stake an amount of tokens for a guardian
-    * @param _from Address sending the amount of tokens to be deposited
     * @param _guardian Address of the guardian to deposit the tokens to
     * @param _amount Amount of tokens to be deposited
     * @param _data Optional data that can be used to request the activation of the deposited tokens
     */
-    function _stake(address _from, address _guardian, uint256 _amount, bytes memory _data) internal {
+    function _stake(address _guardian, uint256 _amount, bytes memory _data) internal {
         require(_amount > 0, ERROR_INVALID_ZERO_AMOUNT);
         _updateAvailableBalanceOf(_guardian, _amount, true);
 
-        // Activate tokens if it was requested by the sender. Note that there's no need to check
-        // the activation amount since we have just added it to the available balance of the guardian.
-        if (_data.toBytes4() == GuardiansRegistry(this).activate.selector) {
-            _activateTokens(_guardian, _amount, _from);
-        } else if (_data.toBytes4() == GuardiansRegistry(this).lockActivation.selector) {
-            _activateTokens(_guardian, _amount, _from);
-            _lockActivation(_guardian, _from, _amount);
-        }
-
         emit Staked(_guardian, _amount, _totalStakedFor(_guardian), _data);
-        require(guardiansToken.safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_TRANSFER_FAILED);
+        require(guardiansToken.safeTransferFrom(msg.sender, address(this), _amount), ERROR_TOKEN_TRANSFER_FAILED);
     }
 
     /**
