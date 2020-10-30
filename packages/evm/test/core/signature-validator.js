@@ -16,7 +16,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
 
   const sign = message => {
     const { v, r, s } = ecsign(Buffer.from(message.replace('0x', ''), 'hex'), Buffer.from(externalAccountPK.replace('0x', ''), 'hex'))
-    return { v, r: `0x${r.toString('hex')}`, s: `0x${s.toString('hex')}`}
+    return { v, r: `0x${r.toString('hex')}`, s: `0x${s.toString('hex')}` }
   }
 
   const encodeSignature = (calldata, deadline, { v, r, s }) => {
@@ -117,7 +117,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
         user = address
       })
     }
-    
+
     const setAuthorizedSender = address => {
       beforeEach(`set authorized sender ${address}`, async () => {
         allowedSender = address
@@ -146,7 +146,7 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
 
     context('when there is no extra calldata given', () => {
       const extraCalldata = ''
-      
+
       context('when there sender and the user are the same', () => {
         setUser(sender)
         itAllowsTheSender(extraCalldata)
