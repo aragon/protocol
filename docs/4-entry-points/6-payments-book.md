@@ -42,7 +42,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 - **Actor:** Guardians of the Protocol
 - **Inputs:**
     - **Period ID:** Period identification number
-    - **Token:** Address of the token being claimed
+    - **Tokens:** List of addresses of the tokens being claimed
 - **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
@@ -58,7 +58,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
     - **Period ID:** Period identification number
-    - **Token:** Address of the token being claimed
+    - **Tokens:** List of addresses of the tokens being claimed
 - **Authentication:** Check the given period is a past period
 - **Pre-flight checks:**
     - Ensure that the governor's share is greater than zero for the requested token and period

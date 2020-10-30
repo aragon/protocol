@@ -89,27 +89,27 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
     - **Guardian:** Address of the guardian querying the owed shared of
-    - **Token:** Address of the token being queried
+    - **Tokens:** List of addresses of the tokens being queried
 - **Pre-flight checks:**
     - Ensure that the balance details of the requested period have been ensured
 - **Outputs:**
-    - **Amount:** Total token amount collected for the guardian in the given period
+    - **Amounts:** List of token amounts collected for the guardian in the given period
 
 #### 6.6.2.7. Has guardian claimed
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
     - **Guardian:** Address of the guardian querying the owed shared of
-    - **Token:** Address of the token being queried
+    - **Tokens:** List of addresses of the tokens being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Claimed:** True if the guardian's share has already been claimed for the given period and token, false otherwise
+    - **Claimed:** List of results considering true if the guardian's share has already been claimed for the given period and token, false otherwise
 
 #### 6.6.2.8. Governor share
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
-    - **Token:** Address of the token being queried
+    - **Tokens:** List of addresses of the tokens being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Total token amount collected for the governor in the given period
+    - **Amounts:** List of token amount collected for the governor in the given period
