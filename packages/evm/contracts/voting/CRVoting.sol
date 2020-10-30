@@ -58,7 +58,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
 
     /**
     * @dev Ensure a certain vote exists
-    * @param _voteId Identification number of the vote to be checked
+    * @param _voteId ID of the vote instance to be checked
     */
     modifier voteExists(uint256 _voteId) {
         Vote storage vote = voteRecords[_voteId];
