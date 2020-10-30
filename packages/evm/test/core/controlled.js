@@ -1,8 +1,8 @@
 const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { CONTROLLED_ERRORS } = require('../../helpers/utils/errors')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Controlled = artifacts.require('ControlledMock')
 
@@ -19,7 +19,7 @@ contract('Controlled', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       it('initializes the controlled', async () => {
         controlled = await Controlled.new(controller.address)
 
-        assert.equal(await controlled.getController(), controller.address, 'controller does not match')
+        assert.equal(await controlled.controller(), controller.address, 'controller does not match')
       })
     })
 

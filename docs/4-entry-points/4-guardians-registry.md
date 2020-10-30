@@ -113,7 +113,38 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Activate the staked amount if requested by the guardian
     - Pull the corresponding amount of guardian tokens from the sender to the `GuardiansRegistry` module, revert if the ERC20-transfer wasn't successful
 
-### 4.4.8. Process deactivation request
+### 4.4.8. Lock activation
+
+- **Actor:** Guardian of the Protocol
+- **Inputs:**
+    - **Lock manager**: Address of the lock manager that will control the lock
+    - **Amount**: Amount of active tokens to be locked
+- **Authentication:** Open.
+- **Pre-flight checks:**
+    - Ensure that the given lock manager is allowed by the `GuardiansRegistry`
+- **State transitions:**
+    - Increase the total amount locked for the guardian
+    - Increase the amount locked for the guardian by the given lock manager
+
+### 4.4.9. Unlock activation
+
+- **Actor:** External entity incentivized to unlock the activation of a guardian of the Protocol
+- **Inputs:**
+    - **Guardian:** Address of the guardian unlocking the active balance of
+    - **Lock manager:** Address of the lock manager controlling the lock
+    - **Amount:** Amount of active tokens to be unlocked
+    - **Deactivate:** Whether the requested amount should be deactivated immediately
+- **Authentication:** Open. Implicitly, only the lock manager or any account in case the lock manager allows the unlock
+- **Pre-flight checks:**
+    - Ensure that the requested amount can be unlocked
+    - Ensure that the given amount is greater than zero
+    - Ensure that the given lock manager has locked some amount
+- **State transitions:**
+    - Decrease the total amount locked for the guardian
+    - Decrease the amount locked for the guardian by the given lock manager
+    - If the sender is the guardian schedule a deactivation if requested
+
+### 4.4.10. Process deactivation request
 
 - **Actor:** External entity incentivized to update guardians available balances
 - **Inputs:**
@@ -127,28 +158,28 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Increase the available balance of the guardian
     - Reset the deactivation request of the guardian
 
-### 4.4.9. Assign tokens
+### 4.4.11. Assign tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Guardian:** Address of the guardian to add an amount of tokens to
     - **Amount:** Amount of tokens to be added to the available balance of a guardian
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Increase the guardian's available balance
 
-### 4.4.10. Burn tokens
+### 4.4.12. Burn tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Amount:** Amount of tokens to be burned
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Increase the burn address's available balance
 
-### 4.4.11. Draft
+### 4.4.13. Draft
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -160,7 +191,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
         - **Batch requested guardians:** Number of guardians to be selected in the given batch of the draft
         - **Draft requested guardians:** Total number of guardians requested to be drafted
         - **Draft locking permyriad:** ‱ of the minimum active balance to be locked for the draft (1/10,000)
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure that the requested number of guardians to be drafted is greater than zero
     - Ensure each drafted guardian has enough active balance to be locked for the draft
@@ -169,7 +200,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Update the locked active balance of each drafted guardian
     - Decrease previous deactivation requests if there is any and needed to draft the guardian
 
-### 4.4.12. Slash or unlock
+### 4.4.14. Slash or unlock
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -177,7 +208,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardians:** List of guardian addresses to be slashed
     - **Locked amounts:** List of amounts locked for each corresponding guardian that will be either slashed or returned
     - **Rewarded guardians:** List of booleans to tell whether a guardian's active balance has to be slashed or not
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure that both lists lengths match
     - Ensure that each guardian has enough locked balance to be unlocked
@@ -185,32 +216,32 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Decrease the unlocked balance of each guardian based on their corresponding given amounts
     - In case of a guardian being slashed, decrease their active balance for the next term
 
-### 4.4.13. Collect tokens
+### 4.4.15. Collect tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Guardian:** Address of the guardian to collect the tokens from
     - **Amount:** Amount of tokens to be collected from the given guardian and for the requested term id
     - **Term ID:** Current term identification number
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure the guardian has enough active balance based on the requested amount
 - **State transitions:**
     - Decrease the active balance of the guardian for the next term
     - Decrease previous deactivation requests if there is any and its necessary to collect the requested amount of tokens from a guardian
 
-### 4.4.14. Lock withdrawals
+### 4.4.16. Lock withdrawals
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
     - **Guardian:** Address of the guardian to locked the withdrawals of
     - **Term ID:** Term identification number until which the guardian's withdrawals will be locked
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:** None
 - **State transitions:**
     - Update the guardian's state with the term ID until which their withdrawals will be locked
 
-### 4.4.15. Set total active balance limit
+### 4.4.17. Set total active balance limit
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -221,7 +252,29 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the total active balance limit
 
-### 4.4.16. Recover funds
+### 4.4.18. Change activator whitelist
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Activator:** Address of the activator to be changed
+    - **Allowed:** Whether the activator is allowed
+- **Authentication:** Only config governor
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Update the activator status
+
+### 4.4.19. Change lock manager whitelist
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Lock manager:** Address of the lock manager to be changed
+    - **Allowed:** Whether the lock manager is allowed
+- **Authentication:** Only config governor
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Update the lock manager status
+
+### 4.4.20. Recover funds
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**

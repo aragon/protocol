@@ -1,14 +1,14 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/IsContract.sol";
+import "../../lib/utils/IsContract.sol";
 
-import "./Modules.sol";
-import "./IModuleCache.sol";
+import "./ModuleIds.sol";
+import "./IModulesLinker.sol";
 import "../clock/ProtocolClock.sol";
 import "../config/ProtocolConfig.sol";
 
 
-contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
+contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
@@ -43,10 +43,10 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     // List of current modules registered for the system indexed by ID
     mapping (bytes32 => address) internal currentModules;
 
-    // List of all modules registered for the system indexed by address
+    // List of all historical modules registered for the system indexed by address
     mapping (address => Module) internal allModules;
 
-    // List of custom functions indexed by signature
+    // List of custom function targets indexed by signature
     mapping (bytes4 => address) internal customFunctions;
 
     event ModuleSet(bytes32 id, address addr);
@@ -117,7 +117,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     constructor(
         uint64[2] memory _termParams,
         address[3] memory _governors,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -184,7 +184,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     */
     function setConfig(
         uint64 _fromTermId,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] calldata _fees,
         uint64[5] calldata _roundStateDurations,
         uint16[2] calldata _pcts,
@@ -280,20 +280,48 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice Set many modules at once
-    * @param _ids List of ids of each module to be set
-    * @param _addresses List of addresses of each the module to be set
+    * @notice Set and link many modules at once
+    * @param _newModuleIds List of IDs of the new modules to be set
+    * @param _newModuleAddresses List of addresses of the new modules to be set
+    * @param _newModuleIdsToBeLinked List of IDs of the modules that will be linked in the new modules to be set
+    * @param _currentModulesToBeSynced List of the current modules to update their links based on the new modules set
     */
-    function setModules(bytes32[] calldata _ids, address[] calldata _addresses) external onlyModulesGovernor {
-        require(_ids.length == _addresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
+    function setModules(
+        bytes32[] calldata _newModuleIds,
+        address[] calldata _newModuleAddresses,
+        bytes32[] calldata _newModuleIdsToBeLinked,
+        address[] calldata _currentModulesToBeSynced
+    )
+        external
+        onlyModulesGovernor
+    {
+        // We only care there about the modules to be set, links are optional
+        require(_newModuleIds.length == _newModuleAddresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
-        for (uint256 i = 0; i < _ids.length; i++) {
-            _setModule(_ids[i], _addresses[i]);
+        // First set the addresses of the new modules or the modules to be updated
+        for (uint256 i = 0; i < _newModuleIds.length; i++) {
+            _setModule(_newModuleIds[i], _newModuleAddresses[i]);
         }
+
+        // Then update the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
+        _linkModules(_newModuleAddresses, _newModuleIdsToBeLinked);
+
+        // Finally update the links of the already existing modules based on the list of IDs that have been set
+        _linkModules(_currentModulesToBeSynced, _newModuleIds);
     }
 
     /**
-    * @notice Disabled module `_addr`
+    * @notice Sync modules for a list of modules IDs based on their current address
+    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @param _idsToBeSet List of IDs of the modules to be linked
+    */
+    function linkModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
+        require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
+        _linkModules(_modulesToBeSynced, _idsToBeSet);
+    }
+
+    /**
+    * @notice Disable module `_addr`
     * @dev Current modules can be disabled to allow pausing the protocol. However, these can be enabled back again, see `enableModule`
     * @param _addr Address of the module to be disabled
     */
@@ -317,27 +345,6 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
 
         module.disabled = false;
         emit ModuleEnabled(module.id, _addr);
-    }
-
-    /**
-    * @notice Sync modules' cache for a list of modules IDs based on their current address
-    * @param _modules List of modules addresses to be synced
-    * @param _ids List of IDs of the modules to be cached
-    */
-    function cacheModules(IModuleCache[] calldata _modules, bytes32[] calldata _ids) external onlyModulesGovernor {
-        require(_ids.length > 0 && _modules.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
-        address[] memory addresses = new address[](_ids.length);
-
-        for (uint256 i = 0; i < _ids.length; i++) {
-            address moduleAddress = currentModules[_ids[i]];
-            Module storage module = allModules[moduleAddress];
-            _ensureModuleExists(module);
-            addresses[i] = moduleAddress;
-        }
-
-        for (uint256 j = 0; j < _modules.length; j++) {
-            _modules[j].cacheModules(_ids, addresses);
-        }
     }
 
     /**
@@ -368,7 +375,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     */
     function getConfig(uint64 _termId) external view
         returns (
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256[3] memory fees,
             uint64[5] memory roundStateDurations,
             uint16[2] memory pcts,
@@ -388,7 +395,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
-    function getDraftConfig(uint64 _termId) external view returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct) {
+    function getDraftConfig(uint64 _termId) external view returns (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct) {
         uint64 lastEnsuredTermId = _lastEnsuredTermId();
         return _getDraftConfig(_termId, lastEnsuredTermId);
     }
@@ -453,7 +460,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     /**
     * @dev Tell the current address and disable status of a module based on a given ID
     * @param _id ID of the module being queried
-    * @return addr Current address of the requested module
+    * @return addr information for the requested module
     * @return disabled Whether the module has been disabled
     */
     function getModule(bytes32 _id) external view returns (address addr, bool disabled) {
@@ -461,48 +468,57 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Tell the address of the current DisputeManager module
+    * @dev Tell the information for the current DisputeManager module
     * @return addr Current address of the DisputeManager module
     * @return disabled Whether the module has been disabled
     */
     function getDisputeManager() external view returns (address addr, bool disabled) {
-        return _getModule(DISPUTE_MANAGER);
+        return _getModule(MODULE_ID_DISPUTE_MANAGER);
     }
 
     /**
-    * @dev Tell the current address of the current Treasury module
-    * @return addr Current address of the Treasury module
-    * @return disabled Whether the module has been disabled
-    */
-    function getTreasury() external view returns (address addr, bool disabled) {
-        return _getModule(TREASURY);
-    }
-
-    /**
-    * @dev Tell the current address of the current Voting module
-    * @return addr Current address of the Voting module
-    * @return disabled Whether the module has been disabled
-    */
-    function getVoting() external view returns (address addr, bool disabled) {
-        return _getModule(VOTING);
-    }
-
-    /**
-    * @dev Tell the current address of the current GuardiansRegistry module
+    * @dev Tell the information for  the current GuardiansRegistry module
     * @return addr Current address of the GuardiansRegistry module
     * @return disabled Whether the module has been disabled
     */
     function getGuardiansRegistry() external view returns (address addr, bool disabled) {
-        return _getModule(GUARDIANS_REGISTRY);
+        return _getModule(MODULE_ID_GUARDIANS_REGISTRY);
     }
 
     /**
-    * @dev Tell the current address of the current PaymentsBook module
+    * @dev Tell the information for the current Voting module
+    * @return addr Current address of the Voting module
+    * @return disabled Whether the module has been disabled
+    */
+    function getVoting() external view returns (address addr, bool disabled) {
+        return _getModule(MODULE_ID_VOTING);
+    }
+
+    /**
+    * @dev Tell the information for the current PaymentsBook module
     * @return addr Current a of the PaymentsBook module
     * @return disabled Whether the module has been disabled
     */
     function getPaymentsBook() external view returns (address addr, bool disabled) {
-        return _getModule(PAYMENTS_BOOK);
+        return _getModule(MODULE_ID_PAYMENTS_BOOK);
+    }
+
+    /**
+    * @dev Tell the information for the current Treasury module
+    * @return addr Current address of the Treasury module
+    * @return disabled Whether the module has been disabled
+    */
+    function getTreasury() external view returns (address addr, bool disabled) {
+        return _getModule(MODULE_ID_TREASURY);
+    }
+
+    /**
+    * @dev Tell the target registered for a custom function
+    * @param _sig Signature of the function being queried
+    * @return Address of the target where the function call will be forwarded
+    */
+    function getCustomFunction(bytes4 _sig) external view returns (address) {
+        return customFunctions[_sig];
     }
 
     /**
@@ -547,6 +563,28 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
+    * @dev Internal function to sync the modules for a list of modules IDs based on their current address
+    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @param _idsToBeSet List of IDs of the modules to be linked
+    */
+    function _linkModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
+        address[] memory addressesToBeSet = new address[](_idsToBeSet.length);
+
+        // Load the addresses of all the modules to be updated
+        for (uint256 i = 0; i < _idsToBeSet.length; i++) {
+            address moduleAddress = currentModules[_idsToBeSet[i]];
+            Module storage module = allModules[moduleAddress];
+            _ensureModuleExists(module);
+            addressesToBeSet[i] = moduleAddress;
+        }
+
+        // Update the links of all the requested modules
+        for (uint256 j = 0; j < _modulesToBeSynced.length; j++) {
+            IModulesLinker(_modulesToBeSynced[j]).linkModules(_idsToBeSet, addressesToBeSet);
+        }
+    }
+
+    /**
     * @dev Internal function to notify when a term has been transitioned
     * @param _termId Identification number of the new current term that has been transitioned
     */
@@ -563,7 +601,7 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Internal function to tell the current address registered for a module based on a given ID
+    * @dev Internal function to tell the information for a module based on a given ID
     * @param _id ID of the module being queried
     * @return addr Current address of the requested module
     * @return disabled Whether the module has been disabled
@@ -571,21 +609,5 @@ contract Controller is IsContract, Modules, ProtocolClock, ProtocolConfig {
     function _getModule(bytes32 _id) internal view returns (address addr, bool disabled) {
         addr = currentModules[_id];
         disabled = allModules[addr].disabled;
-    }
-
-    /**
-    * @dev Internal function to tell the address of the current DisputeManager module
-    * @return Current address of the DisputeManager module
-    */
-    function _getDisputeManager() internal view returns (address) {
-        return currentModules[DISPUTE_MANAGER];
-    }
-
-    /**
-    * @dev Internal function to tell the address of the current PaymentsBook module
-    * @return Current address of the PaymentsBook module
-    */
-    function _getPaymentsBook() internal view returns (address) {
-        return currentModules[PAYMENTS_BOOK];
     }
 }

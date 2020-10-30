@@ -1,9 +1,9 @@
 const { ZERO_BYTES32, NOW, ONE_DAY, NEXT_WEEK, bn } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { CLOCK_EVENTS } = require('../../helpers/utils/events')
-const { CLOCK_ERRORS, CONTROLLER_ERRORS } = require('../../helpers/utils/errors')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { CLOCK_EVENTS } = require('../helpers/utils/events')
+const { CLOCK_ERRORS, CONTROLLER_ERRORS } = require('../helpers/utils/errors')
 
 contract('Controller', ([_, someone, configGovernor]) => {
   let protocolHelper, controller

@@ -23,7 +23,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone]) => {
       it('is initialized', async () => {
         treasury = await ProtocolTreasury.new(controller.address)
 
-        assert.equal(await treasury.getController(), controller.address, 'treasury is not initialized')
+        assert.equal(await treasury.controller(), controller.address, 'treasury is not initialized')
       })
     })
 

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
 import "./HexSumTreeMock.sol";
-import "../../lib/GuardiansTreeSortition.sol";
+import "../../lib/tree/GuardiansTreeSortition.sol";
 
 
 contract GuardiansTreeSortitionMock is HexSumTreeMock {

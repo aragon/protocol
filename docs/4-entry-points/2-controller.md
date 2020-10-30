@@ -53,7 +53,16 @@ To read more information about its responsibilities and structure, go to [sectio
     - Create the initial Protocol configuration object
     - Create the governor object
 
-### 4.2.2. Set config
+### 4.2.2. Fallback
+- **Actor:** Any external entity
+- **Inputs:** Arbitrary
+- **Authentication:** Open
+- **Pre-flight checks:**
+    - Ensure that the given signature has been registered as a custom function
+- **State transitions:**
+    - Forward call to the target registered for the custom function unless it is already implemented by the controller
+
+### 4.2.3. Set config
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -95,7 +104,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - Create a new Protocol configuration object
     - Create a new future term object for the new configuration
 
-### 4.2.3. Delay start time
+### 4.2.4. Delay start time
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -107,7 +116,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Update the protocol first term start time
 
-### 4.2.4. Heartbeat
+### 4.2.5. Heartbeat
 
 - **Actor:** Any entity incentivized to keep to Protocol term updated
 - **Inputs:**
@@ -119,7 +128,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - Update the Protocol term
     - Create a new term object for each transitioned new term
 
-### 4.2.5. Ensure current term
+### 4.2.6. Ensure current term
 
 - **Actor:** Any entity incentivized to keep to Protocol term updated
 - **Inputs:** None
@@ -129,7 +138,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - If necessary, update the Protocol term and create a new term object for each transitioned new term
 
-### 4.2.6. Ensure current term randomness
+### 4.2.7. Ensure current term randomness
 
 - **Actor:** Any entity incentivized to compute the term randomness for the current term
 - **Inputs:** None
@@ -139,7 +148,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - In case the term randomness has not been computed yet, set its randomness using the block hash of the following block when the term object was created
 
-### 4.2.7. Set automatic withdrawals
+### 4.2.8. Set automatic withdrawals
 
 - **Actor:** External entity holding funds in the protocol
 - **Inputs:**
@@ -149,7 +158,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Update the automatic withdrawals config of the sender
 
-### 4.2.8. Change funds governor
+### 4.2.9. Change funds governor
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -160,7 +169,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Update the funds governor address
 
-### 4.2.9. Change config governor
+### 4.2.10. Change config governor
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -171,7 +180,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Update the config governor address
 
-### 4.2.10. Change modules governor
+### 4.2.11. Change modules governor
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -182,7 +191,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Update the modules governor address
 
-### 4.2.11. Eject funds governor
+### 4.2.12. Eject funds governor
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:** None
@@ -191,7 +200,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Unset the funds governor address
 
-### 4.2.12. Eject modules governor
+### 4.2.13. Eject modules governor
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:** None
@@ -200,7 +209,18 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Unset the modules governor address
 
-### 4.2.13. Set module
+### 4.2.14. Set custom function
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Signature:** Signature of the function to be customized
+    - **Address:** Address of the target that will be forwarded with the function call
+- **Authentication:** Only modules governor
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Set the target address for the given siganture
+
+### 4.2.15. Set module
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -212,15 +232,57 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Set the module address for the corresponding module ID
 
-### 4.2.14. Set modules
+### 4.2.16. Set modules
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
-    - **Module IDs:** List of identification words of the modules to be set
-    - **Addresses:** List of addresses of the modules to be set
+    - **New modules' IDs:** List of IDs of the new modules to be set
+    - **New modules' address:** List of addresses of the new modules to be set
+    - **New modules' IDs to be linked :** List of IDs of the modules to be linked in the new modules to be set
+    - **Current modules to be synced:** List of addresses of current modules to be linked based on the new modules' IDs to be set
 - **Authentication:** Only modules governor
 - **Pre-flight checks:**
     - Ensure both input lists have the same length
     - Ensure that the module addresses are contracts
+    - Ensure that all the modules to be linked actually exist
 - **State transitions:**
-    - Save all the module addresses for their corresponding module ID
+    - Save all the modules' address for their corresponding module ID
+    - Link the implementations of the requested module IDs in the new modules set
+    - Link the implementations of the new modules set in the requested current modules
+
+### 4.2.17. Link modules
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Current modules to be synced:** List of addresses of current modules to be linked based on the implementations of the modules to be set
+    - **IDs to be set :** List of IDs of the modules whose references will be linked in the requested list of modules
+- **Authentication:** Only modules governor
+- **Pre-flight checks:**
+    - Ensure both input lists have at least one item
+    - Ensure that all the modules to be linked actually exist
+- **State transitions:**
+    - Link the implementations of the requested module IDs on each of the requested module
+
+### 4.2.18. Disable module
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Address:** Address of the module to be disabled
+- **Authentication:** Only modules governor
+- **Pre-flight checks:**
+    - Ensure that the given module exists
+    - Ensure that the given module is not disabled
+- **State transitions:**
+    - Mark the given module as disabled
+
+### 4.2.19. Enable module
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Address:** Address of the module to be enabled
+- **Authentication:** Only modules governor
+- **Pre-flight checks:**
+    - Ensure that the given module exists
+    - Ensure that the given module is not enabled
+- **State transitions:**
+    - Mark the given module as enabled

@@ -1,23 +1,23 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
-import "../lib/os/SafeERC20.sol";
-import "../lib/os/SafeMath.sol";
-import "../lib/os/SafeMath64.sol";
-import "../lib/os/Uint256Helpers.sol";
+import "../lib/math/SafeMath.sol";
+import "../lib/math/SafeMath64.sol";
+import "../lib/utils/SafeERC20.sol";
+import "../lib/utils/PctHelpers.sol";
+import "../lib/utils/Uint256Helpers.sol";
+import "../lib/standards/IERC20.sol";
 
 import "./IDisputeManager.sol";
-import "../lib/PctHelpers.sol";
 import "../voting/ICRVoting.sol";
 import "../voting/ICRVotingOwner.sol";
 import "../treasury/ITreasury.sol";
 import "../arbitration/IArbitrable.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManager {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using PctHelpers for uint256;
@@ -74,15 +74,15 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
 
     struct AdjudicationRound {
         uint64 draftTermId;            // Term from which the guardians of a round can be drafted
-        uint64 guardiansNumber;           // Number of guardians drafted for a round
+        uint64 guardiansNumber;        // Number of guardians drafted for a round
         bool settledPenalties;         // Whether or not penalties have been settled for a round
-        uint256 guardianFees;             // Total amount of fees to be distributed between the winning guardians of a round
-        address[] guardians;              // List of guardians drafted for a round
+        uint256 guardianFees;          // Total amount of fees to be distributed between the winning guardians of a round
+        address[] guardians;           // List of guardians drafted for a round
         mapping (address => GuardianState) guardiansStates; // List of states for each drafted guardian indexed by address
         uint64 delayedTerms;           // Number of terms a round was delayed based on its requested draft term id
-        uint64 selectedGuardians;         // Number of guardians selected for a round, to allow drafts to be batched
-        uint64 coherentGuardians;         // Number of drafted guardians that voted in favor of the dispute final ruling
-        uint64 settledGuardians;          // Number of guardians whose rewards were already settled
+        uint64 selectedGuardians;      // Number of guardians selected for a round, to allow drafts to be batched
+        uint64 coherentGuardians;      // Number of drafted guardians that voted in favor of the dispute final ruling
+        uint64 settledGuardians;       // Number of guardians whose rewards were already settled
         uint256 collectedTokens;       // Total amount of tokens collected from losing guardians
         Appeal appeal;                 // Appeal-related information of a round
     }
@@ -101,20 +101,20 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     struct DraftParams {
-        uint256 disputeId;            // Identification number of the dispute to be drafted
-        uint256 roundId;              // Identification number of the round to be drafted
-        uint64 termId;                // Identification number of the current term of the Protocol
-        bytes32 draftTermRandomness;  // Randomness of the term in which the dispute was requested to be drafted
-        DraftConfig config;           // Draft config of the Protocol at the draft term
+        uint256 disputeId;             // Identification number of the dispute to be drafted
+        uint256 roundId;               // Identification number of the round to be drafted
+        uint64 termId;                 // Identification number of the current term of the Protocol
+        bytes32 draftTermRandomness;   // Randomness of the term in which the dispute was requested to be drafted
+        DraftConfig config;            // Draft config of the Protocol at the draft term
     }
 
     struct NextRoundDetails {
         uint64 startTerm;              // Term ID from which the next round will start
-        uint64 guardiansNumber;           // Guardians number for the next round
+        uint64 guardiansNumber;        // Guardians number for the next round
         DisputeState newDisputeState;  // New state for the dispute associated to the given round after the appeal
-        ERC20 feeToken;                // ERC20 token used for the next round fees
+        IERC20 feeToken;               // ERC20 token used for the next round fees
         uint256 totalFees;             // Total amount of fees to be distributed between the winning guardians of the next round
-        uint256 guardianFees;             // Total amount of fees for a regular round at the given term
+        uint256 guardianFees;          // Total amount of fees for a regular round at the given term
         uint256 appealDeposit;         // Amount to be deposit of fees for a regular round at the given term
         uint256 confirmAppealDeposit;  // Total amount of fees for a regular round at the given term
     }
@@ -193,7 +193,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         emit NewDispute(disputeId, _subject, draftTermId, guardiansNumber, _metadata);
 
         // Create first adjudication round of the dispute
-        (ERC20 feeToken, uint256 guardianFees, uint256 totalFees) = _getRegularRoundFees(config.fees, guardiansNumber);
+        (IERC20 feeToken, uint256 guardianFees, uint256 totalFees) = _getRegularRoundFees(config.fees, guardiansNumber);
         _createRound(disputeId, DisputeState.PreDraft, draftTermId, guardiansNumber, guardianFees);
 
         // Pay round fees and return dispute id
@@ -374,7 +374,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         }
 
         ITreasury treasury = _treasury();
-        ERC20 feeToken = config.fees.token;
+        IERC20 feeToken = config.fees.token;
         if (_isRegularRound(_roundId, config)) {
             // For regular appeal rounds we compute the amount of locked tokens that needs to get burned in batches.
             // The callers of this function will get rewarded in this case.
@@ -473,7 +473,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         // Load next round details
         Config memory config = _getDisputeConfig(dispute);
         NextRoundDetails memory nextRound = _getNextRoundDetails(round, _roundId, config);
-        ERC20 feeToken = nextRound.feeToken;
+        IERC20 feeToken = nextRound.feeToken;
         uint256 totalFees = nextRound.totalFees;
         uint256 appealDeposit = nextRound.appealDeposit;
         uint256 confirmAppealDeposit = nextRound.confirmAppealDeposit;
@@ -557,10 +557,10 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
 
     /**
     * @dev Tell the amount of token fees required to create a dispute
-    * @return feeToken ERC20 token used for the fees
+    * @return feeToken IERC20 token used for the fees
     * @return totalFees Total amount of fees for a regular round at the given term
     */
-    function getDisputeFees() external view returns (ERC20 feeToken, uint256 totalFees) {
+    function getDisputeFees() external view returns (IERC20 feeToken, uint256 totalFees) {
         uint64 currentTermId = _getCurrentTermId();
         Config memory config = _getConfigAt(currentTermId);
         (feeToken,, totalFees) = _getRegularRoundFees(config.fees, config.disputes.firstRoundGuardiansNumber);
@@ -668,7 +668,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
             uint64 nextRoundStartTerm,
             uint64 nextRoundGuardiansNumber,
             DisputeState newDisputeState,
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256 totalFees,
             uint256 guardianFees,
             uint256 appealDeposit,
@@ -942,7 +942,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _token ERC20 token to execute a transfer from
     * @param _amount Amount of tokens to be transferred from the address transferring the funds to the Protocol treasury
     */
-    function _depositAmount(address _from, ERC20 _token, uint256 _amount) internal {
+    function _depositAmount(address _from, IERC20 _token, uint256 _amount) internal {
         if (_amount > 0) {
             ITreasury treasury = _treasury();
             require(_token.safeTransferFrom(_from, address(treasury), _amount), ERROR_DEPOSIT_FAILED);
@@ -1194,7 +1194,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return totalFees Total amount of fees for a regular round at the given term
     */
     function _getRegularRoundFees(FeesConfig memory _config, uint64 _guardiansNumber) internal pure
-        returns (ERC20 feeToken, uint256 guardianFees, uint256 totalFees)
+        returns (IERC20 feeToken, uint256 guardianFees, uint256 totalFees)
     {
         feeToken = _config.token;
         // For regular rounds the fees for each guardian is constant and given by the config of the round
@@ -1213,7 +1213,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return totalFees Total amount of fees for a final round at the given term
     */
     function _getFinalRoundFees(FeesConfig memory _config, uint64 _guardiansNumber) internal pure
-        returns (ERC20 feeToken, uint256 guardianFees, uint256 totalFees)
+        returns (IERC20 feeToken, uint256 guardianFees, uint256 totalFees)
     {
         feeToken = _config.token;
         // For final rounds, the guardians number is computed as the number of times the registry's minimum active balance is held in the registry
@@ -1364,7 +1364,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         AdjudicationRound storage _round,
         uint256 _roundId,
         ITreasury _protocolTreasury,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256 _collectedTokens
     )
         private

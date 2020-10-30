@@ -192,7 +192,7 @@ class ProtocolHelper {
 
   async dispute({ arbitrable = undefined, possibleRulings = bn(2), metadata = '0x', closeEvidence = true } = {}) {
     // create an arbitrable if no one was given
-    if (!arbitrable) arbitrable = await this.artifacts.require('Arbitrable').new(this.protocol.address)
+    if (!arbitrable) arbitrable = await this.artifacts.require('ArbitrableMock').new(this.protocol.address)
 
     // mint fee tokens for the arbitrable instance
     const { disputeFees } = await this.getDisputeFees()
@@ -395,9 +395,8 @@ class ProtocolHelper {
     }
 
     const ids = Object.values(MODULE_IDS)
-    const implementations = [this.disputeManager, this.treasury, this.voting, this.guardiansRegistry, this.paymentsBook].map(i => i.address)
-    await this.protocol.setModules(ids, implementations, { from: this.modulesGovernor })
-    await this.protocol.cacheModules(implementations, ids, { from: this.modulesGovernor })
+    const implementations = [this.disputeManager, this.guardiansRegistry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
+    await this.protocol.setModules(ids, implementations, ids, [], { from: this.modulesGovernor })
 
     const zeroTermStartTime = this.firstTermStartTime.sub(this.termDuration)
     await this.setTimestamp(zeroTermStartTime)

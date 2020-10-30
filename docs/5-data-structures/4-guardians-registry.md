@@ -19,3 +19,10 @@ The deactivation request object includes the following fields:
 
 - **Amount:** Amount requested for deactivation
 - **Available termId:** ID of the term when guardians can withdraw their requested deactivation tokens
+
+### 5.3.2. Activation locks
+
+The activation locks object includes the following fields:
+
+- **Total:** Total amount of active balance locked for a guardian
+- **Available termId:** List of locked amounts indexed by lock manager

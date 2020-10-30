@@ -1,12 +1,12 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
+import "../lib/standards/IERC20.sol";
 import "../payments/IPaymentsBook.sol";
 
 
 interface IArbitrator {
     /**
-    * @dev Emitted when new evidence is submitted for the IArbitrable instance's dispute
+    * @dev Emitted when new evidence is submitted for a dispute
     * @param disputeId Identification number of the dispute receiving new evidence
     * @param submitter Address of the account submitting the evidence
     * @param evidence Data submitted for the evidence of the dispute
@@ -49,7 +49,7 @@ interface IArbitrator {
     * @return feeToken ERC20 token used for the fees
     * @return feeAmount Total amount of fees that must be allowed to the recipient
     */
-    function getDisputeFees() external view returns (address recipient, ERC20 feeToken, uint256 feeAmount);
+    function getDisputeFees() external view returns (address recipient, IERC20 feeToken, uint256 feeAmount);
 
     /**
     * @dev Tell the payments recipient address

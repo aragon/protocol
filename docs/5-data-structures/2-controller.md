@@ -10,7 +10,14 @@ The governor object includes the following fields:
 - **Config:** Address allowed to change the different configurations of the whole system
 - **Modules:** Address allowed to plug/unplug modules from the system
 
-### 5.2.2. Config
+### 5.2.2. Module
+
+The module object includes the following fields:
+
+- **ID:** ID associated to a module
+- **Disabled:** Whether the module is disabled
+
+### 5.2.3. Config
 
 The config object includes the following fields:
 
@@ -18,7 +25,7 @@ The config object includes the following fields:
 - **Disputes config:** Disputes config object
 - **Min active balance:** Minimum amount of tokens guardians have to activate to participate in the Protocol
 
-### 5.2.3. Fees config
+### 5.2.4. Fees config
 
 The fees config object includes the following fields:
 
@@ -28,7 +35,7 @@ The fees config object includes the following fields:
 - **Draft fee:** Amount of tokens paid per round to cover the costs of drafting guardians
 - **Settle fee:** Amount of tokens paid per round to cover the costs of slashing guardians
 
-### 5.2.4. Disputes config
+### 5.2.5. Disputes config
 
 The disputes config object includes the following fields:
 
@@ -45,7 +52,7 @@ The disputes config object includes the following fields:
 - **Appeal collateral factor:** Permyriad multiple of dispute fees (guardians, draft, and settlements) required to appeal a preliminary ruling (1/10,000)
 - **Appeal confirmation collateral factor:** Permyriad multiple of dispute fees (guardians, draft, and settlements) required to confirm appeal (1/10,000)
 
-### 5.2.5. Term
+### 5.2.6. Term
 
 The term object includes the following fields:
 

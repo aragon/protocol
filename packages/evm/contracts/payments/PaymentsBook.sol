@@ -1,20 +1,20 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
-import "../lib/os/SafeMath.sol";
-import "../lib/os/SafeMath64.sol";
-import "../lib/os/SafeERC20.sol";
-import "../lib/os/TimeHelpers.sol";
+import "../lib/math/SafeMath.sol";
+import "../lib/math/SafeMath64.sol";
+import "../lib/utils/PctHelpers.sol";
+import "../lib/utils/SafeERC20.sol";
+import "../lib/utils/TimeHelpers.sol";
+import "../lib/standards/IERC20.sol";
 
 import "./IPaymentsBook.sol";
-import "../lib/PctHelpers.sol";
 import "../registry/IGuardiansRegistry.sol";
-import "../core/controller/Controller.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SafeMath64 for uint64;
     using PctHelpers for uint256;
@@ -383,7 +383,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         if (_token == address(0)) {
             require(msg.value == _amount, ERROR_ETH_DEPOSIT_MISMATCH);
         } else {
-            require(ERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+            require(IERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
         }
     }
 
@@ -398,7 +398,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
             // solium-disable-next-line security/no-send
             require(_to.send(_amount), ERROR_ETH_TRANSFER_FAILED);
         } else {
-            require(ERC20(_token).safeTransfer(_to, _amount), ERROR_TOKEN_TRANSFER_FAILED);
+            require(IERC20(_token).safeTransfer(_to, _amount), ERROR_TOKEN_TRANSFER_FAILED);
         }
     }
 

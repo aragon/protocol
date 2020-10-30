@@ -13,7 +13,7 @@ contract IArbitrable {
     event Ruled(IArbitrator indexed arbitrator, uint256 indexed disputeId, uint256 ruling);
 
     /**
-    * @dev Give a ruling for a certain dispute, the account calling it must have rights to rule on the contract
+    * @dev Give a ruling for a certain dispute
     * @param _disputeId Identification number of the dispute to be ruled
     */
     function rule(uint256 _disputeId) external;

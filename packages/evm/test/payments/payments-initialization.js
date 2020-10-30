@@ -23,7 +23,7 @@ contract('PaymentsBook', ([_, governor, someone]) => {
       it('initializes payments book correctly', async () => {
         const paymentsBook = await PaymentsBook.new(controller.address, PERIOD_DURATION, GOVERNOR_SHARE_PCT)
 
-        assert.equal(await paymentsBook.getController(), controller.address, 'payments book controller does not match')
+        assert.equal(await paymentsBook.controller(), controller.address, 'payments book controller does not match')
         assertBn(await paymentsBook.periodDuration(), PERIOD_DURATION, 'payment duration does not match')
         assertBn(await paymentsBook.governorSharePct(), GOVERNOR_SHARE_PCT, 'governor share pct does not match')
       })

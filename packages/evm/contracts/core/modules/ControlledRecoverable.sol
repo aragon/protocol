@@ -1,13 +1,13 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/ERC20.sol";
-import "../../lib/os/SafeERC20.sol";
+import "../../lib/utils/SafeERC20.sol";
+import "../../lib/standards/IERC20.sol";
 
 import "./Controlled.sol";
 
 
 contract ControlledRecoverable is Controlled {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
 
     string private constant ERROR_SENDER_NOT_FUNDS_GOVERNOR = "CTD_SENDER_NOT_FUNDS_GOVERNOR";
     string private constant ERROR_INSUFFICIENT_RECOVER_FUNDS = "CTD_INSUFFICIENT_RECOVER_FUNDS";
@@ -44,9 +44,9 @@ contract ControlledRecoverable is Controlled {
             // solium-disable-next-line security/no-send
             require(_to.send(balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
         } else {
-            balance = ERC20(_token).balanceOf(address(this));
+            balance = IERC20(_token).balanceOf(address(this));
             require(balance > 0, ERROR_INSUFFICIENT_RECOVER_FUNDS);
-            require(ERC20(_token).safeTransfer(_to, balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
+            require(IERC20(_token).safeTransfer(_to, balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
         }
 
         emit RecoverFunds(_token, _to, balance);

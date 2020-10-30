@@ -2,6 +2,10 @@ const ARBITRABLE_EVENTS = {
   RULED: 'Ruled'
 }
 
+const ARBITRATOR_EVENTS = {
+  EVIDENCE_SUBMITTED: 'EvidenceSubmitted'
+}
+
 const DISPUTE_MANAGER_EVENTS = {
   DISPUTE_STATE_CHANGED: 'DisputeStateChanged',
   NEW_DISPUTE: 'NewDispute',
@@ -38,6 +42,9 @@ const REGISTRY_EVENTS = {
   GUARDIAN_TOKENS_BURNED: 'GuardianTokensBurned',
   GUARDIAN_TOKENS_ASSIGNED: 'GuardianTokensAssigned',
   GUARDIAN_TOKENS_COLLECTED: 'GuardianTokensCollected',
+  GUARDIAN_ACTIVATION_LOCK_CHANGED: 'GuardianActivationLockChanged',
+  ACTIVATOR_CHANGED: 'ActivatorWhitelistChanged',
+  LOCK_MANAGER_CHANGED: 'LockManagerWhitelistChanged',
   TOTAL_ACTIVE_BALANCE_LIMIT_CHANGED: 'TotalActiveBalanceLimitChanged'
 }
 
@@ -64,7 +71,7 @@ const CONTROLLER_EVENTS = {
 }
 
 const CONTROLLED_EVENTS = {
-  MODULE_CACHED: 'ModuleCached',
+  MODULE_LINKED: 'ModuleLinked',
   RECOVER_FUNDS: 'RecoverFunds'
 }
 
@@ -88,5 +95,6 @@ module.exports = {
   CONTROLLED_EVENTS,
   CONFIG_EVENTS,
   CLOCK_EVENTS,
+  ARBITRATOR_EVENTS,
   ARBITRABLE_EVENTS
 }

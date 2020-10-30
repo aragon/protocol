@@ -1,16 +1,16 @@
 pragma solidity ^0.5.17;
 
-import "../lib/os/ERC20.sol";
-import "../lib/os/SafeMath.sol";
-import "../lib/os/SafeERC20.sol";
+import "../lib/math/SafeMath.sol";
+import "../lib/utils/SafeERC20.sol";
+import "../lib/standards/IERC20.sol";
 
 import "./ITreasury.sol";
-import "../core/controller/Controller.sol";
-import "../core/controller/ControlledRecoverable.sol";
+import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRecoverable.sol";
 
 
 contract ProtocolTreasury is ControlledRecoverable, ITreasury {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     string private constant ERROR_DEPOSIT_AMOUNT_ZERO = "TREASURY_DEPOSIT_AMOUNT_ZERO";
@@ -22,8 +22,8 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     // List of balances indexed by token and holder address
     mapping (address => mapping (address => uint256)) internal balances;
 
-    event Assign(ERC20 indexed token, address indexed from, address indexed to, uint256 amount);
-    event Withdraw(ERC20 indexed token, address indexed from, address indexed to, uint256 amount);
+    event Assign(IERC20 indexed token, address indexed from, address indexed to, uint256 amount);
+    event Withdraw(IERC20 indexed token, address indexed from, address indexed to, uint256 amount);
 
     /**
     * @dev Constructor function
@@ -40,7 +40,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _to Address of the recipient that will be assigned the tokens to
     * @param _amount Amount of tokens to be assigned to the recipient
     */
-    function assign(ERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManagers {
+    function assign(IERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManagers {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
 
         address tokenAddress = address(_token);
@@ -54,7 +54,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _to Address of the recipient that will receive the tokens
     * @param _amount Amount of tokens to be withdrawn from the sender
     */
-    function withdraw(ERC20 _token, address _to, uint256 _amount) external {
+    function withdraw(IERC20 _token, address _to, uint256 _amount) external {
         _withdraw(_token, msg.sender, _to, _amount);
     }
 
@@ -63,7 +63,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _token ERC20 token to be withdrawn
     * @param _to Address of the recipient that will receive their tokens
     */
-    function withdrawAll(ERC20 _token, address _to) external {
+    function withdrawAll(IERC20 _token, address _to) external {
         IConfig config = _protocolConfig();
         require(config.areWithdrawalsAllowedFor(_to), ERROR_WITHDRAWS_DISALLOWED);
 
@@ -77,7 +77,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _holder Address of the holder querying the balance of
     * @return Amount of tokens the holder owns
     */
-    function balanceOf(ERC20 _token, address _holder) external view returns (uint256) {
+    function balanceOf(IERC20 _token, address _holder) external view returns (uint256) {
         return _balanceOf(_token, _holder);
     }
 
@@ -88,7 +88,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _to Address of the recipient that will receive the corresponding tokens
     * @param _amount Amount of tokens to be withdrawn from the sender
     */
-    function _withdraw(ERC20 _token, address _from, address _to, uint256 _amount) internal {
+    function _withdraw(IERC20 _token, address _from, address _to, uint256 _amount) internal {
         require(_amount > 0, ERROR_WITHDRAW_AMOUNT_ZERO);
         uint256 balance = _balanceOf(_token, _from);
         require(balance >= _amount, ERROR_WITHDRAW_INVALID_AMOUNT);
@@ -107,7 +107,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _holder Address of the holder querying the balance of
     * @return Amount of tokens the holder owns
     */
-    function _balanceOf(ERC20 _token, address _holder) internal view returns (uint256) {
+    function _balanceOf(IERC20 _token, address _holder) internal view returns (uint256) {
         return balances[address(_token)][_holder];
     }
 }

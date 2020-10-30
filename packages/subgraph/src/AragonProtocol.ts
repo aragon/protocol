@@ -14,14 +14,14 @@ import { Heartbeat, ModuleSet, FundsGovernorChanged, ConfigGovernorChanged, Modu
 const DISPUTE_MANAGER_TYPE = 'DisputeManager'
 const GUARDIANS_REGISTRY_TYPE = 'GuardiansRegistry'
 const VOTING_TYPE = 'Voting'
-const TREASURY_TYPE = 'Treasury'
 const PAYMENTS_BOOK = 'PaymentsBook'
+const TREASURY_TYPE = 'Treasury'
 
 const DISPUTE_MANAGER_ID = '0x14a6c70f0f6d449c014c7bbc9e68e31e79e8474fb03b7194df83109a2d888ae6'
 const GUARDIANS_REGISTRY_ID = '0x8af7b7118de65da3b974a3fd4b0c702b66442f74b9dff6eaed1037254c0b79fe'
 const VOTING_ID = '0x7cbb12e82a6d63ff16fe43977f43e3e2b247ecd4e62c0e340da8800a48c67346'
-const TREASURY_ID = '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7'
 const PAYMENTS_BOOK_ID = '0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5ac0d1892b418'
+const TREASURY_ID = '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7'
 
 export function handleHeartbeat(event: Heartbeat): void {
   const protocolContract = AragonProtocol.bind(event.address)
@@ -103,14 +103,14 @@ export function handleModuleSet(event: ModuleSet): void {
     Voting.create(address)
     module.type = VOTING_TYPE
   }
-  else if (module.moduleId == TREASURY_ID) {
-    Treasury.create(address)
-    module.type = TREASURY_TYPE
-  }
   else if (module.moduleId == PAYMENTS_BOOK_ID) {
     PaymentsBook.create(address)
     module.type = PAYMENTS_BOOK
     loadOrCreatePaymentsBookModule(address)
+  }
+  else if (module.moduleId == TREASURY_ID) {
+    Treasury.create(address)
+    module.type = TREASURY_TYPE
   }
   else {
     module.type = 'Unknown'

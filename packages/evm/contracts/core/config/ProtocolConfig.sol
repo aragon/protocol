@@ -1,11 +1,11 @@
 pragma solidity ^0.5.17;
 
-import "../../lib/os/ERC20.sol";
-import "../../lib/os/SafeMath64.sol";
+import "../../lib/math/SafeMath64.sol";
+import "../../lib/utils/PctHelpers.sol";
+import "../../lib/standards/IERC20.sol";
 
 import "./IConfig.sol";
 import "./ProtocolConfigData.sol";
-import "../../lib/PctHelpers.sol";
 
 
 contract ProtocolConfig is IConfig, ProtocolConfigData {
@@ -70,7 +70,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @param _minActiveBalance Minimum amount of guardian tokens that can be activated
     */
     constructor(
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -132,7 +132,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     */
     function getConfig(uint64 _termId) external view
         returns (
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256[3] memory fees,
             uint64[5] memory roundStateDurations,
             uint16[2] memory pcts,
@@ -148,7 +148,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
-    function getDraftConfig(uint64 _termId) external view returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct);
+    function getDraftConfig(uint64 _termId) external view returns (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct);
 
     /**
     * @dev Tell the min active balance config at a certain term
@@ -218,7 +218,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     function _setConfig(
         uint64 _termId,
         uint64 _fromTermId,
-        ERC20 _feeToken,
+        IERC20 _feeToken,
         uint256[3] memory _fees,
         uint64[5] memory _roundStateDurations,
         uint16[2] memory _pcts,
@@ -330,7 +330,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     */
     function _getConfigAt(uint64 _termId, uint64 _lastEnsuredTermId) internal view
         returns (
-            ERC20 feeToken,
+            IERC20 feeToken,
             uint256[3] memory fees,
             uint64[5] memory roundStateDurations,
             uint16[2] memory pcts,
@@ -374,7 +374,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
     */
     function _getDraftConfig(uint64 _termId,  uint64 _lastEnsuredTermId) internal view
-        returns (ERC20 feeToken, uint256 draftFee, uint16 penaltyPct)
+        returns (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct)
     {
         Config storage config = _getConfigFor(_termId, _lastEnsuredTermId);
         return (config.fees.token, config.fees.draftFee, config.disputes.penaltyPct);

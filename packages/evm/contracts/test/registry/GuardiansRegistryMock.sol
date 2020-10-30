@@ -9,7 +9,7 @@ contract GuardiansRegistryMock is GuardiansRegistry {
     bool internal nextDraftMocked;
     address[] internal mockedSelectedGuardians;
 
-    constructor (Controller _controller, ERC20 _guardianToken, uint256 _totalActiveBalanceLimit)
+    constructor (Controller _controller, IERC20 _guardianToken, uint256 _totalActiveBalanceLimit)
         public
         GuardiansRegistry(_controller, _guardianToken, _totalActiveBalanceLimit)
     {}

@@ -39,21 +39,42 @@ The following events are emitted by the `Controller`:
     - **Module ID:** ID of the module being set
     - **Address:** Address of the module being set
 
-#### 6.2.1.6. Funds governor changed
+#### 6.2.1.6. Module enabled
+
+- **Name:** `ModuleEnabled`
+- **Args:**
+    - **Module ID:** ID of the enabled module
+    - **Address:** Address of the enabled module
+
+#### 6.2.1.7. Module disabled
+
+- **Name:** `ModuleDisabled`
+- **Args:**
+    - **Module ID:** ID of the disabled module
+    - **Address:** Address of the disabled module
+
+#### 6.2.1.8. Custom function set
+
+- **Name:** `CustomFunctionSet`
+- **Args:**
+    - **Signature:** Signature of the function being set
+    - **Target:** Address set as the target for the custom function  
+
+#### 6.2.1.9. Funds governor changed
 
 - **Name:** `FundsGovernorChanged`
 - **Args:**
     - **Previous governor:** Address of the previous funds governor
     - **Current governor:** Address of the current funds governor
 
-#### 6.2.1.7. Config governor changed
+#### 6.2.1.10. Config governor changed
 
 - **Name:** `ConfigGovernorChanged`
 - **Args:**
     - **Previous governor:** Address of the previous config governor
     - **Current governor:** Address of the current config governor
 
-#### 6.2.1.8. Modules governor changed
+#### 6.2.1.11. Modules governor changed
 
 - **Name:** `ModulesGovernorChanged`
 - **Args:**
@@ -194,43 +215,70 @@ The following functions are state getters provided by the `Controller`:
 - **Outputs:**
     - **Modules governor:** Address of the modules governor
 
-#### 6.2.2.17. Module
+#### 6.2.2.17. Is module active
 
-- **Inputs:** None
-- **Pre-flight checks:**
+- **Inputs:**
     - **Module ID:** ID of the module being queried
+    - **Address:** Address of the module being queried
+- **Pre-flight checks:**
+    - Ensure that the given ID matches the ID of the requested module
+- **Outputs:**
+    - **Active:** Whether the requested module is active
+
+#### 6.2.2.18. Module by address
+
+- **Inputs:** 
+    - **Address:** Address of the module being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Module ID:** ID of the module associated to the given address
+    - **Active:** Whether the requested module is active
+
+#### 6.2.2.19. Module by ID
+
+- **Inputs:**
+    - **Module ID:** ID of the module being queried
+- **Pre-flight checks:** None
 - **Outputs:**
     - **Module address:** Address of the module queried
 
-#### 6.2.2.18. Dispute Manager
+#### 6.2.2.20. Custom function
+
+- **Inputs:** 
+    - **Signature:** Signature of the function being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Address:** Address of the target where the given signature will be forwarded
+
+#### 6.2.2.21. Dispute Manager
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Protocol address:** Address of the `DisputeManager` module set
 
-#### 6.2.2.19. Guardians registry
+#### 6.2.2.22. Guardians registry
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Guardians registry address:** Address of the `GuardiansRegistry` module set
 
-#### 6.2.2.20. Voting
+#### 6.2.2.23. Voting
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Voting address:** Address of the `Voting` module set
 
-#### 6.2.2.21. PaymentsBook
+#### 6.2.2.24. PaymentsBook
 
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Payments book address:** Address of the `PaymentsBook` module set
 
-#### 6.2.2.22. Treasury
+#### 6.2.2.25. Treasury
 
 - **Inputs:** None
 - **Pre-flight checks:** None

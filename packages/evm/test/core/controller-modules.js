@@ -2,13 +2,12 @@ const { sha3 } = require('web3-utils')
 const { ZERO_ADDRESS, ZERO_BYTES32, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertAmountOfEvents, assertEvent, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../../helpers/wrappers/protocol')
-const { getCachedAddress } = require('../../helpers/utils/modules')
-const { CONTROLLER_ERRORS, CONTROLLED_ERRORS } = require('../../helpers/utils/errors')
-const { CONTROLLER_EVENTS, CONTROLLED_EVENTS } = require('../../helpers/utils/events')
+const { buildHelper } = require('../helpers/wrappers/protocol')
+const { CONTROLLER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
+const { CONTROLLER_EVENTS, CONTROLLED_EVENTS } = require('../helpers/utils/events')
 
 const Controlled = artifacts.require('Controlled')
-const ControlledMock = artifacts.require('ControlledMock')
+const ModuleMock = artifacts.require('ModuleMock')
 
 contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, someone]) => {
   let controller
@@ -261,10 +260,10 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
         context('when the given id is one of the known IDs', () => {
           const modules = [
             { name: 'DISPUTE_MANAGER', getter: 'getDisputeManager' },
-            { name: 'VOTING', getter: 'getVoting' },
-            { name: 'TREASURY', getter: 'getTreasury' },
             { name: 'GUARDIANS_REGISTRY', getter: 'getGuardiansRegistry' },
-            { name: 'PAYMENTS_BOOK', getter: 'getPaymentsBook' }
+            { name: 'VOTING', getter: 'getVoting' },
+            { name: 'PAYMENTS_BOOK', getter: 'getPaymentsBook' },
+            { name: 'TREASURY', getter: 'getTreasury' }
           ]
 
           for (const { name, getter } of modules) {
@@ -528,7 +527,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
     })
   })
 
-  describe('cacheModules', () => {
+  describe('linkModules', () => {
     let firstModule, secondModule, thirdModule
     const firstID = '0x0000000000000000000000000000000000000000000000000000000000000001'
     const secondID = '0x0000000000000000000000000000000000000000000000000000000000000002'
@@ -548,37 +547,37 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
         context('when all the given modules where set', () => {
           beforeEach('set all modules', async () => {
-            controller.setModules(IDs, [firstModule.address, secondModule.address, thirdModule.address], { from: modulesGovernor })
+            controller.setModules(IDs, [firstModule.address, secondModule.address, thirdModule.address], [], [], { from: modulesGovernor })
           })
 
-          it('caches the requested modules in the requested targets', async () => {
+          it('links the requested modules in the requested targets', async () => {
             const targets = [secondModule.address, thirdModule.address]
-            const receipt = await controller.cacheModules(targets, IDs, { from })
+            const receipt = await controller.linkModules(targets, IDs, { from })
 
-            assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { expectedAmount: 6, decodeForAbi: Controlled.abi })
-            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { index: 0, expectedArgs: { id: IDs[0], addr: firstModule.address }, decodeForAbi: Controlled.abi })
-            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { index: 1, expectedArgs: { id: IDs[1], addr: secondModule.address }, decodeForAbi: Controlled.abi })
-            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_CACHED, { index: 2, expectedArgs: { id: IDs[2], addr: thirdModule.address }, decodeForAbi: Controlled.abi })
+            assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { expectedAmount: 6, decodeForAbi: Controlled.abi })
+            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { index: 0, expectedArgs: { id: IDs[0], addr: firstModule.address }, decodeForAbi: Controlled.abi })
+            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { index: 1, expectedArgs: { id: IDs[1], addr: secondModule.address }, decodeForAbi: Controlled.abi })
+            assertEvent(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { index: 2, expectedArgs: { id: IDs[2], addr: thirdModule.address }, decodeForAbi: Controlled.abi })
           })
 
           it('it does not affect when the modules are updated', async () => {
             const targets = [secondModule.address, thirdModule.address]
-            await controller.cacheModules(targets, IDs, { from })
+            await controller.linkModules(targets, IDs, { from })
 
             const newFirstModule = await Controlled.new(controller.address)
             await controller.setModule(firstID, newFirstModule.address, { from })
 
-            assert.equal(await getCachedAddress(firstModule, firstID), ZERO_ADDRESS, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(firstModule, secondID), ZERO_ADDRESS, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(firstModule, thirdID), ZERO_ADDRESS, 'third module cache for third module does not match')
+            assert.equal(await firstModule.linkedModules(firstID), ZERO_ADDRESS, 'first module link for first module does not match')
+            assert.equal(await firstModule.linkedModules(secondID), ZERO_ADDRESS, 'second module link for second module does not match')
+            assert.equal(await firstModule.linkedModules(thirdID), ZERO_ADDRESS, 'third module link for third module does not match')
 
-            assert.equal(await getCachedAddress(secondModule, firstID), firstModule.address, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(secondModule, secondID), secondModule.address, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(secondModule, thirdID), thirdModule.address, 'third module cache for third module does not match')
+            assert.equal(await secondModule.linkedModules(firstID), firstModule.address, 'first module link for first module does not match')
+            assert.equal(await secondModule.linkedModules(secondID), secondModule.address, 'second module link for second module does not match')
+            assert.equal(await secondModule.linkedModules(thirdID), thirdModule.address, 'third module link for third module does not match')
 
-            assert.equal(await getCachedAddress(thirdModule, firstID), firstModule.address, 'first module cache for first module does not match')
-            assert.equal(await getCachedAddress(thirdModule, secondID), secondModule.address, 'second module cache for second module does not match')
-            assert.equal(await getCachedAddress(thirdModule, thirdID), thirdModule.address, 'third module cache for third module does not match')
+            assert.equal(await thirdModule.linkedModules(firstID), firstModule.address, 'first module link for first module does not match')
+            assert.equal(await thirdModule.linkedModules(secondID), secondModule.address, 'second module link for second module does not match')
+            assert.equal(await thirdModule.linkedModules(thirdID), thirdModule.address, 'third module link for third module does not match')
           })
         })
 
@@ -588,15 +587,15 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
           })
 
           it('reverts', async () => {
-            await assertRevert(controller.cacheModules([firstModule.address], IDs, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
+            await assertRevert(controller.linkModules([firstModule.address], IDs, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
           })
         })
       })
 
       context('when the given input length is not valid', () => {
         it('reverts', async () => {
-          await assertRevert(controller.cacheModules([ZERO_ADDRESS], [], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
-          await assertRevert(controller.cacheModules([], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
+          await assertRevert(controller.linkModules([ZERO_ADDRESS], [], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
+          await assertRevert(controller.linkModules([], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
         })
       })
     })
@@ -605,7 +604,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(controller.cacheModules([ZERO_ADDRESS], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
+        await assertRevert(controller.linkModules([ZERO_ADDRESS], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
       })
     })
 
@@ -613,7 +612,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(firstModule.cacheModules([firstID], [firstModule.address], { from }), CONTROLLED_ERRORS.SENDER_NOT_CONTROLLER)
+        await assertRevert(firstModule.linkModules([firstID], [firstModule.address], { from }), CONTROLLED_ERRORS.SENDER_NOT_CONTROLLER)
       })
     })
   })
@@ -621,12 +620,12 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
   describe('customFunctions', () => {
     let module
 
-    const setCounterSig = sha3('setCounter(uint256)').slice(0, 10)
-    const receiveEtherSig = sha3('receiveEther()').slice(0, 10)
-    const failSig = sha3('fail()').slice(0, 10)
+    const setCounterSig = web3.eth.abi.encodeFunctionSignature('setCounter(uint256)')
+    const receiveEtherSig = web3.eth.abi.encodeFunctionSignature('receiveEther()')
+    const failSig = web3.eth.abi.encodeFunctionSignature('fail()')
 
     beforeEach('deploy module', async () => {
-      module = await ControlledMock.new(controller.address)
+      module = await ModuleMock.new(controller.address)
     })
 
     context('when the sender is the governor', () => {
@@ -638,28 +637,34 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             const receipt = await controller.setCustomFunction(setCounterSig, module.address, { from })
             assertAmountOfEvents(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
             assertEvent(receipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: module.address })
+            assert.equal(await controller.getCustomFunction(setCounterSig), module.address, 'custom function target does not match')
 
             const anotherReceipt = await controller.setCustomFunction(receiveEtherSig, module.address, { from })
             assertAmountOfEvents(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET)
             assertEvent(anotherReceipt, CONTROLLER_EVENTS.CUSTOM_FUNCTION_SET, { signature: setCounterSig, target: module.address })
+            assert.equal(await controller.getCustomFunction(receiveEtherSig), module.address, 'custom function target does not match')
           })
 
           it('can be called', async () => {
-            const data = module.contract.methods.setCounter(10).encodeABI()
             await controller.setCustomFunction(setCounterSig, module.address, { from })
+            assert.equal(await controller.getCustomFunction(setCounterSig), module.address, 'custom function target does not match')
 
             assertBn(await module.counter(), 0, 'counter does not match')
+
+            const data = module.contract.methods.setCounter(10).encodeABI()
             await controller.sendTransaction({ data })
+
             assertBn(await module.counter(), 10, 'counter does not match')
           })
 
           it('handles eth transfers properly', async () => {
             await controller.setCustomFunction(receiveEtherSig, module.address, { from })
+            assert.equal(await controller.getCustomFunction(receiveEtherSig), module.address, 'custom function target does not match')
 
             const receipt = await controller.sendTransaction({ data: receiveEtherSig, value: bigExp(1, 18) })
 
-            assertAmountOfEvents(receipt, 'EtherReceived', { decodeForAbi: ControlledMock.abi })
-            assertEvent(receipt, 'EtherReceived', { expectedArgs: { sender: controller.address, value: bigExp(1, 18) }, decodeForAbi: ControlledMock.abi })
+            assertAmountOfEvents(receipt, 'EtherReceived', { decodeForAbi: ModuleMock.abi })
+            assertEvent(receipt, 'EtherReceived', { expectedArgs: { sender: controller.address, value: bigExp(1, 18) }, decodeForAbi: ModuleMock.abi })
 
             const currentBalance = await web3.eth.getBalance(module.address)
             assertBn(currentBalance, bigExp(1, 18), 'module balance does not match')
@@ -667,8 +672,33 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
           it('handles reverts properly', async () => {
             await controller.setCustomFunction(failSig, module.address, { from })
+            assert.equal(await controller.getCustomFunction(failSig), module.address, 'custom function target does not match')
 
             await assertRevert(controller.sendTransaction({ data: failSig }), 'CONTROLLED_FAIL')
+          })
+
+          it('can register the fallback function', async () => {
+            await controller.setCustomFunction('0x', module.address, { from })
+            assert.equal(await controller.getCustomFunction('0x'), module.address, 'custom function target does not match')
+
+            const receipt = await controller.sendTransaction({ value: bigExp(1, 18) })
+
+            assertAmountOfEvents(receipt, 'EtherReceived', { decodeForAbi: ModuleMock.abi })
+            assertEvent(receipt, 'EtherReceived', { expectedArgs: { sender: controller.address, value: bigExp(1, 18) }, decodeForAbi: ModuleMock.abi })
+
+            const currentBalance = await web3.eth.getBalance(module.address)
+            assertBn(currentBalance, bigExp(1, 18), 'module balance does not match')
+          })
+
+          it('ignores when registering already existing functions', async () => {
+            await assertRevert(module.setModule(ZERO_BYTES32, module.address, { from }), 'CONTROLLED_MALICIOUS_SET_MODULE')
+
+            const setModuleSig = web3.eth.abi.encodeFunctionSignature('setModule(bytes32,address)')
+            await controller.setCustomFunction(setModuleSig, module.address, { from })
+            const receipt = await controller.setModule(ZERO_BYTES32, module.address, { from })
+
+            assertAmountOfEvents(receipt, CONTROLLER_EVENTS.MODULE_SET)
+            assertEvent(receipt, CONTROLLER_EVENTS.MODULE_SET, { expectedArgs: { id: ZERO_BYTES32, addr: module.address } })
           })
         }
 
@@ -704,6 +734,10 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
             await controller.setCustomFunction(setCounterSig, ZERO_ADDRESS, { from })
 
             await assertRevert(controller.sendTransaction({ data }), CONTROLLER_ERRORS.CUSTOM_FUNCTION_NOT_SET)
+          })
+
+          it('does not allow calling the fallback', async () => {
+            await assertRevert(controller.sendTransaction({ value: bigExp(1, 18) }), CONTROLLER_ERRORS.CUSTOM_FUNCTION_NOT_SET)
           })
         }
 

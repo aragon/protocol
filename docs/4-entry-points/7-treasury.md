@@ -22,7 +22,7 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
     - **Token:** Address of the ERC20-compatible token to be withdrawn
     - **Recipient:** Address that will receive the funds being withdrawn
     - **Amount:** Amount of tokens to be transferred to the recipient
-- **Authentication:** Only `DisputeManager` module
+- **Authentication:** Only active `DisputeManager` modules
 - **Pre-flight checks:**
     - Ensure that the requested amount is greater than zero
 - **State transitions:**
