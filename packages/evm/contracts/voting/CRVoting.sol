@@ -6,9 +6,10 @@ import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
 import "../core/modules/Controlled.sol";
 import "../core/modules/Controller.sol";
+import "../core/modules/SignaturesValidator.sol";
 
 
-contract CRVoting is Controlled, ICRVoting {
+contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     using SafeMath for uint256;
 
     string private constant ERROR_VOTE_ALREADY_EXISTS = "CRV_VOTE_ALREADY_EXISTS";
@@ -19,17 +20,7 @@ contract CRVoting is Controlled, ICRVoting {
     string private constant ERROR_INVALID_OUTCOME = "CRV_INVALID_OUTCOME";
     string private constant ERROR_INVALID_OUTCOMES_AMOUNT = "CRV_INVALID_OUTCOMES_AMOUNT";
     string private constant ERROR_INVALID_COMMITMENT_SALT = "CRV_INVALID_COMMITMENT_SALT";
-    string private constant ERROR_INVALID_INPUTS_LENGTH = "CRV_INVALID_INPUTS_LENGTH";
     string private constant ERROR_INVALID_REPRESENTATIVES_LENGTH = "CRV_INVALID_REPRESENTATIVES_LEN";
-
-    // bytes32 public constant COMMIT_WITH_SIG_TYPEHASH = keccak256("CommitWithSig(uint256 voteId,address voter,address representative)");
-    bytes32 public constant COMMIT_WITH_SIG_TYPEHASH = 0x279e8c0b43428d0679e85b68cb07f69b01094205adc4547f65eaab2e77eacd26;
-    // bytes32 private constant EIP712DOMAIN_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
-    bytes32 private constant EIP712DOMAIN_HASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
-    // bytes32 private constant NAME_HASH = keccak256("Aragon Protocol Voting")
-    bytes32 private constant NAME_HASH = 0xd29d26249bb0c8fe08bcf70d00b6f5b6b54b653b5a7e4157b490095bbb233349;
-    // bytes32 private constant VERSION_HASH = keccak256("1")
-    bytes32 private constant VERSION_HASH = 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
 
     // Outcome nr. 0 is used to denote a missing vote (default)
     uint8 internal constant OUTCOME_MISSING = uint8(0);
@@ -115,85 +106,21 @@ contract CRVoting is Controlled, ICRVoting {
     }
 
     /**
-    * @notice Commit a vote for vote #`_voteId`
-    * @param _voteId ID of the vote instance to commit a vote to
-    * @param _commitment Hashed outcome to be stored for future reveal
-    */
-    function commit(uint256 _voteId, bytes32 _commitment) external voteExists(_voteId) {
-        _commitFor(_voteId, msg.sender, _commitment);
-    }
-
-    /**
-    * @notice Commit a vote on behalf of `_voter` for vote #`_voteId`
+    * @notice Commit a vote for `_voter` on vote #`_voteId`
     * @param _voteId ID of the vote instance to commit a vote to
     * @param _voter Address of the voter to commit a vote for
     * @param _commitment Hashed outcome to be stored for future reveal
     */
-    function commitFor(uint256 _voteId, address _voter, bytes32 _commitment) external voteExists(_voteId) {
-        require(_isRepresentativeOf(_voter, msg.sender), ERROR_SENDER_NOT_REPRESENTATIVE);
-        _commitFor(_voteId, _voter, _commitment);
-    }
+    function commit(uint256 _voteId, address _voter, bytes32 _commitment) external voteExists(_voteId) {
+        bool isSenderAllowed = _isRepresentativeOf(_voter, msg.sender) || _isSignatureValid(_voter);
+        require(isSenderAllowed, ERROR_SENDER_NOT_REPRESENTATIVE);
 
-    /**
-    * @notice Commit a vote on behalf of `_voter` for vote #`_voteId`
-    * @param _voteId ID of the vote instance to commit a vote to
-    * @param _voter Address of the voter to commit a vote for
-    * @param _commitment Hashed outcome to be stored for future reveal
-    */
-    function commitForWithSig(uint256 _voteId, address _voter, bytes32 _commitment, uint8 _v, bytes32 _r, bytes32 _s)
-        external
-        voteExists(_voteId)
-    {
-        require(_isRepresentativeAllowed(_voteId, _voter, msg.sender, _v, _r, _s), ERROR_SENDER_NOT_REPRESENTATIVE);
-        _commitFor(_voteId, _voter, _commitment);
-    }
+        CastVote storage castVote = voteRecords[_voteId].votes[_voter];
+        require(castVote.commitment == bytes32(0), ERROR_VOTE_ALREADY_COMMITTED);
+        _ensureVoterCanCommit(_voteId, _voter);
 
-    /**
-    * @notice Commit multiple votes
-    * @param _voteIds List of IDs of the vote instances to commit a vote to
-    * @param _voters List of addresses of the voters to commit a vote for
-    * @param _commitments List of hashed outcomes to be stored for future reveals
-    */
-    function commitForMany(uint256[] calldata _voteIds, address[] calldata _voters, bytes32[] calldata _commitments)
-        external
-    {
-        require(_voteIds.length == _voters.length, ERROR_INVALID_INPUTS_LENGTH);
-        require(_voteIds.length == _commitments.length, ERROR_INVALID_INPUTS_LENGTH);
-
-        for (uint256 i = 0; i < _voteIds.length; i++) {
-            require(_existsVote(voteRecords[_voteIds[i]]), ERROR_VOTE_DOES_NOT_EXIST);
-            require(_isRepresentativeOf(_voters[i], msg.sender), ERROR_SENDER_NOT_REPRESENTATIVE);
-            _commitFor(_voteIds[i], _voters[i], _commitments[i]);
-        }
-    }
-
-    /**
-    * @notice Commit multiple votes
-    * @param _voteIds List of IDs of the vote instances to commit a vote to
-    * @param _voters List of addresses of the voters to commit a vote for
-    * @param _commitments List of hashed outcomes to be stored for future reveals
-    */
-    function commitForManyWithSig(
-        uint256[] calldata _voteIds,
-        address[] calldata _voters,
-        bytes32[] calldata _commitments,
-        uint8[] calldata _v,
-        bytes32[] calldata _r,
-        bytes32[] calldata _s
-    )
-        external
-    {
-        require(_voteIds.length == _voters.length, ERROR_INVALID_INPUTS_LENGTH);
-        require(_voteIds.length == _commitments.length, ERROR_INVALID_INPUTS_LENGTH);
-        require(_voteIds.length == _v.length, ERROR_INVALID_INPUTS_LENGTH);
-        require(_voteIds.length == _r.length, ERROR_INVALID_INPUTS_LENGTH);
-        require(_voteIds.length == _s.length, ERROR_INVALID_INPUTS_LENGTH);
-
-        for (uint256 i = 0; i < _voteIds.length; i++) {
-            require(_existsVote(voteRecords[_voteIds[i]]), ERROR_VOTE_DOES_NOT_EXIST);
-            require(_isRepresentativeAllowed(_voteIds[i], _voters[i], msg.sender, _v[i], _r[i], _s[i]), ERROR_SENDER_NOT_REPRESENTATIVE);
-            _commitFor(_voteIds[i], _voters[i], _commitments[i]);
-        }
+        castVote.commitment = _commitment;
+        emit VoteCommitted(_voteId, _voter, _commitment, msg.sender);
     }
 
     /**
@@ -242,28 +169,6 @@ contract CRVoting is Controlled, ICRVoting {
     */
     function isRepresentativeOf(address _voter, address _representative) external view returns (bool) {
         return _isRepresentativeOf(_voter, _representative);
-    }
-
-    /**
-    * @dev Verify if a representative address has been authorized by a voter for a specific vote
-    * @param _voteId Identification number of the vote to be checked
-    * @param _voter Address of the voter to be checked
-    * @param _representative Address of the representative to be checked
-    * @return True if the representative was authorized by a voter
-    */
-    function isRepresentativeAllowed(
-        uint256 _voteId,
-        address _voter,
-        address _representative,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-    )
-        external
-        view
-        returns (bool)
-    {
-        return _isRepresentativeAllowed(_voteId, _voter, _representative, _v, _r, _s);
     }
 
     /**
@@ -357,13 +262,6 @@ contract CRVoting is Controlled, ICRVoting {
     }
 
     /**
-    * @dev Get EIP712 domain separator
-    */
-    function getDomainSeparator() external view returns (bytes32) {
-        return _getDomainSeparator();
-    }
-
-    /**
     * @dev Hash a vote outcome using a given salt
     * @param _outcome Outcome to be hashed
     * @param _salt Encryption salt
@@ -371,21 +269,6 @@ contract CRVoting is Controlled, ICRVoting {
     */
     function hashVote(uint8 _outcome, bytes32 _salt) external pure returns (bytes32) {
         return _hashVote(_outcome, _salt);
-    }
-
-    /**
-    * @dev Commit a vote on behalf of `_voter` for vote #`_voteId`
-    * @param _voteId ID of the vote instance to commit a vote to
-    * @param _voter Address of the voter to commit a vote for
-    * @param _commitment Hashed outcome to be stored for future reveal
-    */
-    function _commitFor(uint256 _voteId, address _voter, bytes32 _commitment) internal {
-        CastVote storage castVote = voteRecords[_voteId].votes[_voter];
-        require(castVote.commitment == bytes32(0), ERROR_VOTE_ALREADY_COMMITTED);
-        _ensureVoterCanCommit(_voteId, _voter);
-
-        castVote.commitment = _commitment;
-        emit VoteCommitted(_voteId, _voter, _commitment, msg.sender);
     }
 
     /**
@@ -467,40 +350,7 @@ contract CRVoting is Controlled, ICRVoting {
     * @return True if the representative currently represents the voter
     */
     function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
-        return representatives[_voter][_representative] || _voter == _representative;
-    }
-
-    /**
-    * @dev Verify if a representative address has been authorized by a voter for a specific vote
-    * @param _voteId Identification number of the vote to be checked
-    * @param _voter Address of the voter to be checked
-    * @param _representative Address of the representative to be checked
-    * @return True if the representative was authorized by a voter
-    */
-    function _isRepresentativeAllowed(
-        uint256 _voteId,
-        address _voter,
-        address _representative,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-    )
-        internal
-        view
-        returns (bool)
-    {
-        bytes32 encodeData = keccak256(abi.encode(COMMIT_WITH_SIG_TYPEHASH, _voteId, _voter, _representative));
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _getDomainSeparator(), encodeData));
-        address recoveredAddress = ecrecover(digest, _v, _r, _s);
-        // Explicitly disallow authorizations for address(0) as ecrecover returns address(0) on malformed messages
-        return recoveredAddress != address(0) && recoveredAddress == _voter;
-    }
-
-    /**
-    * @dev Get EIP712 domain separator
-    */
-    function _getDomainSeparator() internal view returns (bytes32) {
-        return keccak256(abi.encode(EIP712DOMAIN_HASH, NAME_HASH, VERSION_HASH, _chainId(), address(this)));
+        return _voter == _representative || representatives[_voter][_representative];
     }
 
     /**
