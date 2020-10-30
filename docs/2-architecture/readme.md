@@ -58,15 +58,15 @@ Detailed information about `AragonProtocol` can be found in [section 4](../4-ent
 
 ## 2.5. Migration Strategies
 
-| Module             |                          Ongoing disputes                         |                              No disputes                          |                      
-|--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------| 
+| Module             |                          Ongoing disputes                         |                              No disputes                          |
+|--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------|
 | Dispute Manager    | Leave the previous instance active until all disputes are solved  | Disable previous instance and update Voting linked module         |
-| Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute Manager linked module|    
-| Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | " |
-| PaymentsBook       | Leave the previous instance active until all funds are claimed                                                                        |  
-| Guardians Registry | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |  
+| Voting             | Deploy new Dispute Manager and point to new Voting instance (*)   | Disable previous instance and update Dispute Manager linked module|
+| Treasury           | Deploy new Dispute Manager and point to new Treasury instance (*) | "                                                                 |
+| PaymentsBook       | Leave the previous instance active until all funds are claimed                                                                        |
+| Guardians Registry | Disable disputes and staking while the status is migrated the the new instance, update Dispute Manager and PaymentsBook modules (**)  |
 
-(*) Assuming there is no easy way to migrate/replicate the current status of the existing module to the new one 
+(*) Assuming there is no easy way to migrate/replicate the current status of the existing module to the new one
 
 (**) If the Guardians Registry status cannot be migrated it would be similar to deploying a new entire protocol
 
@@ -82,7 +82,7 @@ Detailed information about `AragonProtocol` can be found in [section 4](../4-ent
 | Treasury            | `settlePenalties`      | " |
 | Treasury            | `settleAppealDeposit`  | " |
 | Voting              | `createDispute`        | The Dispute Manager needs to access the same Voting instance during a dispute lifecycle |
-| Voting              | `ensureCanCommit`      | " | 
+| Voting              | `ensureCanCommit`      | " |
 | Voting              | `createAppeal`         | " |
 | Voting              | `confirmAppeal`        | " |
 | Voting              | `settleReward`         | " |
@@ -96,9 +96,9 @@ Detailed information about `AragonProtocol` can be found in [section 4](../4-ent
 | GuardiansRegistry   | `settlePenalties`      | " |
 | GuardiansRegistry   | `settleAppealDeposit`  | " |
 
-Notes: 
-- If there are no ongoing disputes any of the three dependencies can be swapped 
-- If there are ongoing disputes none of the three dependencies can be migrated 
+Notes:
+- If there are no ongoing disputes any of the three dependencies can be swapped
+- If there are ongoing disputes none of the three dependencies can be migrated
 
 
 ### 2.5.2. Voting
@@ -110,9 +110,9 @@ Notes:
 | DisputeManager   | `reveal`               | " |
 | DisputeManager   | `leak`                 | " |
 
-Notes: 
+Notes:
 - If there are ongoing disputes the Voting dependency cannot be changed
-- If a new Dispute Manager is deployed it can be pointed to the same Voting module 
+- If a new Dispute Manager is deployed it can be pointed to the same Voting module
 
 
 ### 2.5.3. Treasury

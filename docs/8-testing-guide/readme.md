@@ -1,20 +1,20 @@
 # 8. Testing guide
 
-This guide aims to cover all the things you should know in order to try Aragon Protocol or integrate your application with it. 
+This guide aims to cover all the things you should know in order to try Aragon Protocol or integrate your application with it.
 
 ## 8.1. Testing instances
 
-There are a few testing instances already deployed for Aragon Protocol. 
+There are a few testing instances already deployed for Aragon Protocol.
 All of these are mimicking the mainnet instance with some exceptions of term durations to provide a better testing experience.
 Additionally, all the instances are using their own deployed version of the following ERC20 tokens:
-- ANT, the native token of Aragon Protocol. You will need some fake ANT to stake as a guardian to be selected to resolve disputes.  
+- ANT, the native token of Aragon Protocol. You will need some fake ANT to stake as a guardian to be selected to resolve disputes.
 - DAI, used for the Aragon Protocol fees. You will need some fake DAI to pay the dispute fees.
 
 Of course, there is an ERC20 faucet deployed for all these instances that you can use to claim some fake ANT or DAI to start testing. More information is outlined below on using these faucets.
 
 ### 8.1.1. Staging
 
-This is probably the most useful testing instance you would like to try. 
+This is probably the most useful testing instance you would like to try.
 Fees are low and protocol terms last a few minutes to make sure you can interact with it a bit faster.
 
 - Network: Rinkeby
@@ -57,11 +57,11 @@ This testing instance basically mimics the Mainnet instance
 > Unless you are familiar with using a local Aragon development environment, we recommend skipping ahead to Section 8.2 and using one of the other available testing instances (Staging/ Rinkeby/ Ropsten).
 
 To deploy a local instance of Aragon Protocol you will need to clone the deployment scripts first:
- 
+
 ```bash
 git clone https://github.com/aragon/aragon-network-deploy/
 cd aragon-network-deploy
-npm i 
+npm i
 ```
 
 Once you have done that, make sure you have a local Ganache running:
@@ -86,7 +86,7 @@ You can do this directly through Etherscan, simply click in any of the faucet li
 Once there, you just need to enable your Web3 account and call the `withdraw()` function providing the desired token address and amount:
 ![faucet](./images/faucet.png)
 
-When claiming tokens remember to add the 18 zeroes for the decimals, for example 10 DAI should be requested as `10000000000000000000`. 
+When claiming tokens remember to add the 18 zeroes for the decimals, for example 10 DAI should be requested as `10000000000000000000`.
 Bear in mind there is a quota set for these faucets; they will only allow you to withdraw up to 10,000 fake-DAI or 10,000 fake-ANT every 7 days.
 
 ## 8.3. Installing the Aragon Protocol dev CLI tool
@@ -112,7 +112,7 @@ Let's continue with the Aragon Protocol testing guide and see how we can use the
 
 To become a guardian you simply need to activate some ANT tokens into Aragon Protocol.
 First make sure to have claimed some fake ANT tokens from the faucet corresponding to the Aragon Protocol instance you're willing to try.
-For now, the testing instances require a minimum of 10,000 ANT so make sure to have at least that amount. 
+For now, the testing instances require a minimum of 10,000 ANT so make sure to have at least that amount.
 Then, you can activate tokens into Aragon Protocol using the `stake` and `activate` commands of the CLI tool as follows:
 
 ```bash
@@ -124,7 +124,7 @@ Where:
 - `[GUARDIAN]`: address of the guardian you will activate the tokens for
 - `[AMOUNT]`: amount of fake ANT tokens you will activate for the specified guardian (it doesn't require adding the decimals, so to activate 10,000 ANT simply enter `10000`)
 - `[FROM]`: address paying for the fake ANT tokens; this must be the address you used to claim the tokens from the faucet
-- `[NETWORK]`: name of the Aragon Protocol instance you are willing to use: `staging`, `rinkeby`, or `ropsten` 
+- `[NETWORK]`: name of the Aragon Protocol instance you are willing to use: `staging`, `rinkeby`, or `ropsten`
 
 Note that you can also avoid the flag `--verbose` if you want to avoid having too much details about the transactions being sent to the network.
 
@@ -143,7 +143,7 @@ node ./bin/index.js arbitrable -f [FROM] -n [NETWORK] --verbose
 
 Where:
 - `[FROM]`: address deploying the Arbitrable contract; this address will be the one available to create disputes with it
-- `[NETWORK]`: name of the Aragon Protocol instance you are using: `staging`, `rinkeby`, or `ropsten` 
+- `[NETWORK]`: name of the Aragon Protocol instance you are using: `staging`, `rinkeby`, or `ropsten`
 
 This command will output the address of your new Arbitrable contract.
 
@@ -167,12 +167,12 @@ node ./bin/index.js dispute \
   --verbose
 ```
 
-Where: 
+Where:
 - `[ARBITRABLE]`: address of your Arbitrable instance
 - `[METADATA]`: metadata to be linked for your dispute (continue reading to have a better understanding of how to build a proper dispute metadata)
-- `[EVIDENCE_N]`: reference to a human-readable evidence (continue reading to have a better understanding of how to provide a proper evidence reference) 
-- `[SUBMITTER_N]`: addresses submitting each piece of evidence; this list should match the evidence list length 
-- `-c` flag: optional to declare that the evidence submission period should be immediately closed. Otherwise, you will need to manually close it afterwards. 
+- `[EVIDENCE_N]`: reference to a human-readable evidence (continue reading to have a better understanding of how to provide a proper evidence reference)
+- `[SUBMITTER_N]`: addresses submitting each piece of evidence; this list should match the evidence list length
+- `-c` flag: optional to declare that the evidence submission period should be immediately closed. Otherwise, you will need to manually close it afterwards.
 - `[FROM]`: address owning the Arbitrable instance being called; this address must be the one you used to deploy the Arbitrable instance before
 - `[NETWORK]`: name of the Aragon Protocol instance you are using: `staging`, `rinkeby`, or `ropsten`
 
@@ -183,11 +183,11 @@ Currently, the Protocol Dashboard supports reading these pieces of information f
 - `[METADATA]`: `'{ "metadata": "[METADATA_CID]/metadata.json", "description": "Some dispute description" }'`
 - `[EVIDENCE_N]`: `ipfs:[EVIDENCE_N_CID]`
 
-Where `METADATA_CID` is the `CID` of a dir hosted in IPFS including a file `metadata.json`, and `[EVIDENCE_N_CID]` is the `CID` of a markdown file for the evidence #N hosted in IPFS. 
+Where `METADATA_CID` is the `CID` of a dir hosted in IPFS including a file `metadata.json`, and `[EVIDENCE_N_CID]` is the `CID` of a markdown file for the evidence #N hosted in IPFS.
 Additionally, the `metadata.json` file must have the following structure:
 
 ```json
-{ 
+{
     "description": "[Your dispute description]",
     "agreementTitle": "[A title for your agreement file]",
     "agreementText": "[Path to the agreement file in the dir uploaded to IPFS]",
@@ -198,7 +198,7 @@ Additionally, the `metadata.json` file must have the following structure:
 
 Even though `agreementTitle`, `agreementText`, `plaintiff` and `defendant` are optional values, you will have a much better experience if you provide those.
 
-Additionally, it is recommended to upload all these pieces of information together to IPFS. For example, you can take a look at [these files](./sample-dispute) we used to create this [sample dispute](https://protocol-staging.aragon.org/disputes/15). 
+Additionally, it is recommended to upload all these pieces of information together to IPFS. For example, you can take a look at [these files](./sample-dispute) we used to create this [sample dispute](https://protocol-staging.aragon.org/disputes/15).
 To upload those files we simply ran the following command while having the IPFS daemon running in background:
 
 ![ipfs](./images/ipfs-output.png)
@@ -212,7 +212,7 @@ node ./bin/index.js dispute -a 0xe573D236d40F331d24420075Fb2EdE84B9968E3c -m '{ 
 
 ## 8.6. Ruling a dispute
 
-You can use any of the Protocol Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the protocol—and therefore can be difficult to come to a ruling you want). 
+You can use any of the Protocol Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the protocol—and therefore can be difficult to come to a ruling you want).
 If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to guardians.
 
 Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragonone/protocol-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
