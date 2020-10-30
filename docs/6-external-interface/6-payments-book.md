@@ -2,14 +2,14 @@
 
 ### 6.6.1 Events
 
-The following events are emitted by the `PaymentsBook}`:
+The following events are emitted by the `PaymentsBook`:
 
 #### 6.6.1.1. Payment received
 
 - **Name:** `PaymentReceived`
 - **Args:**
-    - **Period ID:** Identification number of the payment period when the payment was received 
-    - **Payer:** Address of paying on behalf of
+    - **Period ID:** Identification number of the payment period when the payment was received
+    - **Payer:** Address paying on behalf of
     - **Token:** Address of the token used for the payment
     - **Amount:** Amount of tokens being paid
     - **Sender:** Address paying the token amount
@@ -93,7 +93,7 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Pre-flight checks:**
     - Ensure that the balance details of the requested period have been ensured
 - **Outputs:**
-    - **Amount:** Share owed to the given guardian for the requested period
+    - **Amount:** Total token amount collected for the guardian in the given period
 
 #### 6.6.2.7. Has guardian claimed
 
@@ -103,7 +103,7 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Claimed:** True if the guardian's share have already been claimed for the given period and token, false otherwise
+    - **Claimed:** True if the guardian's share has already been claimed for the given period and token, false otherwise
 
 #### 6.6.2.8. Governor share
 
@@ -112,4 +112,4 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Token:** Address of the token being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Total amount collected for the governor for the given period and token
+    - **Amount:** Total token amount collected for the governor in the given period

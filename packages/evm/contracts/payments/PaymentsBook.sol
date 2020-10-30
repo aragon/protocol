@@ -44,7 +44,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         // List of collected amounts for the governor indexed by token address
         mapping (address => uint256) governorShares;
         // List of guardians that have claimed their share during a period, indexed by guardian and token addresses
-        mapping (address => mapping (address => bool)) claimedGuardianShares;
+        mapping (address => mapping (address => bool)) claimedGuardians;
     }
 
     // Duration of a payment period in Protocol terms
@@ -111,7 +111,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
-        require(!_hasClaimedGuardianShare(period, msg.sender, _token), ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED);
+        require(!_hasGuardianClaimedShare(period, msg.sender, _token), ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED);
 
         (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) = _ensurePeriodBalanceDetails(period, _periodId);
         uint256 guardianActiveBalance = _getGuardianActiveBalance(msg.sender, periodBalanceCheckpoint);
@@ -135,7 +135,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            if (!_hasClaimedGuardianShare(period, msg.sender, token)) {
+            if (!_hasGuardianClaimedShare(period, msg.sender, token)) {
                 uint256 amount = _getGuardianShare(period, token, guardianActiveBalance, totalActiveBalance);
                 _claimGuardianShare(period, _periodId, msg.sender, token, amount);
             }
@@ -285,7 +285,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     */
     function hasGuardianClaimed(uint256 _periodId, address _guardian, address _token) external view returns (bool) {
         Period storage period = periods[_periodId];
-        return _hasClaimedGuardianShare(period, _guardian, _token);
+        return _hasGuardianClaimedShare(period, _guardian, _token);
     }
 
     /**
@@ -304,7 +304,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
 
         claimed = new bool[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            claimed[i] = _hasClaimedGuardianShare(period, _guardian, _tokens[i]);
+            claimed[i] = _hasGuardianClaimedShare(period, _guardian, _tokens[i]);
         }
     }
 
@@ -352,7 +352,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         internal
     {
         if (_amount > 0) {
-            _period.claimedGuardianShares[_guardian][_token] = true;
+            _period.claimedGuardians[_guardian][_token] = true;
             _transfer(_guardian, _token, _amount);
             emit GuardianShareClaimed(_periodId, _guardian, _token, _amount);
         }
@@ -535,8 +535,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @param _token Address of the token to be queried
     * @return True if the guardian has already claimed their share
     */
-    function _hasClaimedGuardianShare(Period storage _period, address _guardian, address _token) internal view returns (bool) {
-        return _period.claimedGuardianShares[_guardian][_token];
+    function _hasGuardianClaimedShare(Period storage _period, address _guardian, address _token) internal view returns (bool) {
+        return _period.claimedGuardians[_guardian][_token];
     }
 
     /**
