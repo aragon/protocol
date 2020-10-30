@@ -13,7 +13,7 @@ const DisputeManager = artifacts.require('DisputeManagerMockForVoting')
 contract('CRVoting', ([_, someone, representative, governor]) => {
   let controller, voting, disputeManager
 
-  const wallet = web3.eth.accounts.create('erc3009')
+  const wallet = web3.eth.accounts.create('voting')
   const externalAccount = wallet.address
   const externalAccountPK = wallet.privateKey
 

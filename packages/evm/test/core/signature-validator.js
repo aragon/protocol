@@ -10,7 +10,7 @@ const SignaturesValidator = artifacts.require('SignaturesValidatorMock')
 
 contract('SignaturesValidator', ([_, sender, strange]) => {
   let validator
-  const wallet = web3.eth.accounts.create('erc3009')
+  const wallet = web3.eth.accounts.create('signatures')
   const externalAccount = wallet.address
   const externalAccountPK = wallet.privateKey
 

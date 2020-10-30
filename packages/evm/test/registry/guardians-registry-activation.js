@@ -13,7 +13,7 @@ const ERC20 = artifacts.require('ERC20Mock')
 contract('GuardiansRegistry', ([_, guardian, governor]) => {
   let controller, registry, disputeManager, ANT
 
-  const wallet = web3.eth.accounts.create('erc3009')
+  const wallet = web3.eth.accounts.create('registry')
   const externalAccount = wallet.address
   const externalAccountPK = wallet.privateKey
 
