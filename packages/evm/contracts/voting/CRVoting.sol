@@ -61,8 +61,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     * @param _voteId ID of the vote instance to be checked
     */
     modifier voteExists(uint256 _voteId) {
-        Vote storage vote = voteRecords[_voteId];
-        require(_existsVote(vote), ERROR_VOTE_DOES_NOT_EXIST);
+        require(_existsVote(_voteId), ERROR_VOTE_DOES_NOT_EXIST);
         _;
     }
 
@@ -96,11 +95,10 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     */
     function createVote(uint256 _voteId, uint8 _possibleOutcomes) external onlyCurrentDisputeManager {
         require(_possibleOutcomes >= MIN_POSSIBLE_OUTCOMES && _possibleOutcomes <= MAX_POSSIBLE_OUTCOMES, ERROR_INVALID_OUTCOMES_AMOUNT);
-
-        Vote storage vote = voteRecords[_voteId];
-        require(!_existsVote(vote), ERROR_VOTE_ALREADY_EXISTS);
+        require(!_existsVote(_voteId), ERROR_VOTE_ALREADY_EXISTS);
 
         // No need for SafeMath: we already checked the number of outcomes above
+        Vote storage vote = voteRecords[_voteId];
         vote.maxAllowedOutcome = OUTCOME_REFUSED + _possibleOutcomes;
         emit VotingCreated(_voteId, _possibleOutcomes);
     }
@@ -336,11 +334,12 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
 
     /**
     * @dev Internal function to check if a vote instance was already created
-    * @param _vote Vote instance to be checked
+    * @param _voteId ID of the vote instance to be checked
     * @return True if the given vote instance was already created, false otherwise
     */
-    function _existsVote(Vote storage _vote) internal view returns (bool) {
-        return _vote.maxAllowedOutcome != OUTCOME_MISSING;
+    function _existsVote(uint256 _voteId) internal view returns (bool) {
+        Vote storage vote = voteRecords[_voteId];
+        return vote.maxAllowedOutcome != OUTCOME_MISSING;
     }
 
     /**
