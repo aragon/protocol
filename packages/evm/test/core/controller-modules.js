@@ -1,4 +1,4 @@
-const { sha3 } = require('web3-utils')
+const { keccak256 } = require('web3-utils')
 const { ZERO_ADDRESS, ZERO_BYTES32, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertAmountOfEvents, assertEvent, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -267,7 +267,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
           ]
 
           for (const { name, getter } of modules) {
-            const id = sha3(name)
+            const id = keccak256(name)
 
             describe(getter, () => {
               context('when the module was not set yet', () => {

@@ -1,4 +1,4 @@
-const { sha3 } = require('web3-utils')
+const { keccak256 } = require('web3-utils')
 const { ZERO_ADDRESS, bn, bigExp, getEventAt, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -496,7 +496,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
                     })
 
                     it('changes for different term randomness', async () => {
-                      const termRandomness = sha3('0x1')
+                      const termRandomness = keccak256('0x1')
                       const expectedGuardians = await computeExpectedGuardians({ termRandomness: EMPTY_RANDOMNESS, batchRequestedGuardians, roundRequestedGuardians })
 
                       const { addresses } = await draft({ termRandomness, batchRequestedGuardians, roundRequestedGuardians })
