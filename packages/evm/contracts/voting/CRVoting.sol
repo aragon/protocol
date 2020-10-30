@@ -48,7 +48,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     // Vote records indexed by their ID
     mapping (uint256 => Vote) internal voteRecords;
     // Representatives indexed by principals
-    mapping (address => mapping (address => bool)) representatives;
+    mapping (address => mapping (address => bool)) internal representatives;
 
     event VotingCreated(uint256 indexed voteId, uint8 possibleOutcomes);
     event VoteCommitted(uint256 indexed voteId, address indexed voter, bytes32 commitment, address sender);
