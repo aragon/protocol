@@ -333,8 +333,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Internal function to make sure that the balance details of a certain period have been computed. This function assumes given ID and
-    *      period correspond to each other.
+    * @dev Internal function to make sure that the balance details of a certain period have been computed.
+    *      This function assumes given ID and period correspond to each other, and that the period is in the past.
     * @param _periodId Identification number of the period being ensured
     * @param _period Period being ensured
     * @return Protocol term ID used to fetch the total active balance of the guardians registry
@@ -414,9 +414,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @return Protocol term where the given period starts
     */
     function _getPeriodStartTermId(uint256 _periodId) internal view returns (uint64) {
-        // Periods are measured in Protocol terms. Since Protocol terms are represented in uint64, we are safe to use uint64 for period ids too.
-        // We are using SafeMath here because if any user calls `getPeriodBalanceDetails` for a huge period ID,
-        // it would overflow and therefore return wrong information.
+        // Periods are measured in Protocol terms
+        // Since Protocol terms are represented in uint64, we are safe to use uint64 for period ids too
         return START_TERM_ID.add(uint64(_periodId).mul(periodDuration));
     }
 
@@ -454,7 +453,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         }
 
         // Note that we already checked the guardian active balance is greater than zero.
-        // Then, the total active balance must be greater than zero.
+        // Then, the total active balance should be greater than zero.
         return _period.guardiansShares[_token].mul(_guardianActiveBalance) / _totalActiveBalance;
     }
 
