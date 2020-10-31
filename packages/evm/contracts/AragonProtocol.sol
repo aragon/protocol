@@ -6,7 +6,6 @@ import "./arbitration/IArbitrator.sol";
 import "./arbitration/IArbitrable.sol";
 import "./core/modules/Controller.sol";
 import "./disputes/IDisputeManager.sol";
-import "./payments/IPaymentsBook.sol";
 
 
 contract AragonProtocol is Controller, IArbitrator {
