@@ -97,7 +97,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         uint256 guardiansShare = _amount.sub(governorShare);
         period.guardiansShares[_token] = period.guardiansShares[_token].add(guardiansShare);
 
-        // Deposit tokens from sender to this contract
+        // Deposit funds from sender to this contract
+        // ETH or token amount checks are handled in `_deposit()`
         _deposit(msg.sender, _token, _amount);
         emit PaymentReceived(periodId, _payer, _token, _amount, msg.sender, _data);
     }
@@ -312,6 +313,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         if (_token == address(0)) {
             require(msg.value == _amount, ERROR_ETH_DEPOSIT_MISMATCH);
         } else {
+            require(msg.value == 0, ERROR_ETH_DEPOSIT_MISMATCH);
             require(IERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
         }
     }
@@ -324,7 +326,6 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     */
     function _transfer(address payable _to, address _token, uint256 _amount) internal {
         if (_token == address(0)) {
-            // solium-disable-next-line security/no-send
             require(_to.send(_amount), ERROR_ETH_TRANSFER_FAILED);
         } else {
             require(IERC20(_token).safeTransfer(_to, _amount), ERROR_TOKEN_TRANSFER_FAILED);

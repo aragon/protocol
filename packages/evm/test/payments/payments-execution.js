@@ -85,6 +85,15 @@ contract('PaymentBook', ([_, someone, payer]) => {
               assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED)
               assertEvent(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED, { expectedArgs: { periodId: currentPeriodId, payer: someone, sender: from, token, amount } })
             })
+
+            it('reverts when sending ETH', async () => {
+              const previousPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
+
+              await assertRevert(paymentsBook.pay(token.address, amount, someone, data, { from, value: 1 }), PAYMENTS_BOOK_ERRORS.ETH_DEPOSIT_MISMATCH)
+
+              const currentPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
+              assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance, 'payments book balances do not match')
+            })
           })
 
           context('when paying with ETH', () => {
