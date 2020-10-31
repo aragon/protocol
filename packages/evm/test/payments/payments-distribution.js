@@ -120,12 +120,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
           })
 
           it('transfers share of payments to the guardian', async () => {
-            assert.isFalse((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
+            assert.isTrue((await paymentsBook.canGuardianClaim(periodId, guardian, [token.address])).every(Boolean))
             const previousBalance = await token.balanceOf(guardian)
 
             await paymentsBook.claimGuardianShare(periodId, [token.address], { from: guardian })
 
-            assert.isTrue((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
+            assert.isFalse((await paymentsBook.canGuardianClaim(periodId, guardian, [token.address])).every(Boolean))
 
             const currentBalance = await token.balanceOf(guardian)
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
@@ -134,18 +134,18 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
           it("cannot claim a guardian's share twice", async () => {
             await paymentsBook.claimGuardianShare(periodId, [token.address], { from: guardian })
 
-            await assertRevert(paymentsBook.claimGuardianShare(periodId, [token.address], { from: guardian }), PAYMENTS_BOOK_ERRORS.GUARDIAN_SHARE_ALREADY_CLAIMED)
+            await assertRevert(paymentsBook.claimGuardianShare(periodId, [token.address], { from: guardian }), PAYMENTS_BOOK_ERRORS.GUARDIAN_CANNOT_CLAIM_SHARE)
           })
 
-          it("can claim a guardian's remaining share of payments", async () => {
+          it("can claim guardian's remaining share of payments", async () => {
             const tokens = [anotherToken.address, eth.address]
             const previousEthBalance = bn(await web3.eth.getBalance(guardian))
             const previousTokenBalance = await anotherToken.balanceOf(guardian)
 
             await paymentsBook.claimGuardianShare(periodId, tokens, { from: guardian })
 
-            const hasClaimed = await paymentsBook.hasGuardianClaimed(periodId, guardian, tokens)
-            assert.isTrue(hasClaimed.every(Boolean), 'guardian claim share status does not match')
+            const canClaim = await paymentsBook.canGuardianClaim(periodId, guardian, tokens)
+            assert.isFalse(canClaim.every(Boolean), 'guardian claim share status does not match')
 
             const currentTokenBalance = await anotherToken.balanceOf(guardian)
             assertBn(currentTokenBalance, previousTokenBalance.add(expectedGuardianAnotherTokenShare), 'guardian token balance does not match')

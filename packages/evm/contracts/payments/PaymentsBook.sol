@@ -28,7 +28,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
-    string private constant ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED = "PB_GUARDIAN_SHARE_ALREADY_CLAIMED";
+    string private constant ERROR_GUARDIAN_CANNOT_CLAIM_SHARE = "PB_GUARDIAN_CANNOT_CLAIM_SHARE";
     string private constant ERROR_OVERRATED_GOVERNOR_SHARE_PCT = "PB_OVERRATED_GOVERNOR_SHARE_PCT";
 
     // Term 0 is for guardians on-boarding
@@ -119,7 +119,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            require(!_hasGuardianClaimedShare(period, msg.sender, token), ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED);
+            require(_canGuardianClaim(period, msg.sender, token), ERROR_GUARDIAN_CANNOT_CLAIM_SHARE);
 
             uint256 amount = _getGuardianShare(period, token, guardianActiveBalance, totalActiveBalance);
             _claimGuardianShare(period, _periodId, msg.sender, token, amount);
@@ -230,13 +230,13 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Check if a given guardian has already claimed the owed share for a certain period
+    * @dev Check if a given guardian can claim the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _guardian Address of the guardian being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the guardian
+    * @return List of status to tell whether the guardian can claim the given list of tokens
     */
-    function hasGuardianClaimed(uint256 _periodId, address _guardian, address[] calldata _tokens)
+    function canGuardianClaim(uint256 _periodId, address _guardian, address[] calldata _tokens)
         external
         view
         returns (bool[] memory claimed)
@@ -245,7 +245,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
 
         claimed = new bool[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            claimed[i] = _hasGuardianClaimedShare(period, _guardian, _tokens[i]);
+            claimed[i] = _canGuardianClaim(period, _guardian, _tokens[i]);
         }
     }
 
@@ -281,8 +281,8 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     )
         internal
     {
+        _period.claimedGuardians[_guardian][_token] = true;
         if (_amount > 0) {
-            _period.claimedGuardians[_guardian][_token] = true;
             _transfer(_guardian, _token, _amount);
             emit GuardianShareClaimed(_periodId, _guardian, _token, _amount);
         }
@@ -459,14 +459,14 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @dev Check if a given guardian has already claimed the owed share for a certain period
+    * @dev Check if a given guardian can claim the owed share for a certain period
     * @param _period Period being queried
     * @param _guardian Address of the guardian being queried
     * @param _token Address of the token to be queried
-    * @return True if the guardian has already claimed their share
+    * @return True if the guardian can claim their share
     */
-    function _hasGuardianClaimedShare(Period storage _period, address _guardian, address _token) internal view returns (bool) {
-        return _period.claimedGuardians[_guardian][_token];
+    function _canGuardianClaim(Period storage _period, address _guardian, address _token) internal view returns (bool) {
+        return !_period.claimedGuardians[_guardian][_token];
     }
 
     /**
