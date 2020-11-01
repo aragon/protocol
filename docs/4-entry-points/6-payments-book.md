@@ -75,7 +75,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
     - **Period ID:** Period identification number
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that all the terms contained in the requested period have already been initialized for the Protocol
+    - Ensure that the last term included in the requested period has already started
 - **State transitions:**
     - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANT active balance in the `GuardiansRegistry` at that term for the requested period
 
