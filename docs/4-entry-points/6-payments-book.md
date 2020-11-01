@@ -46,14 +46,14 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 - **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
-    - Ensure that the sender has not already claimed their share for the requested token and period
+    - Ensure that the sender has not claimed their share for the requested token and period
     - Ensure that the sender's share is greater than zero for the requested token and period
 - **State transitions:**
     - Compute period balance checkpoint if it wasn't computed yet
     - Mark the sender's share as claimed for the requested period and token
     - Transfer the corresponding tokens to the sender, revert if the transfer wasn't successful
 
-### 4.6.4. Transfer governor share
+### 4.6.4. Claim governor share
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -61,9 +61,11 @@ Aragon Protocol does not explicitly require users to provide these extra payment
     - **Tokens:** List of addresses of the tokens being claimed
 - **Authentication:** Check the given period is a past period
 - **Pre-flight checks:**
+    - Ensure that the requested period has already ended
+    - Ensure that the governor has not claimed their share for the requested token and period
     - Ensure that the governor's share is greater than zero for the requested token and period
 - **State transitions:**
-    - Reset the total amount collected for the governor to zero for the given token and period
+    - Mark the governor's share as claimed for the requested period and token
     - Transfer the corresponding tokens to the config governor address, revert if the transfer wasn't successful
 
 ### 4.6.5. Ensure period balance details

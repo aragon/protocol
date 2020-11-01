@@ -24,9 +24,9 @@ The following events are emitted by the `PaymentsBook`:
     - **Token:** Address of the token used for the share
     - **Amount:** Amount of tokens the guardian received for the requested period
 
-#### 6.6.1.3. Governor share transferred
+#### 6.6.1.3. Governor share claimed
 
-- **Name:** `GovernorShareTransferred`
+- **Name:** `GovernorShareClaimed`
 - **Args:**
     - **Period ID:** Identification number of the payment period claimed by the governor
     - **Token:** Address of the token used for the share
@@ -95,7 +95,7 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Outputs:**
     - **Amounts:** List of token amounts collected for the guardian in the given period
 
-#### 6.6.2.7. Has guardian claimed
+#### 6.6.2.7. Can guardian claim
 
 - **Inputs:**
     - **Period ID:** Identification number of the period being queried
@@ -103,7 +103,7 @@ The following functions are state getters provided by the `PaymentsBook`:
     - **Tokens:** List of addresses of the tokens being queried
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Claimed:** List of results considering true if the guardian's share has already been claimed for the given period and token, false otherwise
+    - **Claimed:** List of results considering true if the guardian's share can be claimed for the given period and token, false otherwise
 
 #### 6.6.2.8. Governor share
 
@@ -113,3 +113,12 @@ The following functions are state getters provided by the `PaymentsBook`:
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Amounts:** List of token amount collected for the governor in the given period
+
+#### 6.6.2.9. Can governor claim
+
+- **Inputs:**
+    - **Period ID:** Identification number of the period being queried
+    - **Tokens:** List of addresses of the tokens being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Claimed:** List of results considering true if the governor's share can be claimed for the given period and token, false otherwise

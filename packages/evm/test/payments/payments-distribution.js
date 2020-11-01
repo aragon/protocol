@@ -169,7 +169,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
               const previousAnotherTokenBalance = await token.balanceOf(paymentsBook.address)
               const previousEthBalance = bn(await web3.eth.getBalance(paymentsBook.address))
 
-              const receipt = await paymentsBook.transferGovernorShare(periodId, tokens)
+              const receipt = await paymentsBook.claimGovernorShare(periodId, tokens)
 
               const currentTokenBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentTokenBalance, previousTokenBalance, 'payments book token balance does not match')
@@ -180,7 +180,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
               const currentEthBalance = bn(await web3.eth.getBalance(paymentsBook.address))
               assertBn(currentEthBalance, previousEthBalance, 'payments book eth balance does not match')
 
-              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { expectedAmount: 0 })
+              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { expectedAmount: 0 })
             })
           } else {
             it("estimates governor's share of payments correctly", async () => {
@@ -193,26 +193,20 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
 
             it("transfers governor's share of payments", async () => {
               const previousBalance = await token.balanceOf(governor)
+              assert.isTrue((await paymentsBook.canGovernorClaim(periodId, [token.address])).every(Boolean))
 
-              await paymentsBook.transferGovernorShare(periodId, [token.address])
+              await paymentsBook.claimGovernorShare(periodId, [token.address])
 
-              const share = await paymentsBook.getGovernorShare(periodId, [token.address])
-              assertBn(share[0], 0, 'governor token share does not match')
+              assert.isFalse((await paymentsBook.canGovernorClaim(periodId, [token.address])).every(Boolean))
 
               const currentBalance = await token.balanceOf(governor)
               assertBn(currentBalance, previousBalance.add(expectedGovernorTokenAmount), 'governor token balance does not match')
             })
 
-            it('ignores duplicated governor requests', async () => {
-              const previousBalance = await token.balanceOf(governor)
+            it('cannot claim the governor share twice', async () => {
+              await paymentsBook.claimGovernorShare(periodId, [token.address])
 
-              await paymentsBook.transferGovernorShare(periodId, [token.address])
-              const receipt = await paymentsBook.transferGovernorShare(periodId, [token.address])
-
-              const currentBalance = await token.balanceOf(governor)
-              assertBn(currentBalance, previousBalance.add(expectedGovernorTokenAmount), 'governor token balance does not match')
-
-              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { expectedAmount: 0 })
+              await assertRevert(paymentsBook.claimGovernorShare(periodId, [token.address]), PAYMENTS_BOOK_ERRORS.GOVERNOR_CANNOT_CLAIM_SHARE)
             })
 
             it("can claim governor's remaining share of payments", async () => {
@@ -220,11 +214,10 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
               const previousEthBalance = bn(await web3.eth.getBalance(governor))
               const previousTokenBalance = await anotherToken.balanceOf(governor)
 
-              await paymentsBook.transferGovernorShare(periodId, tokens)
+              await paymentsBook.claimGovernorShare(periodId, tokens)
 
-              const otherShares = await paymentsBook.getGovernorShare(periodId, tokens)
-              assertBn(otherShares[0], 0, 'governor another token share does not match')
-              assertBn(otherShares[1], 0, 'governor eth share does not match')
+              const canClaim = await paymentsBook.canGovernorClaim(periodId, tokens)
+              assert.isFalse(canClaim.every(Boolean), 'guardian claim share status does not match')
 
               const currentTokenBalance = await anotherToken.balanceOf(governor)
               assertBn(currentTokenBalance, previousTokenBalance.add(expectedGovernorAnotherTokenAmount), 'guardian token balance does not match')
@@ -234,12 +227,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             })
 
             it("emits an event when requesting governor's share", async () => {
-              const receipt = await paymentsBook.transferGovernorShare(periodId, tokens)
+              const receipt = await paymentsBook.claimGovernorShare(periodId, tokens)
 
-              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { expectedAmount: 3 })
-              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { index: 0, expectedArgs: { periodId, token: tokens[0], amount: expectedGovernorTokenAmount } })
-              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { index: 1, expectedArgs: { periodId, token: tokens[1], amount: expectedGovernorAnotherTokenAmount } })
-              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { index: 2, expectedArgs: { periodId, token: tokens[2], amount: expectedGovernorEthAmount } })
+              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { expectedAmount: 3 })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 0, expectedArgs: { periodId, token: tokens[0], amount: expectedGovernorTokenAmount } })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 1, expectedArgs: { periodId, token: tokens[1], amount: expectedGovernorAnotherTokenAmount } })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 2, expectedArgs: { periodId, token: tokens[2], amount: expectedGovernorEthAmount } })
             })
           }
         }
