@@ -57,7 +57,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
 
               const logs = decodeEvents(receipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
               assertAmountOfEvents({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
-              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, guardiansNumber: firstRoundGuardiansNumber, metadata } })
+              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, metadata } })
 
               const { subject, possibleRulings: rulings, state, finalRuling, createTermId } = await protocolHelper.getDispute(0)
               assert.equal(subject, arbitrable.address, 'dispute subject does not match')
