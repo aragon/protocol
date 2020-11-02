@@ -15,8 +15,9 @@ interface ITreasury {
     /**
     * @dev Withdraw a certain amount of tokens
     * @param _token ERC20 token to be withdrawn
+    * @param _from Address withdrawing the tokens from
     * @param _to Address of the recipient that will receive the tokens
     * @param _amount Amount of tokens to be withdrawn from the sender
     */
-    function withdraw(IERC20 _token, address _to, uint256 _amount) external;
+    function withdraw(IERC20 _token, address _from, address _to, uint256 _amount) external;
 }

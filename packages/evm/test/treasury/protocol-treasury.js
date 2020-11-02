@@ -2,8 +2,10 @@ const { ZERO_ADDRESS, MAX_UINT256, bn, bigExp } = require('@aragon/contract-help
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
+const { getPKForAccount } = require('../helpers/utils/accounts')
+const { encodeAuthorization } = require('../helpers/utils/modules')
 const { TREASURY_EVENTS } = require('../helpers/utils/events')
-const { TREASURY_ERRORS, CONTROLLED_ERRORS, MATH_ERRORS } = require('../helpers/utils/errors')
+const { TREASURY_ERRORS, SIGNATURES_VALIDATOR_ERRORS, CONTROLLED_ERRORS, MATH_ERRORS } = require('../helpers/utils/errors')
 
 const ProtocolTreasury = artifacts.require('ProtocolTreasury')
 const ERC20 = artifacts.require('ERC20Mock')
@@ -162,194 +164,224 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone]) => {
       ANT = await ERC20.new('AN Token', 'ANT', 18)
     })
 
-    context('when the sender has some balance', () => {
-      const from = holder
+    const withdraw = async (token, recipient, amount, sender, authorize = false) => {
+      let calldata = treasury.contract.methods.withdraw(token.address, holder, recipient, amount.toString()).encodeABI()
+      if (authorize) calldata = await encodeAuthorization(treasury, holder, getPKForAccount(holder), calldata, sender)
+      return treasury.sendTransaction({ from: sender, data: calldata })
+    }
 
-      beforeEach('deposit some tokens', async () => {
-        await treasury.assign(ANT.address, holder, bigExp(100, 18), { from: disputeManager })
-        await treasury.assign(DAI.address, holder, bigExp(200, 18), { from: disputeManager })
+    const itHandlesWithdrawsProperly = (sender, authorize = false) => {
+      context('when the holder has some balance', () => {
+        beforeEach('deposit some tokens', async () => {
+          await treasury.assign(ANT.address, holder, bigExp(100, 18), { from: disputeManager })
+          await treasury.assign(DAI.address, holder, bigExp(200, 18), { from: disputeManager })
+        })
+
+        context('when the given recipient is not the zero address', () => {
+          const recipient = holder
+
+          context('when the given amount is zero', () => {
+            const amount = bn(0)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
+            })
+          })
+
+          context('when the given amount is lower than the balance of the account', () => {
+            const amount = bigExp(10, 18)
+
+            context('when the treasury contract has enough tokens', () => {
+              beforeEach('mint tokens', async () => {
+                await DAI.generateTokens(treasury.address, amount)
+              })
+
+              it('subtracts the requested amount from the previous token balance', async () => {
+                const previousBalance = await treasury.balanceOf(DAI.address, recipient)
+
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const currentBalance = await treasury.balanceOf(DAI.address, recipient)
+                assertBn(currentBalance, previousBalance.sub(amount), 'account balance do not match')
+              })
+
+              it('transfers the requested amount to the recipient', async () => {
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const balance = await DAI.balanceOf(recipient)
+                assertBn(balance, amount, 'token balance do not match')
+              })
+
+              it('emits an event', async () => {
+                const receipt = await withdraw(DAI, recipient, amount, sender, authorize)
+
+                assertAmountOfEvents(receipt, TREASURY_EVENTS.WITHDRAW)
+                assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from: holder, to: recipient, token: DAI, amount } })
+              })
+
+              it('does not affect other token balances', async () => {
+                const previousANTBalance = await treasury.balanceOf(ANT.address, recipient)
+
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const currentANTBalance = await treasury.balanceOf(ANT.address, recipient)
+                assertBn(currentANTBalance, previousANTBalance, 'account balance do not match')
+              })
+            })
+
+            context('when the treasury contract does not have enough tokens', () => {
+              it('reverts', async () => {
+                await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_FAILED)
+              })
+            })
+          })
+
+          context('when the given amount is equal to the balance of the account', () => {
+            const amount = bigExp(200, 18)
+
+            context('when the treasury contract has enough tokens', () => {
+              beforeEach('mint tokens', async () => {
+                await DAI.generateTokens(treasury.address, amount)
+              })
+
+              it('reduces the account balance to 0', async () => {
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const currentBalance = await treasury.balanceOf(DAI.address, recipient)
+                assertBn(currentBalance, 0, 'account balance do not match')
+              })
+
+              it('transfers the requested amount to the recipient', async () => {
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const balance = await DAI.balanceOf(recipient)
+                assertBn(balance, amount, 'token balance do not match')
+              })
+
+              it('emits an event', async () => {
+                const receipt = await withdraw(DAI, recipient, amount, sender, authorize)
+
+                assertAmountOfEvents(receipt, TREASURY_EVENTS.WITHDRAW)
+                assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from: holder, to: recipient, token: DAI, amount } })
+              })
+
+              it('does not affect other token balances', async () => {
+                const previousANTBalance = await treasury.balanceOf(ANT.address, recipient)
+
+                await withdraw(DAI, recipient, amount, sender, authorize)
+
+                const currentANTBalance = await treasury.balanceOf(ANT.address, recipient)
+                assertBn(currentANTBalance, previousANTBalance, 'account balance do not match')
+              })
+            })
+
+            context('when the treasury contract does not have enough tokens', () => {
+              it('reverts', async () => {
+                await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_FAILED)
+              })
+            })
+          })
+
+          context('when the given amount is grater than the balance of the account', () => {
+            const amount = bigExp(201, 18)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
+            })
+          })
+        })
+
+        context('when the given recipient is the zero address', () => {
+          const recipient = ZERO_ADDRESS
+
+          context('when the given amount is zero', () => {
+            const amount = bn(0)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
+            })
+          })
+
+          context('when the given amount is lower than the balance of the account', () => {
+            const amount = bigExp(10, 18)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_FAILED)
+            })
+          })
+
+          context('when the given amount is equal to the balance of the account', () => {
+            const amount = bigExp(200, 18)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_FAILED)
+            })
+          })
+
+          context('when the given amount is grater than the balance of the account', () => {
+            const amount = bigExp(201, 18)
+
+            it('reverts', async () => {
+              await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
+            })
+          })
+        })
       })
 
-      context('when the given recipient is not the zero address', () => {
+      context('when the sender does not have balance', () => {
         const recipient = holder
+        const amount = bigExp(10, 18)
 
-        context('when the given amount is zero', () => {
-          const amount = bn(0)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
-          })
-        })
-
-        context('when the given amount is lower than the balance of the account', () => {
-          const amount = bigExp(10, 18)
-
-          context('when the treasury contract has enough tokens', () => {
-            beforeEach('mint tokens', async () => {
-              await DAI.generateTokens(treasury.address, amount)
-            })
-
-            it('subtracts the requested amount from the previous token balance', async () => {
-              const previousBalance = await treasury.balanceOf(DAI.address, recipient)
-
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const currentBalance = await treasury.balanceOf(DAI.address, recipient)
-              assertBn(currentBalance, previousBalance.sub(amount), 'account balance do not match')
-            })
-
-            it('transfers the requested amount to the recipient', async () => {
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const balance = await DAI.balanceOf(recipient)
-              assertBn(balance, amount, 'token balance do not match')
-            })
-
-            it('emits an event', async () => {
-              const receipt = await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              assertAmountOfEvents(receipt, TREASURY_EVENTS.WITHDRAW)
-              assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from, to: recipient, token: DAI.address, amount } })
-            })
-
-            it('does not affect other token balances', async () => {
-              const previousANTBalance = await treasury.balanceOf(ANT.address, recipient)
-
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const currentANTBalance = await treasury.balanceOf(ANT.address, recipient)
-              assertBn(currentANTBalance, previousANTBalance, 'account balance do not match')
-            })
-          })
-
-          context('when the treasury contract does not have enough tokens', () => {
-            it('reverts', async () => {
-              await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_FAILED)
-            })
-          })
-        })
-
-        context('when the given amount is equal to the balance of the account', () => {
-          const amount = bigExp(200, 18)
-
-          context('when the treasury contract has enough tokens', () => {
-            beforeEach('mint tokens', async () => {
-              await DAI.generateTokens(treasury.address, amount)
-            })
-
-            it('reduces the account balance to 0', async () => {
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const currentBalance = await treasury.balanceOf(DAI.address, recipient)
-              assertBn(currentBalance, 0, 'account balance do not match')
-            })
-
-            it('transfers the requested amount to the recipient', async () => {
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const balance = await DAI.balanceOf(recipient)
-              assertBn(balance, amount, 'token balance do not match')
-            })
-
-            it('emits an event', async () => {
-              const receipt = await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              assertAmountOfEvents(receipt, TREASURY_EVENTS.WITHDRAW)
-              assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from, to: recipient, token: DAI.address, amount } })
-            })
-
-            it('does not affect other token balances', async () => {
-              const previousANTBalance = await treasury.balanceOf(ANT.address, recipient)
-
-              await treasury.withdraw(DAI.address, recipient, amount, { from })
-
-              const currentANTBalance = await treasury.balanceOf(ANT.address, recipient)
-              assertBn(currentANTBalance, previousANTBalance, 'account balance do not match')
-            })
-          })
-
-          context('when the treasury contract does not have enough tokens', () => {
-            it('reverts', async () => {
-              await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_FAILED)
-            })
-          })
-        })
-
-        context('when the given amount is grater than the balance of the account', () => {
-          const amount = bigExp(201, 18)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
-          })
+        it('reverts', async () => {
+          await assertRevert(withdraw(DAI, recipient, amount, sender, authorize), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
         })
       })
+    }
 
-      context('when the given recipient is the zero address', () => {
-        const recipient = ZERO_ADDRESS
+    context('when the sender is the holder', () => {
+      const sender = holder
 
-        context('when the given amount is zero', () => {
-          const amount = bn(0)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
-          })
-        })
-
-        context('when the given amount is lower than the balance of the account', () => {
-          const amount = bigExp(10, 18)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_FAILED)
-          })
-        })
-
-        context('when the given amount is equal to the balance of the account', () => {
-          const amount = bigExp(200, 18)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_FAILED)
-          })
-        })
-
-        context('when the given amount is grater than the balance of the account', () => {
-          const amount = bigExp(201, 18)
-
-          it('reverts', async () => {
-            await assertRevert(treasury.withdraw(DAI.address, recipient, amount, { from }), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
-          })
-        })
-      })
+      itHandlesWithdrawsProperly(sender)
     })
 
-    context('when the sender does not have balance', () => {
-      const from = holder
+    context('when the sender is not the holder', () => {
+      const sender = someone
 
-      it('reverts', async () => {
-        await assertRevert(treasury.withdraw(DAI.address, holder, bigExp(10, 18), { from }), TREASURY_ERRORS.WITHDRAW_INVALID_AMOUNT)
+      context('when the sender was authorized', () => {
+        const authorized = true
+
+        itHandlesWithdrawsProperly(sender, authorized)
+      })
+
+      context('when the sender was not authorized', () => {
+        const authorized = false
+
+        it('reverts', async () => {
+          await assertRevert(withdraw(DAI, holder, bigExp(1, 18), sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
+        })
       })
     })
   })
 
   describe('withdrawAll', () => {
-    const from = someone
-    const recipient = holder
-
     beforeEach('create tokens', async () => {
       DAI = await ERC20.new('DAI Token', 'DAI', 18)
       ANT = await ERC20.new('AN Token', 'ANT', 18)
     })
 
-    context('when the holder accepts automatic withdraws', () => {
-      beforeEach('accept automatic withdraws', async () => {
-        await controller.setAutomaticWithdrawals(true, { from: recipient })
-      })
+    const withdrawAll = async (token, sender, authorize = false) => {
+      let calldata = treasury.contract.methods.withdrawAll(token.address, holder).encodeABI()
+      if (authorize) calldata = await encodeAuthorization(treasury, holder, getPKForAccount(holder), calldata, sender)
+      return treasury.sendTransaction({ from: sender, data: calldata })
+    }
 
+    const itHandlesWithdrawsProperly = (sender, authorize = false) => {
       context('when the recipient has some assigned tokens', () => {
         const balance = bigExp(200, 18)
 
         beforeEach('deposit some tokens to the recipient', async () => {
-          await treasury.assign(DAI.address, recipient, balance, { from: disputeManager })
-          await treasury.assign(ANT.address, recipient, balance, { from: disputeManager })
+          await treasury.assign(DAI.address, holder, balance, { from: disputeManager })
+          await treasury.assign(ANT.address, holder, balance, { from: disputeManager })
         })
 
         context('when the treasury contract has enough tokens', () => {
@@ -358,55 +390,101 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone]) => {
           })
 
           it('subtracts the total balance from the recipient', async () => {
-            await treasury.withdrawAll(DAI.address, recipient, { from })
+            await withdrawAll(DAI, sender, authorize)
 
-            const currentBalance = await treasury.balanceOf(DAI.address, recipient)
+            const currentBalance = await treasury.balanceOf(DAI.address, holder)
             assertBn(currentBalance, 0, 'account balance do not match')
           })
 
           it('transfers the total balance to the recipient', async () => {
-            await treasury.withdrawAll(DAI.address, recipient, { from })
+            await withdrawAll(DAI, sender, authorize)
 
-            const currentBalance = await DAI.balanceOf(recipient)
+            const currentBalance = await DAI.balanceOf(holder)
             assertBn(currentBalance, balance, 'token balance do not match')
           })
 
           it('emits an event', async () => {
-            const receipt = await treasury.withdrawAll(DAI.address, recipient, { from })
+            const receipt = await withdrawAll(DAI, sender, authorize)
 
             assertAmountOfEvents(receipt, TREASURY_EVENTS.WITHDRAW)
-            assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from: recipient, to: recipient, token: DAI.address, amount: balance } })
+            assertEvent(receipt, TREASURY_EVENTS.WITHDRAW, { expectedArgs: { from: holder, to: holder, token: DAI.address, amount: balance } })
           })
 
           it('does not affect other token balances', async () => {
-            const previousANTBalance = await treasury.balanceOf(ANT.address, recipient)
+            const previousANTBalance = await treasury.balanceOf(ANT.address, holder)
 
-            await treasury.withdrawAll(DAI.address, recipient, { from })
+            await withdrawAll(DAI, sender, authorize)
 
-            const currentANTBalance = await treasury.balanceOf(ANT.address, recipient)
+            const currentANTBalance = await treasury.balanceOf(ANT.address, holder)
             assertBn(currentANTBalance, previousANTBalance, 'account balance do not match')
           })
         })
 
         context('when the treasury contract does not have enough tokens', () => {
           it('reverts', async () => {
-            await assertRevert(treasury.withdrawAll(DAI.address, recipient, { from }), TREASURY_ERRORS.WITHDRAW_FAILED)
+            await assertRevert(withdrawAll(DAI, sender, authorize), TREASURY_ERRORS.WITHDRAW_FAILED)
           })
         })
       })
 
       context('when the recipient does not tokens assigned', () => {
-        const from = holder
-
         it('reverts', async () => {
-          await assertRevert(treasury.withdrawAll(DAI.address, recipient, { from }), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
+          await assertRevert(withdrawAll(DAI, sender, authorize), TREASURY_ERRORS.WITHDRAW_AMOUNT_ZERO)
+        })
+      })
+    }
+
+    context('when the holder accepts automatic withdraws', () => {
+      beforeEach('accept automatic withdraws', async () => {
+        await controller.setAutomaticWithdrawals(true, { from: holder })
+      })
+
+      context('when the sender is the holder', () => {
+        const sender = holder
+
+        itHandlesWithdrawsProperly(sender)
+      })
+
+      context('when the sender is not the holder', () => {
+        const sender = someone
+
+        context('when the sender was authorized', () => {
+          const authorized = true
+
+          itHandlesWithdrawsProperly(sender, authorized)
+        })
+
+        context('when the sender was not authorized', () => {
+          const authorized = false
+
+          itHandlesWithdrawsProperly(sender, authorized)
         })
       })
     })
 
     context('when the holder does not accept automatic withdraws', () => {
-      it('reverts', async () => {
-        await assertRevert(treasury.withdrawAll(DAI.address, recipient, { from }), TREASURY_ERRORS.WITHDRAWALS_DISALLOWED)
+      context('when the sender is the holder', () => {
+        const sender = holder
+
+        itHandlesWithdrawsProperly(sender)
+      })
+
+      context('when the sender is not the holder', () => {
+        const sender = someone
+
+        context('when the sender was authorized', () => {
+          const authorized = true
+
+          itHandlesWithdrawsProperly(sender, authorized)
+        })
+
+        context('when the sender was not authorized', () => {
+          const authorized = false
+
+          it('reverts', async () => {
+            await assertRevert(withdrawAll(DAI, sender, authorized), TREASURY_ERRORS.WITHDRAWALS_DISALLOWED)
+          })
+        })
       })
     })
   })
