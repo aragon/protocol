@@ -147,12 +147,12 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
     context('when there is no extra calldata given', () => {
       const extraCalldata = ''
 
-      context('when there sender and the user are the same', () => {
+      context('when the sender and the user are the same', () => {
         setUser(sender)
         itAllowsTheSender(extraCalldata)
       })
 
-      context('when there sender and the user are different accounts', () => {
+      context('when the sender and the user are different accounts', () => {
         setUser(externalAccount)
         itReverts(extraCalldata)
       })
