@@ -6,10 +6,10 @@ import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
 import "../core/modules/Controlled.sol";
 import "../core/modules/Controller.sol";
-import "../core/modules/SignaturesValidator.sol";
+import "../core/modules/ControlledRelayable.sol";
 
 
-contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
+contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
     using SafeMath for uint256;
 
     string private constant ERROR_VOTE_ALREADY_EXISTS = "CRV_VOTE_ALREADY_EXISTS";
@@ -78,7 +78,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     * @param _representative Address of the representative to be changed
     * @param _allowed Whether the representative is allowed
     */
-    function updateRepresentative(address _voter, address _representative, bool _allowed) external authenticate(_voter) {
+    function updateRepresentative(address _voter, address _representative, bool _allowed) external authenticateSender(_voter) {
         representatives[_voter][_representative] = _allowed;
         emit RepresentativeChanged(_voter, _representative, _allowed);
     }
@@ -106,7 +106,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     * @param _commitment Hashed outcome to be stored for future reveal
     */
     function commit(uint256 _voteId, address _voter, bytes32 _commitment) external voteExists(_voteId) {
-        bool isSenderAllowed = _isRepresentativeOf(_voter, msg.sender) || _isSignatureValid(_voter);
+        bool isSenderAllowed = _isRepresentativeOf(_voter, msg.sender) || _isSenderAllowed(_voter);
         require(isSenderAllowed, ERROR_SENDER_NOT_REPRESENTATIVE);
 
         CastVote storage castVote = voteRecords[_voteId].votes[_voter];

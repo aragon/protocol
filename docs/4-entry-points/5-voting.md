@@ -21,12 +21,9 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
     - **Voter:** Address of the voter updating the representative for
     - **Representatives:** Address of the representative to be changed
     - **Allowed:** Whether the representative is allowed or not
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** Open
-- **Pre-flight checks:** 
-    - Validate signature if given
+- **Authentication:** Open. Implicitly voters on their behalf or a whitelisted relayer.
+- **Pre-flight checks:** None
 - **State transitions:**
-    - Update next nonce of the voter if a signature was given
     - Update the representative status for the given voter
 
 ### 4.5.3. Create
@@ -47,16 +44,13 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
     - **Vote ID:** Vote identification number
     - **Voter:** Address of the voter committing the vote for
     - **Commitment:** Hashed outcome to be stored for future reveal
-    - **Authorization:** Optional authorization granted by the voter in case of a third party sender
-- **Authentication:** Only the voter or an external account allowed by signature. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function.
+- **Authentication:** Only the voter or a whitelisted relayer. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function.
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure a vote object with that ID exists
     - Ensure that the sender was drafted for the corresponding dispute's adjudication round
     - Ensure that the sender has not committed a vote before
     - Ensure that votes can still be committed for the adjudication round
 - **State transitions:**
-    - Update next nonce of the voter if a signature was given
     - Create a cast vote object for the sender
 
 ### 4.5.4. Leak
