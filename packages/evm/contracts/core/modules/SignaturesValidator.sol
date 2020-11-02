@@ -12,7 +12,7 @@ contract SignaturesValidator is IERC712, TimeHelpers {
     // bytes32 private constant EIP712DOMAIN_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
     bytes32 internal constant EIP712DOMAIN_HASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
     // bytes32 private constant NAME_HASH = keccak256("Aragon Protocol")
-    bytes32 internal constant NAME_HASH = 0xd29d26249bb0c8fe08bcf70d00b6f5b6b54b653b5a7e4157b490095bbb233349;
+    bytes32 internal constant NAME_HASH = 0xa0d9e49a5b2f7cb3ade18ca4d0e001fa655c6d026766aba753a8b0f12201bc51;
     // bytes32 private constant VERSION_HASH = keccak256("1")
     bytes32 internal constant VERSION_HASH = 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
 
@@ -22,10 +22,6 @@ contract SignaturesValidator is IERC712, TimeHelpers {
     }
 
     mapping (address => uint256) internal nextNonce;
-
-    constructor () public {
-        // solium-disable-previous-line no-empty-blocks
-    }
 
     /**
     * @dev Get next nonce for an address
