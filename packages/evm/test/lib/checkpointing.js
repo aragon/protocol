@@ -22,8 +22,8 @@ contract('Checkpointing', () => {
     context('when the given value is can be represented by 192 bits', () => {
       const value = 100
 
-      context('when there was no value registered yet', async () => {
-        context('when the given time is zero', async () => {
+      context('when there was no value registered yet', () => {
+        context('when the given time is zero', () => {
           const time = 0
 
           it('adds the new value', async () => {
@@ -33,7 +33,7 @@ contract('Checkpointing', () => {
           })
         })
 
-        context('when the given time is greater than zero', async () => {
+        context('when the given time is greater than zero', () => {
           const time = 1
 
           it('adds the new value', async () => {
@@ -44,14 +44,14 @@ contract('Checkpointing', () => {
         })
       })
 
-      context('when there were some values already registered', async () => {
+      context('when there were some values already registered', () => {
         beforeEach('add some values', async () => {
           await checkpointing.add(30, 1)
           await checkpointing.add(50, 2)
           await checkpointing.add(90, 3)
         })
 
-        context('when the given time is previous to the latest registered value', async () => {
+        context('when the given time is previous to the latest registered value', () => {
           const time = 40
 
           it('reverts', async () => {
@@ -59,7 +59,7 @@ contract('Checkpointing', () => {
           })
         })
 
-        context('when the given time is equal to the latest registered value', async () => {
+        context('when the given time is equal to the latest registered value', () => {
           const time = 90
 
           it('updates the already registered value', async () => {
@@ -70,7 +70,7 @@ contract('Checkpointing', () => {
           })
         })
 
-        context('when the given time is after the latest registered value', async () => {
+        context('when the given time is after the latest registered value', () => {
           const time = 95
 
           it('adds the new last value', async () => {

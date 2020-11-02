@@ -71,7 +71,7 @@ contract('PaymentsBook', ([_, governor, someone]) => {
       paymentsBook = protocolHelper.paymentsBook
     })
 
-    context('when the sender is the governor', async () => {
+    context('when the sender is the governor', () => {
       const from = governor
 
       const itUpdatesTheGovernorSharePct = newGovernorSharePct => {
@@ -91,19 +91,19 @@ contract('PaymentsBook', ([_, governor, someone]) => {
         })
       }
 
-      context('when the given value is zero', async () => {
+      context('when the given value is zero', () => {
         const newGovernorSharePct = bn(0)
 
         itUpdatesTheGovernorSharePct(newGovernorSharePct)
       })
 
-      context('when the given value is not greater than 10,000', async () => {
+      context('when the given value is not greater than 10,000', () => {
         const newGovernorSharePct = bn(500)
 
         itUpdatesTheGovernorSharePct(newGovernorSharePct)
       })
 
-      context('when the given value is greater than 10,000', async () => {
+      context('when the given value is greater than 10,000', () => {
         const newGovernorSharePct = bn(10001)
 
         it('reverts', async () => {
@@ -112,7 +112,7 @@ contract('PaymentsBook', ([_, governor, someone]) => {
       })
     })
 
-    context('when the sender is not the governor', async () => {
+    context('when the sender is not the governor', () => {
       const from = someone
 
       it('reverts', async () => {

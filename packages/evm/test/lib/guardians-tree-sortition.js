@@ -41,7 +41,7 @@ contract('GuardiansTreeSortition', () => {
         await Promise.all(balances.map(b => tree.insert(termId, b)))
       })
 
-      context('when querying a first batch', async () => {
+      context('when querying a first batch', () => {
         const selectedGuardians = 0
         const batchRequestedGuardians = 2
 
@@ -55,7 +55,7 @@ contract('GuardiansTreeSortition', () => {
         })
       })
 
-      context('when querying a middle batch', async () => {
+      context('when querying a middle batch', () => {
         const selectedGuardians = 2
         const batchRequestedGuardians = 2
 
@@ -69,7 +69,7 @@ contract('GuardiansTreeSortition', () => {
         })
       })
 
-      context('when querying a final batch', async () => {
+      context('when querying a final batch', () => {
         const selectedGuardians = 4
         const batchRequestedGuardians = 1
 

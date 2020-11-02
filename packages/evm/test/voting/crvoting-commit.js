@@ -192,23 +192,23 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
                 })
               }
 
-              context('when the given commitment is equal to the missing outcome', async () => {
+              context('when the given commitment is equal to the missing outcome', () => {
                 itHandlesCommittedVotesFor(OUTCOMES.MISSING)
               })
 
-              context('when the given commitment is equal to the leaked outcome', async () => {
+              context('when the given commitment is equal to the leaked outcome', () => {
                 itHandlesCommittedVotesFor(OUTCOMES.LEAKED)
               })
 
-              context('when the given commitment is equal to the refused outcome', async () => {
+              context('when the given commitment is equal to the refused outcome', () => {
                 itHandlesCommittedVotesFor(OUTCOMES.REFUSED)
               })
 
-              context('when the given commitment is a valid outcome', async () => {
+              context('when the given commitment is a valid outcome', () => {
                 itHandlesCommittedVotesFor(OUTCOMES.LOW)
               })
 
-              context('when the given commitment is an out-of-bounds outcome', async () => {
+              context('when the given commitment is an out-of-bounds outcome', () => {
                 itHandlesCommittedVotesFor(OUTCOMES.HIGH.add(bn(1)))
               })
             })
