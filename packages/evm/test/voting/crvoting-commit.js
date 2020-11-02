@@ -31,17 +31,73 @@ contract('CRVoting', ([_, someone, representative, governor]) => {
   })
 
   describe('setRepresentatives', () => {
-    context('when the representative was not set', () => {
+    const itAllowsTheRepresentative = () => {
+      it('allows the representative', async () => {
+        await voting.setRepresentatives([representative], [true], { from: someone })
 
+        assert.isTrue(await voting.isRepresentativeOf(someone, representative), 'representative is not allowed')
+      })
+
+      it('emits an event', async () => {
+        const receipt = await voting.setRepresentatives([representative], [true], { from: someone })
+
+        assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
+        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter: someone, representative, allowed: true } })
+      })
+    }
+
+    const itDisallowsTheRepresentative = () => {
+      it('disallows the representative', async () => {
+        await voting.setRepresentatives([representative], [false], { from: someone })
+
+        assert.isFalse(await voting.isRepresentativeOf(someone, representative), 'representative is not allowed')
+      })
+
+      it('emits an event', async () => {
+        const receipt = await voting.setRepresentatives([representative], [false], { from: someone })
+
+        assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
+        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter: someone, representative, allowed: false } })
+      })
+    }
+
+    context('when the representative was not set', () => {
+      context('when the representative is allowed', () => {
+        itAllowsTheRepresentative()
+      })
+
+      context('when the representative is disallowed', () => {
+        itDisallowsTheRepresentative()
+      })
     })
 
     context('when the representative was already set', () => {
       context('when the representative was allowed', () => {
+        beforeEach('set representative', async () => {
+          await voting.setRepresentatives([representative], [true])
+        })
 
+        context('when the representative is allowed', () => {
+          itAllowsTheRepresentative()
+        })
+
+        context('when the representative is disallowed', () => {
+          itDisallowsTheRepresentative()
+        })
       })
 
       context('when the representative was not allowed', () => {
-        // assert.isTrue(await voting.isRepresentativeOf(voter, representative), 'representative is not allowed')
+        beforeEach('set representative', async () => {
+          await voting.setRepresentatives([representative], [false])
+        })
+
+        context('when the representative is allowed', () => {
+          itAllowsTheRepresentative()
+        })
+
+        context('when the representative is disallowed', () => {
+          itDisallowsTheRepresentative()
+        })
       })
     })
   })

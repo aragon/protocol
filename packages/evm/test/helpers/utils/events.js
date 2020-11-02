@@ -24,7 +24,8 @@ const VOTING_EVENTS = {
   VOTING_CREATED: 'VotingCreated',
   VOTE_COMMITTED: 'VoteCommitted',
   VOTE_REVEALED: 'VoteRevealed',
-  VOTE_LEAKED: 'VoteLeaked'
+  VOTE_LEAKED: 'VoteLeaked',
+  REPRESENTATIVE_CHANGED: 'RepresentativeChanged'
 }
 
 const REGISTRY_EVENTS = {
