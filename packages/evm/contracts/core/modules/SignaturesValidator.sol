@@ -1,10 +1,9 @@
 pragma solidity ^0.5.17;
 
 import "../../lib/utils/TimeHelpers.sol";
-import "../../lib/standards/IERC712.sol";
 
 
-contract SignaturesValidator is IERC712, TimeHelpers {
+contract SignaturesValidator is TimeHelpers {
     string private constant ERROR_INVALID_SIGNATURE = "SV_INVALID_SIGNATURE";
 
     // deadline + [r,s,v] signature
