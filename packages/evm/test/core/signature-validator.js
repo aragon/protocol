@@ -21,10 +21,10 @@ contract('SignaturesValidator', ([_, sender, strange]) => {
 
   const encodeSignature = (calldata, deadline, { v, r, s }) => {
     const encodedDeadline = padLeft(toHex(deadline).slice(2), 64)
-    const encodedV = padLeft(toHex(v).slice(2), 64)
+    const encodedV = toHex(v).slice(2)
     const encodedR = r.slice(2)
     const encodedS = s.slice(2)
-    return `${calldata}${encodedDeadline}${encodedV}${encodedR}${encodedS}`
+    return `${calldata}${encodedDeadline}${encodedR}${encodedS}${encodedV}`
   }
 
   before('deploy validator', async () => {

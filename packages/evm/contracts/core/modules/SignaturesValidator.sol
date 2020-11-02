@@ -7,8 +7,8 @@ import "../../lib/standards/IERC712.sol";
 contract SignaturesValidator is IERC712, TimeHelpers {
     string private constant ERROR_INVALID_SIGNATURE = "SV_INVALID_SIGNATURE";
 
-    // [v,r,s] signature + deadline
-    uint256 internal constant EXTRA_CALLDATA_LENGTH = 32 * 4;
+    // deadline + [r,s,v] signature
+    uint256 internal constant EXTRA_CALLDATA_LENGTH = 32 * 3 + 1;
     // bytes32 private constant EIP712DOMAIN_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
     bytes32 internal constant EIP712DOMAIN_HASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
     // bytes32 private constant NAME_HASH = keccak256("Aragon Protocol")
@@ -59,12 +59,11 @@ contract SignaturesValidator is IERC712, TimeHelpers {
             return true;
         }
 
-        uint256 deadline = _deadline();
-        (uint8 v, bytes32 r, bytes32 s) = _signature();
-        bytes32 encodeData = keccak256(abi.encode(_calldata(), msg.sender, _nonce, deadline));
+        (bytes memory data, uint256 deadline, bytes32 r, bytes32 s, uint8 v) = _decodeCalldata();
+        bytes32 encodeData = keccak256(abi.encode(data, msg.sender, _nonce, deadline));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _getDomainSeparator(), encodeData));
-
         address recoveredAddress = ecrecover(digest, v, r, s);
+
         // Explicitly disallow authorizations for address(0) as ecrecover returns address(0) on malformed messages
         return deadline >= getTimestamp() && recoveredAddress != address(0) && recoveredAddress == _user;
     }
@@ -84,41 +83,20 @@ contract SignaturesValidator is IERC712, TimeHelpers {
     }
 
     /**
-    * @dev Auth deadline encoded in calldata
+    * @dev Decode extra calldata
     */
-    function _deadline() internal pure returns (uint256) {
-        return _decodeExtraCalldataWord(0);
-    }
-
-    /**
-    * @dev Signature encoded in calldata
-    */
-    function _signature() internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        v = uint8(_decodeExtraCalldataWord(0x20));
-        r = bytes32(_decodeExtraCalldataWord(0x40));
-        s = bytes32(_decodeExtraCalldataWord(0x60));
-    }
-
-    /**
-    * @dev Decode original calldata
-    */
-    function _calldata() internal pure returns (bytes memory result) {
-        result = msg.data;
-        if (result.length > EXTRA_CALLDATA_LENGTH) {
-            assembly { mstore(result, sub(calldatasize, EXTRA_CALLDATA_LENGTH)) }
-        }
-    }
-
-    /**
-    * @dev Decode word from extra calldata
-    */
-    function _decodeExtraCalldataWord(uint256 _offset) internal pure returns (uint256 result) {
-        uint256 offset = _offset;
-        assembly {
-            let ptr := mload(0x40)
-            mstore(0x40, add(ptr, 0x20))
-            calldatacopy(ptr, sub(calldatasize, sub(EXTRA_CALLDATA_LENGTH, offset)), 0x20)
-            result := mload(ptr)
+    function _decodeCalldata() internal pure returns (bytes memory data, uint256 deadline, bytes32 r, bytes32 s, uint8 v) {
+        data = msg.data;
+        if (data.length > EXTRA_CALLDATA_LENGTH) {
+            assembly {
+                let realCalldataSize := sub(calldatasize, EXTRA_CALLDATA_LENGTH)
+                let extraCalldataPtr := add(add(data, 0x20), realCalldataSize)
+                deadline := mload(extraCalldataPtr)
+                r := mload(add(extraCalldataPtr, 0x20))
+                s := mload(add(extraCalldataPtr, 0x40))
+                v := byte(0, mload(add(extraCalldataPtr, 0x60)))
+                mstore(data, realCalldataSize)
+            }
         }
     }
 }
