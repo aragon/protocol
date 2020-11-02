@@ -11,9 +11,10 @@ import "./IPaymentsBook.sol";
 import "../registry/IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
 import "../core/modules/ControlledRecoverable.sol";
+import "../core/modules/SignaturesValidator.sol";
 
 
-contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
+contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, SignaturesValidator {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SafeMath64 for uint64;
@@ -107,24 +108,25 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     }
 
     /**
-    * @notice Claim guardian share for period #`_periodId` owed to `msg.sender`
+    * @notice Claim guardian share for period #`_periodId` owed to `_guardian`
     * @dev It will ignore tokens that were already claimed without reverting
     * @param _periodId Identification number of the period being claimed
+    * @param _guardian Address of the guardian claiming the shares for
     * @param _tokens List of token addresses to be claimed
     */
-    function claimGuardianShare(uint256 _periodId, address[] calldata _tokens) external {
+    function claimGuardianShare(uint256 _periodId, address payable _guardian, address[] calldata _tokens) external authenticate(_guardian) {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
         (uint64 periodBalanceCheckpoint, uint256 totalActiveBalance) = _ensurePeriodBalanceDetails(period, _periodId);
-        uint256 guardianActiveBalance = _getGuardianActiveBalance(msg.sender, periodBalanceCheckpoint);
+        uint256 guardianActiveBalance = _getGuardianActiveBalance(_guardian, periodBalanceCheckpoint);
 
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            require(_canGuardianClaim(period, msg.sender, token), ERROR_GUARDIAN_CANNOT_CLAIM_SHARE);
+            require(_canGuardianClaim(period, _guardian, token), ERROR_GUARDIAN_CANNOT_CLAIM_SHARE);
             uint256 amount = _getGuardianShare(period, token, guardianActiveBalance, totalActiveBalance);
-            _claimGuardianShare(period, _periodId, msg.sender, token, amount);
+            _claimGuardianShare(period, _periodId, _guardian, token, amount);
         }
     }
 
