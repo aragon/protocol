@@ -127,6 +127,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     Dispute[] internal disputes;
 
     event DisputeStateChanged(uint256 indexed disputeId, DisputeState indexed state);
+    event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence);
     event EvidencePeriodClosed(uint256 indexed disputeId, uint64 indexed termId);
     event NewDispute(uint256 indexed disputeId, IArbitrable indexed subject, uint64 indexed draftTermId, uint64 guardiansNumber, bytes metadata);
     event GuardianDrafted(uint256 indexed disputeId, uint256 indexed roundId, address indexed guardian);
@@ -179,6 +180,22 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
         // Pay round fees and return dispute id
         _depositAmount(address(_subject), feeToken, totalFees);
         return disputeId;
+    }
+
+    /**
+    * @notice Submit evidence for a dispute #`_disputeId`
+    * @param _subject Arbitrable instance submitting the dispute
+    * @param _disputeId Identification number of the dispute receiving new evidence
+    * @param _submitter Address of the account submitting the evidence
+    * @param _evidence Data submitted for the evidence of the dispute
+    */
+    function submitEvidence(IArbitrable _subject, uint256 _disputeId, address _submitter, bytes calldata _evidence)
+        external
+        onlyController
+    {
+        (Dispute storage dispute, ) = _getDisputeAndRound(_disputeId, 0);
+        require(dispute.subject == _subject, ERROR_SENDER_NOT_DISPUTE_SUBJECT);
+        emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
     }
 
     /**

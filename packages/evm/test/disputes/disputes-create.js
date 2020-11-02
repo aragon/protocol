@@ -161,7 +161,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
     })
 
     context('when the sender is not an arbitrable', () => {
-      beforeEach('create dispute', async () => {
+      beforeEach('approve dispute fees', async () => {
         const { disputeFees } = await protocolHelper.getDisputeFees()
         await protocolHelper.mintFeeTokens(fakeArbitrable, disputeFees)
         await feeToken.approve(disputeManager.address, disputeFees, { from: fakeArbitrable })
@@ -178,8 +178,8 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         await protocol.createDispute(2, '0xabcd', { from: fakeArbitrable })
         const receipt = await protocol.submitEvidence(0, fakeArbitrable, '0x1234', { from: fakeArbitrable })
 
-        assertAmountOfEvents(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED)
-        assertEvent(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { expectedArgs: { disputeId: 0, submitter: fakeArbitrable, evidence: '0x1234' } })
+        assertAmountOfEvents(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { decodeForAbi: DisputeManager.abi })
+        assertEvent(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { decodeForAbi: DisputeManager.abi, expectedArgs: { disputeId: 0, submitter: fakeArbitrable, evidence: '0x1234' } })
       })
     })
 
