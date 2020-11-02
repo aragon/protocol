@@ -16,7 +16,7 @@ contract ProtocolClock is IClock, TimeHelpers {
     string private constant ERROR_BAD_FIRST_TERM_START_TIME = "CLK_BAD_FIRST_TERM_START_TIME";
     string private constant ERROR_TOO_MANY_TRANSITIONS = "CLK_TOO_MANY_TRANSITIONS";
     string private constant ERROR_INVALID_TRANSITION_TERMS = "CLK_INVALID_TRANSITION_TERMS";
-    string private constant ERROR_CANNOT_DELAY_STARTED_PROTOCOL = "CLK_CANNOT_DELAY_STARTED_PROTOCOL";
+    string private constant ERROR_CANNOT_DELAY_STARTED_PROTOCOL = "CLK_CANNOT_DELAY_STARTED_PROT";
     string private constant ERROR_CANNOT_DELAY_PAST_START_TIME = "CLK_CANNOT_DELAY_PAST_START_TIME";
 
     // Maximum number of term transitions a callee may have to assume in order to call certain functions that require the Protocol being up-to-date

@@ -47,8 +47,8 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     string private constant ERROR_ROUND_ALREADY_SETTLED = "DM_ROUND_ALREADY_SETTLED";
     string private constant ERROR_ROUND_NOT_SETTLED = "DM_ROUND_PENALTIES_NOT_SETTLED";
     string private constant ERROR_GUARDIAN_ALREADY_REWARDED = "DM_GUARDIAN_ALREADY_REWARDED";
-    string private constant ERROR_WONT_REWARD_NON_VOTER_GUARDIAN = "DM_WONT_REWARD_NON_VOTER_GUARDIAN";
-    string private constant ERROR_WONT_REWARD_INCOHERENT_GUARDIAN = "DM_WONT_REWARD_INCOHERENT_GUARDIAN";
+    string private constant ERROR_WONT_REWARD_NON_VOTER_GUARDIAN = "DM_WONT_REWARD_NON_VOTER_GUARD";
+    string private constant ERROR_WONT_REWARD_INCOHERENT_GUARDIAN = "DM_WONT_REWARD_INCOHERENT_GUARD";
     string private constant ERROR_ROUND_APPEAL_ALREADY_SETTLED = "DM_APPEAL_ALREADY_SETTLED";
 
     // Minimum possible rulings for a dispute
