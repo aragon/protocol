@@ -1,8 +1,8 @@
 # 4.6. PaymentsBook
 
-The `PaymentsBook` module is in charge of collecting the payments paid by the users to use Aragon Protocol.
-This module is simply in charge of collecting any type of payment and distribute it to the corresponding parties: guardians and the governor.
-The payments module does not enforce users of Aragon Protocol to pay on-chain. The idea is that any custom mechanism can be built on top if desired.
+The `PaymentsBook` module is in charge of collecting any extra payments paid by users to use Aragon Protocol.
+This module is simply in charge of collecting any type of payment and distributing it to the corresponding parties: guardians and the governor.
+Aragon Protocol does not explicitly require users to provide these extra payments on-chain. The idea is that any custom mechanism can be built on top and then verified by guardians handling arising disputes.
 
 ### 4.6.1. Constructor
 
@@ -46,12 +46,12 @@ The payments module does not enforce users of Aragon Protocol to pay on-chain. T
 - **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
-    - Ensure that the sender has not claimed their share for the requested period before
-    - Ensure that the corresponding share of the sender are greater than zero for the requested period
+    - Ensure that the sender has not already claimed their share for the requested token and period
+    - Ensure that the sender's share is greater than zero for the requested token and period
 - **State transitions:**
     - Compute period balance checkpoint if it wasn't computed yet
-    - Mark the sender has already claimed their share for the requested period and token
-    - Transfer the corresponding share to the sender, revert if the transfer wasn't successful
+    - Mark the sender's share as claimed for the requested period and token
+    - Transfer the corresponding tokens to the sender, revert if the transfer wasn't successful
 
 ### 4.6.4. Transfer governor share
 
@@ -61,19 +61,19 @@ The payments module does not enforce users of Aragon Protocol to pay on-chain. T
     - **Token:** Address of the token being claimed
 - **Authentication:** Check the given period is a past period
 - **Pre-flight checks:**
-    - Ensure that the governor share for the requested token and period is greater than zero
+    - Ensure that the governor's share is greater than zero for the requested token and period
 - **State transitions:**
     - Reset the total amount collected for the governor to zero for the given token and period
-    - Transfer the governor share to the config governor address, revert if the transfer wasn't successful
+    - Transfer the corresponding tokens to the config governor address, revert if the transfer wasn't successful
 
 ### 4.6.5. Ensure period balance details
 
-- **Actor:** External entity incentivized in updating the parameters to determine the guardians share for each period
+- **Actor:** External entity incentivized in updating the parameters to determine the guardian's share for each period
 - **Inputs:**
     - **Period ID:** Period identification number
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that all the terms corresponding of the requested period have already been initialized for the Protocol
+    - Ensure that all the terms contained in the requested period have already been initialized for the Protocol
 - **State transitions:**
     - Pick a random term checkpoint included in the requested period using the next period's start term randomness, and save the total ANT active balance in the `GuardiansRegistry` at that term for the requested period
 
@@ -99,4 +99,3 @@ The payments module does not enforce users of Aragon Protocol to pay on-chain. T
     - Ensure that the balance of the `PaymentsBook` module is greater than zero
 - **State transitions:**
     - Transfer the whole balance of the `PaymentsBook` module to the recipient address, revert if the transfer wasn't successful
-

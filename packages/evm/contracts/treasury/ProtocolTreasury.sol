@@ -29,9 +29,8 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @dev Constructor function
     * @param _controller Address of the controller
     */
-    constructor(Controller _controller) ControlledRecoverable(_controller) public {
+    constructor(Controller _controller) Controlled(_controller) public {
         // solium-disable-previous-line no-empty-blocks
-        // No need to explicitly call `Controlled` constructor since `ControlledRecoverable` is already doing it
     }
 
     /**

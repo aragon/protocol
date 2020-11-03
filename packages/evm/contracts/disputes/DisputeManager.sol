@@ -163,8 +163,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _maxGuardiansPerDraftBatch Max number of guardians to be drafted per batch
     * @param _skippedDisputes Number of disputes to be skipped
     */
-    constructor(Controller _controller, uint64 _maxGuardiansPerDraftBatch, uint256 _skippedDisputes) ControlledRecoverable(_controller) public {
-        // No need to explicitly call `Controlled` constructor since `ControlledRecoverable` is already doing it
+    constructor(Controller _controller, uint64 _maxGuardiansPerDraftBatch, uint256 _skippedDisputes) Controlled(_controller) public {
         _setMaxGuardiansPerDraftBatch(_maxGuardiansPerDraftBatch);
         _skipDisputes(_skippedDisputes);
     }

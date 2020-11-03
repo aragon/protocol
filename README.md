@@ -1,4 +1,4 @@
-![Aragon Protocol](./docs/aragon-protocol.png)
+![Aragon Protocol](.github/assets/aragon-protocol.png)
 
 <img align="right" src="https://github.com/aragon/protocol/workflows/CI/badge.svg">
   <a href="https://github.com/aragon/protocol/actions"/>
@@ -12,7 +12,7 @@ Aragon Protocol is now live on Ethereum mainnet. You can become a guardian by st
 #### ⚖ [Check out the Aragon Protocol Dashboard](https://protocol.aragon.org)
 The Aragon Protocol Dashboard is the central app where all dispute-related information is available for guardians.
 
-#### 📚 [Read the User Guide](https://help.aragon.org/category/47-aragoncourt) 
+#### 📚 [Read the User Guide](https://help.aragon.org/category/47-aragoncourt)
 Read the user guide if you have any doubts about the Aragon protocol, Protocol Dashboard, or related tools.
 
 ## Protocol
@@ -24,7 +24,7 @@ Aragon Protocol is a dispute resolution protocol that runs on Ethereum. It's one
 After a long research and development phase, Aragon Protocol's v1 implementation has been [released](https://www.npmjs.com/package/@aragon/protocol) and [deployed](https://etherscan.io/address/0xee4650cBe7a2B23701D416f58b41D8B76b617797#code).
 
 #### ✅ Security review status: audited
-Aragon Protocol v1 has already been audited by an independent security professional. You can read the audit report [here](https://github.com/gakonst/publications/blob/master/aragon_protocol_audit.pdf). 
+Aragon Protocol v1 has already been audited by an independent security professional. You can read the audit report [here](https://github.com/gakonst/publications/blob/master/aragon_protocol_audit.pdf).
 
 #### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragon-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 Don't be shy to contribute even the smallest tweak. Everyone will be especially nice and helpful to beginners to help you get started!
