@@ -25,7 +25,8 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, Sign
     string private constant ERROR_PERIOD_DURATION_ZERO = "PB_PERIOD_DURATION_ZERO";
     string private constant ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED = "PB_PERIOD_BALANCE_DETAILS_NOT_COMPUTED";
     string private constant ERROR_PAYMENT_AMOUNT_ZERO = "PB_PAYMENT_AMOUNT_ZERO";
-    string private constant ERROR_ETH_DEPOSIT_MISMATCH = "PB_ETH_DEPOSIT_MISMATCH";
+    string private constant ERROR_ETH_DEPOSIT_TOKEN_MISMATCH = "PB_ETH_DEPOSIT_TOKEN_MISMATCH";
+    string private constant ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH = "PB_ETH_DEPOSIT_AMOUNT_MISMATCH";
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
@@ -335,10 +336,10 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, Sign
     * @param _amount Amount to be deposited
     */
     function _deposit(address _from, address _token, uint256 _amount) internal {
-        if (_token == address(0)) {
-            require(msg.value == _amount, ERROR_ETH_DEPOSIT_MISMATCH);
+        if (msg.value > 0) {
+            require(_token == address(0), ERROR_ETH_DEPOSIT_TOKEN_MISMATCH);
+            require(msg.value == _amount, ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH);
         } else {
-            require(msg.value == 0, ERROR_ETH_DEPOSIT_MISMATCH);
             require(IERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
         }
     }

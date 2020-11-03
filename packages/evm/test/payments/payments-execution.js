@@ -89,7 +89,7 @@ contract('PaymentBook', ([_, someone, payer]) => {
             it('reverts when sending ETH', async () => {
               const previousPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
 
-              await assertRevert(paymentsBook.pay(token.address, amount, someone, data, { from, value: 1 }), PAYMENTS_BOOK_ERRORS.ETH_DEPOSIT_MISMATCH)
+              await assertRevert(paymentsBook.pay(token.address, amount, someone, data, { from, value: 1 }), PAYMENTS_BOOK_ERRORS.ETH_DEPOSIT_TOKEN_MISMATCH)
 
               const currentPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
               assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance, 'payments book balances do not match')
@@ -130,6 +130,15 @@ contract('PaymentBook', ([_, someone, payer]) => {
 
               assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED)
               assertEvent(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED, { expectedArgs: { periodId: currentPeriodId, payer: someone, sender: from, token: eth, amount } })
+            })
+
+            it('reverts when specifying another amount', async () => {
+              const previousPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
+
+              await assertRevert(paymentsBook.pay(eth.address, amount, someone, data, { from, value: 1 }), PAYMENTS_BOOK_ERRORS.ETH_DEPOSIT_AMOUNT_MISMATCH)
+
+              const currentPaymentsBookBalance = bn(await web3.eth.getBalance(paymentsBook.address))
+              assertBn(currentPaymentsBookBalance, previousPaymentsBookBalance, 'payments book balances do not match')
             })
           })
         })
