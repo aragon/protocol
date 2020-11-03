@@ -67,11 +67,7 @@ contract PaymentsBook is ControlledRecoverable, TimeHelpers, IPaymentsBook {
     * @param _periodDuration Duration of a payment period in Protocol terms
     * @param _governorSharePct Initial permyriad of collected payments that will be allocated to the governor of the Protocol (‱ - 1/10,000)
     */
-    constructor(Controller _controller, uint64 _periodDuration, uint16 _governorSharePct)
-        ControlledRecoverable(_controller)
-        public
-    {
-        // No need to explicitly call `Controlled` constructor since `ControlledRecoverable` is already doing it
+    constructor(Controller _controller, uint64 _periodDuration, uint16 _governorSharePct) Controlled(_controller) public {
         require(_periodDuration > 0, ERROR_PERIOD_DURATION_ZERO);
 
         periodDuration = _periodDuration;

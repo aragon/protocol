@@ -1,21 +1,16 @@
-const { ZERO_ADDRESS, bn, bigExp } = require('@aragon/contract-helpers-test')
+const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { encodeAuthorization } = require('../helpers/utils/modules')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
-const { REGISTRY_ERRORS, SIGNATURES_VALIDATOR_ERRORS } = require('../helpers/utils/errors')
+const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('GuardiansRegistry', ([_, guardian, governor]) => {
+contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
   let controller, registry, disputeManager, ANT
-
-  const wallet = web3.eth.accounts.create('erc3009')
-  const externalAccount = wallet.address
-  const externalAccountPK = wallet.privateKey
 
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
@@ -33,41 +28,41 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   })
 
   describe('stake', () => {
-    const itHandlesStakesProperlyFor = (recipient, amount, sender) => {
+    const itHandlesStakesProperlyFor = (amount, sender) => {
       context('when the sender has enough token balance', () => {
         beforeEach('mint and approve tokens', async () => {
           await ANT.generateTokens(sender, amount)
           await ANT.approve(registry.address, amount, { from: sender })
         })
 
-        it('adds the staked amount to the available balance of the recipient', async () => {
-          const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+        it('adds the staked amount to the available balance of the guardian', async () => {
+          const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
-          const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
-          assertBn(previousAvailableBalance.add(amount), currentAvailableBalance, 'recipient available balances do not match')
+          const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
+          assertBn(previousAvailableBalance.add(amount), currentAvailableBalance, 'guardian available balances do not match')
 
-          assertBn(previousActiveBalance, currentActiveBalance, 'recipient active balances do not match')
-          assertBn(previousLockedBalance, currentLockedBalance, 'recipient locked balances do not match')
-          assertBn(previousDeactivationBalance, currentDeactivationBalance, 'recipient deactivation balances do not match')
+          assertBn(previousActiveBalance, currentActiveBalance, 'guardian active balances do not match')
+          assertBn(previousLockedBalance, currentLockedBalance, 'guardian locked balances do not match')
+          assertBn(previousDeactivationBalance, currentDeactivationBalance, 'guardian deactivation balances do not match')
         })
 
         it('does not affect the active balance of the current term', async () => {
           const termId = await controller.getLastEnsuredTermId()
-          const currentTermPreviousBalance = await registry.activeBalanceOfAt(recipient, termId)
+          const currentTermPreviousBalance = await registry.activeBalanceOfAt(guardian, termId)
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
-          const currentTermCurrentBalance = await registry.activeBalanceOfAt(recipient, termId)
+          const currentTermCurrentBalance = await registry.activeBalanceOfAt(guardian, termId)
           assertBn(currentTermPreviousBalance, currentTermCurrentBalance, 'current term active balances do not match')
         })
 
-        if (recipient !== sender) {
+        if (guardian !== sender) {
           it('does not affect the sender balances', async () => {
             const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(sender)
 
-            await registry.stake(recipient, amount, { from: sender })
+            await registry.stake(guardian, amount, { from: sender })
 
             const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(sender)
             assertBn(previousActiveBalance, currentActiveBalance, 'sender active balances do not match')
@@ -77,32 +72,32 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           })
         }
 
-        it('does not affect the unlocked balance of the recipient', async () => {
+        it('does not affect the unlocked balance of the guardian', async () => {
           const previousSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(sender)
-          const previousRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+          const previousGuardianUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
           await controller.mockIncreaseTerm()
-          const currentRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
-          assertBn(previousRecipientUnlockedActiveBalance, currentRecipientUnlockedActiveBalance, 'recipient unlocked balances do not match')
+          const currentGuardianUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
+          assertBn(previousGuardianUnlockedActiveBalance, currentGuardianUnlockedActiveBalance, 'guardian unlocked balances do not match')
 
-          if (recipient !== sender) {
+          if (guardian !== sender) {
             const currentSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(sender)
             assertBn(previousSenderUnlockedActiveBalance, currentSenderUnlockedActiveBalance, 'sender unlocked balances do not match')
           }
         })
 
-        it('updates the total staked for the recipient', async () => {
+        it('updates the total staked for the guardian', async () => {
           const previousSenderTotalStake = await registry.totalStakedFor(sender)
-          const previousRecipientTotalStake = await registry.totalStakedFor(recipient)
+          const previousGuardianTotalStake = await registry.totalStakedFor(guardian)
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
-          const currentRecipientTotalStake = await registry.totalStakedFor(recipient)
-          assertBn(previousRecipientTotalStake.add(amount), currentRecipientTotalStake, 'recipient total stake amounts do not match')
+          const currentGuardianTotalStake = await registry.totalStakedFor(guardian)
+          assertBn(previousGuardianTotalStake.add(amount), currentGuardianTotalStake, 'guardian total stake amounts do not match')
 
-          if (recipient !== sender) {
+          if (guardian !== sender) {
             const currentSenderTotalStake = await registry.totalStakedFor(sender)
             assertBn(previousSenderTotalStake, currentSenderTotalStake, 'sender total stake amounts do not match')
           }
@@ -111,7 +106,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         it('updates the total staked', async () => {
           const previousTotalStake = await registry.totalStaked()
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
           const currentTotalStake = await registry.totalStaked()
           assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
@@ -120,9 +115,9 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         it('transfers the tokens to the registry', async () => {
           const previousSenderBalance = await ANT.balanceOf(sender)
           const previousRegistryBalance = await ANT.balanceOf(registry.address)
-          const previousRecipientBalance = await ANT.balanceOf(recipient)
+          const previousGuardianBalance = await ANT.balanceOf(guardian)
 
-          await registry.stake(recipient, amount, { from: sender })
+          await registry.stake(guardian, amount, { from: sender })
 
           const currentSenderBalance = await ANT.balanceOf(sender)
           assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
@@ -130,99 +125,72 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const currentRegistryBalance = await ANT.balanceOf(registry.address)
           assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
 
-          if (recipient !== sender) {
-            const currentRecipientBalance = await ANT.balanceOf(recipient)
-            assertBn(previousRecipientBalance, currentRecipientBalance, 'recipient balances do not match')
+          if (guardian !== sender) {
+            const currentGuardianBalance = await ANT.balanceOf(guardian)
+            assertBn(previousGuardianBalance, currentGuardianBalance, 'guardian balances do not match')
           }
         })
 
         it('emits a stake event', async () => {
-          const previousTotalStake = await registry.totalStakedFor(recipient)
+          const previousTotalStake = await registry.totalStakedFor(guardian)
 
-          const receipt = await registry.stake(recipient, amount, { from: sender })
+          const receipt = await registry.stake(guardian, amount, { from: sender })
 
           assertAmountOfEvents(receipt, REGISTRY_EVENTS.STAKED)
-          assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { guardian: recipient, amount, total: previousTotalStake.add(amount) } })
+          assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { guardian: guardian, amount, total: previousTotalStake.add(amount) } })
         })
       })
 
       context('when the sender does not have enough token balance', () => {
         it('reverts', async () => {
-          await assertRevert(registry.stake(recipient, amount, { from: sender }), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
+          await assertRevert(registry.stake(guardian, amount, { from: sender }), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
         })
       })
     }
 
-    const itHandlesStakesProperlyForDifferentAmounts = (recipient, sender) => {
+    const itHandlesStakesProperlyForDifferentAmounts = (sender) => {
       context('when the given amount is zero', () => {
         const amount = bn(0)
 
         it('reverts', async () => {
-          await assertRevert(registry.stake(recipient, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+          await assertRevert(registry.stake(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
         })
       })
 
       context('when the given amount is lower than the minimum active value', () => {
         const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
-        itHandlesStakesProperlyFor(recipient, amount, sender)
+        itHandlesStakesProperlyFor(amount, sender)
       })
 
       context('when the given amount is greater than the minimum active value', () => {
         const amount = MIN_ACTIVE_AMOUNT.mul(bn(2))
 
-        itHandlesStakesProperlyFor(recipient, amount, sender)
+        itHandlesStakesProperlyFor(amount, sender)
       })
     }
 
-    context('when the recipient and the sender are the same', async () => {
+    context('when the sender is the guardian', () => {
       const sender = guardian
-      const recipient = guardian
 
-      itHandlesStakesProperlyForDifferentAmounts(recipient, sender)
+      itHandlesStakesProperlyForDifferentAmounts(sender)
     })
 
-    context('when the recipient and the sender are not the same', async () => {
-      const sender = guardian
-      const recipient = externalAccount
+    context('when the sender is not the guardian', () => {
+      const sender = someone
 
-      itHandlesStakesProperlyForDifferentAmounts(recipient, sender)
-    })
-
-    context('when the recipient is the zero address', async () => {
-      const sender = guardian
-      const recipient = ZERO_ADDRESS
-
-      itHandlesStakesProperlyForDifferentAmounts(recipient, sender)
+      itHandlesStakesProperlyForDifferentAmounts(sender)
     })
   })
 
   describe('unstake', () => {
-    const unstake = async (recipient, amount, sender, authorize = false) => {
-      let calldata = registry.contract.methods.unstake(recipient, amount.toString()).encodeABI()
-      if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-      return registry.sendTransaction({ from: sender, data: calldata })
-    }
-
-    const activate = async (recipient, amount, sender, authorize = false) => {
-      let calldata = registry.contract.methods.activate(recipient, amount.toString()).encodeABI()
-      if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-      return registry.sendTransaction({ from: sender, data: calldata })
-    }
-
-    const deactivate = async (recipient, amount, sender, authorize = false) => {
-      let calldata = registry.contract.methods.deactivate(recipient, amount.toString()).encodeABI()
-      if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-      return registry.sendTransaction({ from: sender, data: calldata })
-    }
-
-    const itHandlesUnstakesProperly = (recipient, sender, authorize = false) => {
+    const itHandlesUnstakesProperly = sender => {
       const itRevertsForDifferentAmounts = () => {
         context('when the given amount is zero', () => {
           const amount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+            await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
           })
         })
 
@@ -230,7 +198,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
+            await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
           })
         })
 
@@ -238,31 +206,31 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.mul(bn(2))
 
           it('reverts', async () => {
-            await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
+            await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
           })
         })
       }
 
-      context('when the recipient has not staked before', () => {
+      context('when the guardian has not staked before', () => {
         itRevertsForDifferentAmounts()
       })
 
-      context('when the recipient has already staked some tokens before', () => {
+      context('when the guardian has already staked some tokens before', () => {
         const stakedBalance = MIN_ACTIVE_AMOUNT
 
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, stakedBalance)
           await ANT.approve(registry.address, stakedBalance, { from: sender })
-          await registry.stake(recipient, stakedBalance, { from: sender })
+          await registry.stake(guardian, stakedBalance, { from: sender })
         })
 
         const itHandlesUnstakesProperlyFor = (amount, deactivationAmount = bn(0)) => {
-          it('removes the unstaked amount from the available balance of the recipient', async () => {
-            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+          it('removes the unstaked amount from the available balance of the guardian', async () => {
+            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            await unstake(recipient, amount, sender, authorize)
+            await registry.unstake(guardian, amount, { from: sender })
 
-            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
             assertBn(previousDeactivationBalance.sub(deactivationAmount), currentDeactivationBalance, 'deactivation balances do not match')
             assertBn(previousAvailableBalance.add(deactivationAmount).sub(amount), currentAvailableBalance, 'available balances do not match')
 
@@ -270,74 +238,74 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             assertBn(previousLockedBalance, currentLockedBalance, 'locked balances do not match')
           })
 
-          it('does not affect the unlocked balance of the recipient', async () => {
-            const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+          it('does not affect the unlocked balance of the guardian', async () => {
+            const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-            await unstake(recipient, amount, sender, authorize)
+            await registry.unstake(guardian, amount, { from: sender })
 
-            const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+            const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
             assertBn(previousUnlockedActiveBalance, currentUnlockedActiveBalance, 'unlocked balances do not match')
           })
 
           it('updates the total staked', async () => {
             const previousTotalStake = await registry.totalStaked()
 
-            await unstake(recipient, amount, sender, authorize)
+            await registry.unstake(guardian, amount, { from: sender })
 
             const currentTotalStake = await registry.totalStaked()
             assertBn(previousTotalStake.sub(amount), currentTotalStake, 'total stake amounts do not match')
           })
 
-          it('updates the total staked for the recipient', async () => {
-            const previousTotalStake = await registry.totalStakedFor(recipient)
+          it('updates the total staked for the guardian', async () => {
+            const previousTotalStake = await registry.totalStakedFor(guardian)
 
-            await unstake(recipient, amount, sender, authorize)
+            await registry.unstake(guardian, amount, { from: sender })
 
-            const currentTotalStake = await registry.totalStakedFor(recipient)
+            const currentTotalStake = await registry.totalStakedFor(guardian)
             assertBn(previousTotalStake.sub(amount), currentTotalStake, 'total stake amounts do not match')
           })
 
-          it('transfers the tokens to the recipient', async () => {
-            const previousRecipientBalance = await ANT.balanceOf(recipient)
+          it('transfers the tokens to the guardian', async () => {
+            const previousGuardianBalance = await ANT.balanceOf(guardian)
             const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
-            await unstake(recipient, amount, sender, authorize)
+            await registry.unstake(guardian, amount, { from: sender })
 
-            const currentRecipientBalance = await ANT.balanceOf(recipient)
-            assertBn(previousRecipientBalance.add(amount), currentRecipientBalance, 'recipient balances do not match')
+            const currentGuardianBalance = await ANT.balanceOf(guardian)
+            assertBn(previousGuardianBalance.add(amount), currentGuardianBalance, 'guardian balances do not match')
 
             const currentRegistryBalance = await ANT.balanceOf(registry.address)
             assertBn(previousRegistryBalance.sub(amount), currentRegistryBalance, 'registry balances do not match')
           })
 
           it('emits an unstake event', async () => {
-            const previousTotalStake = await registry.totalStakedFor(recipient)
+            const previousTotalStake = await registry.totalStakedFor(guardian)
 
-            const receipt = await unstake(recipient, amount, sender, authorize)
+            const receipt = await registry.unstake(guardian, amount, { from: sender })
 
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.UNSTAKED)
-            assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { guardian: recipient, amount, total: previousTotalStake.sub(amount) } })
+            assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { guardian: guardian, amount, total: previousTotalStake.sub(amount) } })
           })
 
           if (deactivationAmount.gt(bn(0))) {
             it('emits a deactivation processed event', async () => {
               const termId = await controller.getCurrentTermId()
-              const { availableTermId } = await registry.getDeactivationRequest(recipient)
+              const { availableTermId } = await registry.getDeactivationRequest(guardian)
 
-              const receipt = await unstake(recipient, amount, sender, authorize)
+              const receipt = await registry.unstake(guardian, amount, { from: sender })
 
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED)
-              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian: recipient, amount: deactivationAmount, availableTermId, processedTermId: termId } })
+              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian, amount: deactivationAmount, availableTermId, processedTermId: termId } })
             })
           }
         }
 
-        context('when the recipient tokens were not activated', () => {
+        context('when the guardian tokens were not activated', () => {
           context('when the given amount is zero', () => {
             const amount = bn(0)
 
             it('reverts', async () => {
-              await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+              await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
             })
           })
 
@@ -351,34 +319,34 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             const amount = stakedBalance.add(bn(1))
 
             it('reverts', async () => {
-              await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
+              await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
             })
           })
         })
 
-        context('when the recipient tokens were activated', () => {
+        context('when the guardian tokens were activated', () => {
           const activeAmount = stakedBalance
 
           beforeEach('activate tokens', async () => {
-            await activate(recipient, stakedBalance, sender, true)
+            await registry.activate(guardian, stakedBalance, { from: sender })
           })
 
-          context('when the recipient tokens were not deactivated', () => {
+          context('when the guardian tokens were not deactivated', () => {
             itRevertsForDifferentAmounts()
           })
 
-          context('when the recipient tokens were deactivated', () => {
+          context('when the guardian tokens were deactivated', () => {
             const deactivationAmount = activeAmount
 
             beforeEach('deactivate tokens', async () => {
-              await deactivate(recipient, deactivationAmount, sender, true)
+              await registry.deactivate(guardian, deactivationAmount, { from: sender })
             })
 
-            context('when the recipient tokens are deactivated for the next term', () => {
+            context('when the guardian tokens are deactivated for the next term', () => {
               itRevertsForDifferentAmounts()
             })
 
-            context('when the recipient tokens are deactivated for the current term', () => {
+            context('when the guardian tokens are deactivated for the current term', () => {
               beforeEach('increment term', async () => {
                 await controller.mockIncreaseTerm()
               })
@@ -387,7 +355,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = bn(0)
 
                 it('reverts', async () => {
-                  await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+                  await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
                 })
               })
 
@@ -401,7 +369,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = stakedBalance.add(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(unstake(recipient, amount, sender, authorize), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
+                  await assertRevert(registry.unstake(guardian, amount, { from: sender }), REGISTRY_ERRORS.NOT_ENOUGH_AVAILABLE_BALANCE)
                 })
               })
             })
@@ -410,28 +378,30 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
       })
     }
 
-    context('when the sender is the recipient', () => {
+    context('when the sender is the guardian', () => {
       const sender = guardian
-      const recipient = guardian
 
-      itHandlesUnstakesProperly(recipient, sender)
+      itHandlesUnstakesProperly(sender)
     })
 
-    context('when the sender is not the recipient', () => {
-      const sender = guardian
-      const recipient = externalAccount
+    context('when the sender is not the guardian', () => {
+      const sender = someone
 
-      context('when the sender is authorized by recipient', () => {
-        const authorize = true
+      context('when the sender is a whitelisted relayer', () => {
+        before('whitelist relayer', async () => {
+          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+        })
 
-        itHandlesUnstakesProperly(recipient, sender, authorize)
+        itHandlesUnstakesProperly(sender)
       })
 
-      context('when the sender is not authorized by recipient', () => {
-        const authorized = false
+      context('when the sender is not a whitelisted relayer', () => {
+        before('disallow relayer', async () => {
+          await controller.updateRelayerWhitelist(sender, false, { from: governor })
+        })
 
         it('reverts', async () => {
-          await assertRevert(unstake(recipient, MIN_ACTIVE_AMOUNT, sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
+          await assertRevert(registry.unstake(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
     })

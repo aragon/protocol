@@ -39,14 +39,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian unstaking the tokens from
     - **Amount:** Amount of tokens to be unstaked
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** The guardian or an external account allowed by signature. Only for guardians that have some available balance in the registry.
+- **Authentication:** The guardian or a whitelisted relayer. Only for guardians that have some available balance in the registry.
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure that the requested amount is greater than zero
     - Ensure that there is enough available balance for the requested amount
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Update the available balance of the guardian
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Transfer the requested amount of guardian tokens from the `GuardiansRegistry` module to the guardian, revert if the ERC20-transfer wasn't successful
@@ -58,16 +55,14 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian activating the tokens for
     - **Amount:** Amount of guardian tokens to be activated for the next term
     - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** The guardian or an external account allowed by signature. Only for guardians with some available balance.
+- **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some available balance.
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the requested amount is greater than zero
     - Ensure that the guardian's available balance is enough for the requested amount
     - Ensure that the new active balance is greater than the minimum active balance for the Protocol
     - Ensure that the total active balance held in the registry does not reach the limit
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Update current Protocol term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Update the guardian's active balance for the next term
@@ -80,14 +75,12 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian deactivating the tokens for
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
     - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** The guardian or an external account allowed by signature. Only for guardians with some activated balance.
+- **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some activated balance.
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the unlocked active balance of the guardians is enough for the requested amount
     - Ensure that the remaining active balance is either zero or greater than the minimum active balance for the Protocol
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Update current Protocol term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Create a new deactivation request object for the next term
@@ -98,13 +91,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian to stake and activate an amount of tokens to
     - **Amount:** Amount of tokens to be staked
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** The guardian or an external account allowed by signature. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function
+- **Authentication:** The guardian or a whitelisted relayer. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function
 - **Pre-flight checks:**
-    - Validate signature if given, or that the sender is a whitelisted activator in case it is not the same guardian
+    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted activator
     - Ensure that the given amount is greater than zero
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Update the available balance of the guardian
     - Activate the staked amount if requested. This includes processing pending deactivation requests.
     - Pull the corresponding amount of guardian tokens from the sender to the `GuardiansRegistry` module, revert if the ERC20-transfer wasn't successful
@@ -116,13 +107,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian lock the activation for
     - **Lock manager**: Address of the lock manager that will control the lock
     - **Amount**: Amount of active tokens to be locked
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** Only the guardian, an external account allowed by signature, or a whitelisted lock manager.
 - **Pre-flight checks:**
-    - Validate signature if given, or that the sender is the lock manager
+    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted lock manager
     - Ensure that the given lock manager is whitelisted by the `GuardiansRegistry`
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Increase the total amount locked for the guardian
     - Increase the amount locked for the guardian by the given lock manager
 
@@ -134,17 +123,15 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Lock manager:** Address of the lock manager controlling the lock
     - **Amount:** Amount of active tokens to be unlocked
     - **Request deactivation:** Whether the unlocked amount must be requested for deactivation immediately
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** Only the guardian, an external account allowed by signature, or a whitelisted lock manager. Only if the lock manager allowes to unlock the requested amount.
 - **Pre-flight checks:**
     - Ensure that the requested amount can be unlocked
     - Ensure that the given amount is greater than zero
     - Ensure that the given lock manager has locked some amount
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Decrease the total amount locked for the guardian
     - Decrease the amount locked for the guardian by the given lock manager
-    - If the sender is the guardian or someone allowed with a signature, schedule a deactivation if requested
+    - If the sender is the guardian or a whitelisted relayer, schedule a deactivation if requested
 
 ### 4.4.9. Process deactivation request
 

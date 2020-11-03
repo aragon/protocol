@@ -11,11 +11,11 @@ import "../lib/standards/IERC20.sol";
 import "./ILockManager.sol";
 import "./IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
-import "../core/modules/SignaturesValidator.sol";
+import "../core/modules/ControlledRelayable.sol";
 import "../core/modules/ControlledRecoverable.sol";
 
 
-contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, SignaturesValidator {
+contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, ControlledRelayable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PctHelpers for uint256;
@@ -150,11 +150,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @param _guardiansToken Address of the ERC20 token to be used as guardian token for the registry
     * @param _totalActiveBalanceLimit Maximum amount of total active balance that can be held in the registry
     */
-    constructor(Controller _controller, IERC20 _guardiansToken, uint256 _totalActiveBalanceLimit)
-        ControlledRecoverable(_controller)
-        public
-    {
-        // No need to explicitly call `Controlled` constructor since `ControlledRecoverable` is already doing it
+    constructor(Controller _controller, IERC20 _guardiansToken, uint256 _totalActiveBalanceLimit) Controlled(_controller) public {
         require(isContract(address(_guardiansToken)), ERROR_NOT_CONTRACT);
 
         guardiansToken = _guardiansToken;
@@ -179,7 +175,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @param _guardian Address of the guardian to unstake tokens from
     * @param _amount Amount of tokens to be unstaked
     */
-    function unstake(address _guardian, uint256 _amount) external authenticate(_guardian) {
+    function unstake(address _guardian, uint256 _amount) external authenticateSender(_guardian) {
         _unstake(_guardian, _amount);
     }
 
@@ -188,7 +184,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @param _guardian Address of the guardian activating the tokens for
     * @param _amount Amount of guardian tokens to be activated for the next term
     */
-    function activate(address _guardian, uint256 _amount) external authenticate(_guardian) {
+    function activate(address _guardian, uint256 _amount) external authenticateSender(_guardian) {
         _activate(_guardian, _amount);
     }
 
@@ -197,7 +193,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @param _guardian Address of the guardian deactivating the tokens for
     * @param _amount Amount of guardian tokens to be deactivated for the next term
     */
-    function deactivate(address _guardian, uint256 _amount) external authenticate(_guardian) {
+    function deactivate(address _guardian, uint256 _amount) external authenticateSender(_guardian) {
         _deactivate(_guardian, _amount);
     }
 
@@ -208,7 +204,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     */
     function stakeAndActivate(address _guardian, uint256 _amount) external {
         // Make sure the sender is the guardian or someone allowed by the guardian, and that the activator is whitelisted
-        bool isActivatorAllowed = _isSignatureValid(_guardian) || _isActivatorWhitelisted(msg.sender);
+        bool isActivatorAllowed = _isSenderAllowed(_guardian) || _isActivatorWhitelisted(msg.sender);
         require(isActivatorAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
 
         _stake(_guardian, _amount);
@@ -223,7 +219,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     */
     function lockActivation(address _guardian, address _lockManager, uint256 _amount) external {
         // Make sure the sender is the guardian, someone allowed by the guardian, or the lock manager itself
-        bool isLockManagerAllowed = msg.sender == _lockManager || _isSignatureValid(_guardian);
+        bool isLockManagerAllowed = msg.sender == _lockManager || _isSenderAllowed(_guardian);
         // Make sure that the given lock manager is whitelisted or that any entity actually is
         require(isLockManagerAllowed && _isLockManagerWhitelisted(_lockManager), ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
@@ -255,7 +251,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
         emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
         if (_requestDeactivation) {
-            _validateSignature(_guardian);
+            _authenticateSender(_guardian);
             _deactivate(_guardian, _amount);
         }
     }
