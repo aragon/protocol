@@ -70,7 +70,7 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
       context('when the delegate was already set', () => {
         context('when the delegate was allowed', () => {
           beforeEach('set delegate', async () => {
-            await voting.delegate(voter, delegate, true, { from: sender })
+            await voting.delegate(voter, delegate, { from: sender })
           })
 
           context('when the delegate is allowed', () => {
