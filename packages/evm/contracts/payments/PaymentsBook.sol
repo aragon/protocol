@@ -274,7 +274,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, Sign
     * @dev Tell if the governor can claim the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the governor can claim the given list of tokens
+    * @return List of statuses to tell whether the governor can claim the given list of tokens
     */
     function canGovernorClaim(uint256 _periodId, address[] calldata _tokens)
         external
