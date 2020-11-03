@@ -54,7 +54,6 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian activating the tokens for
     - **Amount:** Amount of guardian tokens to be activated for the next term
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some available balance.
 - **Pre-flight checks:**
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
@@ -74,7 +73,6 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian deactivating the tokens for
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some activated balance.
 - **Pre-flight checks:**
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
