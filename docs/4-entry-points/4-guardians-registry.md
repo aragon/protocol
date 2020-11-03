@@ -26,7 +26,6 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian staking the tokens for
     - **Amount:** Amount of tokens to be staked
-    - **Data:** Optional data is never used by this function, only logged
 - **Authentication:** Open. Implicitly, only senders that have open an ERC20 allowance with the requested amount of tokens to stake.
 - **Pre-flight checks:**
     - Ensure that the given amount is greater than zero
@@ -40,7 +39,6 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian unstaking the tokens from
     - **Amount:** Amount of tokens to be unstaked
-    - **Data:** Optional data is never used by this function, only logged
     - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** The guardian or an external account allowed by signature. Only for guardians that have some available balance in the registry.
 - **Pre-flight checks:**
@@ -100,7 +98,6 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **Inputs:**
     - **Guardian:** Address of the guardian to stake and activate an amount of tokens to
     - **Amount:** Amount of tokens to be staked
-    - **Data:** Optional data is never used by this function
     - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
 - **Authentication:** The guardian or an external account allowed by signature. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function
 - **Pre-flight checks:**

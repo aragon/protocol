@@ -130,8 +130,8 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     // Tree to store guardians active balance by term for the drafting process
     HexSumTree.Tree internal tree;
 
-    event Staked(address indexed user, uint256 amount, uint256 total, bytes data);
-    event Unstaked(address indexed user, uint256 amount, uint256 total, bytes data);
+    event Staked(address indexed guardian, uint256 amount, uint256 total);
+    event Unstaked(address indexed guardian, uint256 amount, uint256 total);
     event GuardianActivated(address indexed guardian, uint64 fromTermId, uint256 amount, address sender);
     event GuardianDeactivationRequested(address indexed guardian, uint64 availableTermId, uint256 amount);
     event GuardianDeactivationProcessed(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 processedTermId);
@@ -172,20 +172,18 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @notice Stake `@tokenAmount(self.token(), _amount)` for `_guardian`
     * @param _guardian Address of the guardian to stake tokens to
     * @param _amount Amount of tokens to be staked
-    * @param _data Optional data is never used by this function, only logged
     */
-    function stake(address _guardian, uint256 _amount, bytes calldata _data) external {
-        _stake(_guardian, _amount, _data);
+    function stake(address _guardian, uint256 _amount) external {
+        _stake(_guardian, _amount);
     }
 
     /**
     * @notice Unstake `@tokenAmount(self.token(), _amount)` from `_guardian`
     * @param _guardian Address of the guardian to unstake tokens from
     * @param _amount Amount of tokens to be unstaked
-    * @param _data Optional data is never used by this function, only logged
     */
-    function unstake(address _guardian, uint256 _amount, bytes calldata _data) external authenticate(_guardian) {
-        _unstake(_guardian, _amount, _data);
+    function unstake(address _guardian, uint256 _amount) external authenticate(_guardian) {
+        _unstake(_guardian, _amount);
     }
 
     /**
@@ -210,14 +208,13 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @notice Stake and activate `@tokenAmount(self.token(), _amount)` for `_guardian`
     * @param _guardian Address of the guardian staking and activating tokens for
     * @param _amount Amount of tokens to be staked and activated
-    * @param _data Optional data is never used by this function, only logged
     */
-    function stakeAndActivate(address _guardian, uint256 _amount, bytes calldata _data) external {
+    function stakeAndActivate(address _guardian, uint256 _amount) external {
         // Make sure the sender is the guardian or someone allowed by the guardian, and that the activator is whitelisted
         bool isActivatorAllowed = _isSignatureValid(_guardian) || _isActivatorWhitelisted(msg.sender);
         require(isActivatorAllowed, ERROR_ACTIVATOR_NOT_ALLOWED);
 
-        _stake(_guardian, _amount, _data);
+        _stake(_guardian, _amount);
         _activate(_guardian, _amount);
     }
 
@@ -802,13 +799,12 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @dev Internal function to stake an amount of tokens for a guardian
     * @param _guardian Address of the guardian to deposit the tokens to
     * @param _amount Amount of tokens to be deposited
-    * @param _data Optional data that can be used to request the activation of the deposited tokens
     */
-    function _stake(address _guardian, uint256 _amount, bytes memory _data) internal {
+    function _stake(address _guardian, uint256 _amount) internal {
         require(_amount > 0, ERROR_INVALID_ZERO_AMOUNT);
         _updateAvailableBalanceOf(_guardian, _amount, true);
 
-        emit Staked(_guardian, _amount, _totalStakedFor(_guardian), _data);
+        emit Staked(_guardian, _amount, _totalStakedFor(_guardian));
         require(guardiansToken.safeTransferFrom(msg.sender, address(this), _amount), ERROR_TOKEN_TRANSFER_FAILED);
     }
 
@@ -816,9 +812,8 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     * @dev Internal function to unstake an amount of tokens of a guardian
     * @param _guardian Address of the guardian to to unstake the tokens of
     * @param _amount Amount of tokens to be unstaked
-    * @param _data Optional data is never used by this function, only logged
     */
-    function _unstake(address _guardian, uint256 _amount, bytes memory _data) internal {
+    function _unstake(address _guardian, uint256 _amount) internal {
         require(_amount > 0, ERROR_INVALID_ZERO_AMOUNT);
 
         // Try to process a deactivation request for the current term if there is one. Note that we don't need to ensure
@@ -834,7 +829,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
         _processDeactivationRequest(_guardian, lastEnsuredTermId);
 
         _updateAvailableBalanceOf(_guardian, _amount, false);
-        emit Unstaked(_guardian, _amount, _totalStakedFor(_guardian), _data);
+        emit Unstaked(_guardian, _amount, _totalStakedFor(_guardian));
         require(guardiansToken.safeTransfer(_guardian, _amount), ERROR_TOKEN_TRANSFER_FAILED);
     }
 

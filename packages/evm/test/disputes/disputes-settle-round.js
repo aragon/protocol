@@ -339,7 +339,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     for (const guardian of expectedWinningGuardians) {
                       const receipt = await protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address })
                       assertAmountOfEvents(receipt, REGISTRY_EVENTS.UNSTAKED)
-                      assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { user: guardian.address, amount: amount.toString() } })
+                      assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { guardian: guardian.address, amount: amount.toString() } })
                     }
                   })
                 }

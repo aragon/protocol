@@ -51,10 +51,8 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   }
 
   describe('stakeAndActivate', () => {
-    const data = '0xabcd'
-
     const stakeAndActivate = async (guardian, amount, sender, authorize = false) => {
-      let calldata = registry.contract.methods.stakeAndActivate(guardian, amount.toString(), data).encodeABI()
+      let calldata = registry.contract.methods.stakeAndActivate(guardian, amount.toString()).encodeABI()
       if (authorize) calldata = await encodeAuthorization(registry, guardian, externalAccountPK, calldata, sender)
       return registry.sendTransaction({ from: sender, data: calldata })
     }
@@ -200,7 +198,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             const receipt = await stakeAndActivate(recipient, amount, sender, authorize)
 
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.STAKED)
-            assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { user: recipient, amount, total: previousTotalStake.add(amount), data } })
+            assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { guardian: recipient, amount, total: previousTotalStake.add(amount) } })
           })
 
           it('emits an activation event', async () => {

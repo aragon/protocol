@@ -8,19 +8,17 @@ The following events are emitted by the `GuardiansRegistry`:
 
 - **Name:** `Staked`
 - **Args:**
-    - **User:** Address of the guardian to stake the tokens to
+    - **Guardian:** Address of the guardian to stake the tokens to
     - **Amount:** Amount of tokens to be staked
     - **Total:** Total staked balance on the registry
-    - **Data:** Optional data that can be used to request the activation of the deposited tokens
 
 #### 6.4.1.2. Unstaked
 
 - **Name:** `Unstaked`
 - **Args:**
-    - **User:** Address of the guardian to unstake the tokens of
+    - **Guardian:** Address of the guardian to unstake the tokens of
     - **Amount:** Amount of tokens to be unstaked
     - **Total:** Total staked balance on the registry
-    - **Data:** Optional data that can be used to log certain information
 
 #### 6.4.1.3. Guardian activated
 
