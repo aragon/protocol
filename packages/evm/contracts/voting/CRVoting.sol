@@ -50,9 +50,9 @@ contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
     mapping (address => mapping (address => bool)) internal representatives;
 
     event VotingCreated(uint256 indexed voteId, uint8 possibleOutcomes);
-    event VoteCommitted(uint256 indexed voteId, address indexed voter, bytes32 commitment, address sender);
-    event VoteRevealed(uint256 indexed voteId, address indexed voter, uint8 outcome, address revealer);
-    event VoteLeaked(uint256 indexed voteId, address indexed voter, uint8 outcome, address leaker);
+    event VoteCommitted(uint256 indexed voteId, address indexed voter, bytes32 commitment);
+    event VoteRevealed(uint256 indexed voteId, address indexed voter, uint8 outcome);
+    event VoteLeaked(uint256 indexed voteId, address indexed voter, uint8 outcome);
     event RepresentativeChanged(address indexed voter, address indexed representative, bool allowed);
 
     /**
@@ -114,7 +114,7 @@ contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
         _ensureVoterCanCommit(_voteId, _voter);
 
         castVote.commitment = _commitment;
-        emit VoteCommitted(_voteId, _voter, _commitment, msg.sender);
+        emit VoteCommitted(_voteId, _voter, _commitment);
     }
 
     /**
@@ -132,7 +132,7 @@ contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
         // There is no need to check if an outcome is valid if it was leaked.
         // Additionally, leaked votes are not considered for the tally.
         castVote.outcome = OUTCOME_LEAKED;
-        emit VoteLeaked(_voteId, _voter, _outcome, msg.sender);
+        emit VoteLeaked(_voteId, _voter, _outcome);
     }
 
     /**
@@ -152,7 +152,7 @@ contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
 
         castVote.outcome = _outcome;
         _updateTally(vote, _outcome, weight);
-        emit VoteRevealed(_voteId, _voter, _outcome, msg.sender);
+        emit VoteRevealed(_voteId, _voter, _outcome);
     }
 
     /**

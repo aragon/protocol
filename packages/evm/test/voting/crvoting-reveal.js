@@ -73,7 +73,7 @@ contract('CRVoting reveal', ([_, voter, someone]) => {
                       const receipt = await voting.reveal(voteId, voter, outcome, salt, { from })
 
                       assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_REVEALED)
-                      assertEvent(receipt, VOTING_EVENTS.VOTE_REVEALED, { expectedArgs: { voteId, voter, outcome, revealer: from } })
+                      assertEvent(receipt, VOTING_EVENTS.VOTE_REVEALED, { expectedArgs: { voteId, voter, outcome } })
                     })
 
                     it('updates the outcomes tally', async () => {

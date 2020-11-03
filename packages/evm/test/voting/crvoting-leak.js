@@ -72,7 +72,7 @@ contract('CRVoting leak', ([_, voter, someone]) => {
                     const receipt = await voting.leak(voteId, voter, outcome, salt, { from: someone })
 
                     assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_LEAKED)
-                    assertEvent(receipt, VOTING_EVENTS.VOTE_LEAKED, { expectedArgs: { voteId, voter, outcome, leaker: someone } })
+                    assertEvent(receipt, VOTING_EVENTS.VOTE_LEAKED, { expectedArgs: { voteId, voter, outcome } })
                   })
 
                   it('does not affect the outcomes tally', async () => {
