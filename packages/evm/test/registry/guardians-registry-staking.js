@@ -253,7 +253,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, stakedBalance)
           await ANT.approve(registry.address, stakedBalance, { from: sender })
-          await registry.stake(recipient, stakedBalance, '0x', { from: sender })
+          await registry.stake(recipient, stakedBalance, { from: sender })
         })
 
         const itHandlesUnstakesProperlyFor = (amount, deactivationAmount = bn(0)) => {

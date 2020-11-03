@@ -161,7 +161,7 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
             const initialBalance = bigExp(50, 18)
             await ANT.generateTokens(guardian, initialBalance)
             await ANT.approve(registry.address, initialBalance, { from: guardian })
-            await registry.stake(guardian, initialBalance, '0x', { from: guardian })
+            await registry.stake(guardian, initialBalance, { from: guardian })
           })
 
           context('when the given amount does not overflow', () => {

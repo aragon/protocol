@@ -49,7 +49,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   const activate = async (recipient, amount, sender = guardian) => {
     await ANT.generateTokens(sender, amount)
     await ANT.approve(registry.address, amount, { from: sender })
-    let calldata = registry.contract.methods.stakeAndActivate(recipient, amount.toString(), '0x').encodeABI()
+    let calldata = registry.contract.methods.stakeAndActivate(recipient, amount.toString()).encodeABI()
     calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
     return registry.sendTransaction({ from: sender, data: calldata })
   }

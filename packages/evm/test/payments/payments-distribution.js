@@ -46,17 +46,17 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
       await controller.mockSetTerm(0) // tokens are activated for the next term
       await guardianToken.generateTokens(guardianPeriod0Term1, guardianPeriod0Term0Balance)
       await guardianToken.approve(guardiansRegistry.address, guardianPeriod0Term0Balance, { from: guardianPeriod0Term1 })
-      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term1, guardianPeriod0Term0Balance, '0x', { from: guardianPeriod0Term1 })
+      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term1, guardianPeriod0Term0Balance, { from: guardianPeriod0Term1 })
 
       await controller.mockSetTerm(2) // tokens are activated for the next term
       await guardianToken.generateTokens(guardianPeriod0Term3, guardianPeriod0Term3Balance)
       await guardianToken.approve(guardiansRegistry.address, guardianPeriod0Term3Balance, { from: guardianPeriod0Term3 })
-      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term3, guardianPeriod0Term3Balance, '0x', { from: guardianPeriod0Term3 })
+      await guardiansRegistry.stakeAndActivate(guardianPeriod0Term3, guardianPeriod0Term3Balance, { from: guardianPeriod0Term3 })
 
       await controller.mockSetTerm(PERIOD_DURATION * 1.5 - 1)
       await guardianToken.generateTokens(guardianMidPeriod1, guardianMidPeriod1Balance)
       await guardianToken.approve(guardiansRegistry.address, guardianMidPeriod1Balance, { from: guardianMidPeriod1 })
-      await guardiansRegistry.stakeAndActivate(guardianMidPeriod1, guardianMidPeriod1Balance, '0x', { from: guardianMidPeriod1 })
+      await guardiansRegistry.stakeAndActivate(guardianMidPeriod1, guardianMidPeriod1Balance, { from: guardianMidPeriod1 })
     })
 
     beforeEach('create payments book module', async () => {

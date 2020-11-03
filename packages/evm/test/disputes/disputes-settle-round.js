@@ -323,7 +323,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     // fails to withdraw on next term
                     await protocolHelper.passTerms(bn(1))
                     for (const guardian of expectedWinningGuardians) {
-                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // fails to withdraw on last locked term
@@ -331,13 +331,13 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     const lastLockedTermId = draftTerm.add(protocolHelper.commitTerms).add(protocolHelper.revealTerms).add(protocolHelper.finalRoundLockTerms)
                     await protocolHelper.setTerm(lastLockedTermId)
                     for (const guardian of expectedWinningGuardians) {
-                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
+                      await assertRevert(protocolHelper.guardiansRegistry.unstake(guardian.address, amount, { from: guardian.address }), REGISTRY_ERRORS.WITHDRAWALS_LOCK)
                     }
 
                     // succeeds to withdraw after locked term
                     await protocolHelper.passTerms(bn(1))
                     for (const guardian of expectedWinningGuardians) {
-                      const receipt = await protocolHelper.guardiansRegistry.unstake(guardian.address, amount, '0x', { from: guardian.address })
+                      const receipt = await protocolHelper.guardiansRegistry.unstake(guardian.address, amount, { from: guardian.address })
                       assertAmountOfEvents(receipt, REGISTRY_EVENTS.UNSTAKED)
                       assertEvent(receipt, REGISTRY_EVENTS.UNSTAKED, { expectedArgs: { guardian: guardian.address, amount: amount.toString() } })
                     }
@@ -737,7 +737,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                           const amount = initialActiveBalance.sub(unlockedBalance)
                           await guardianToken.generateTokens(address, amount)
                           await guardianToken.approve(guardiansRegistry.address, amount, { from: address })
-                          await guardiansRegistry.stakeAndActivate(address, amount, '0x', { from: address })
+                          await guardiansRegistry.stakeAndActivate(address, amount, { from: address })
                         }
                       }
 

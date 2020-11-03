@@ -33,7 +33,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   })
 
   const unstake = async (recipient, amount, sender, authorize = false) => {
-    let calldata = registry.contract.methods.unstake(recipient, amount.toString(), '0x').encodeABI()
+    let calldata = registry.contract.methods.unstake(recipient, amount.toString()).encodeABI()
     if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
     return registry.sendTransaction({ from: sender, data: calldata })
   }
@@ -312,7 +312,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, maxPossibleBalance)
           await ANT.approve(registry.address, maxPossibleBalance, { from: sender })
-          await registry.stake(recipient, maxPossibleBalance, '0x', { from: sender })
+          await registry.stake(recipient, maxPossibleBalance, { from: sender })
         })
 
         const itHandlesActivationProperlyFor = ({ requestedAmount, deactivationAmount = bn(0), deactivationDue = true }) => {
@@ -566,7 +566,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               // max possible balance was already allowed, allowing one more token
               await ANT.generateTokens(sender, 1)
               await ANT.approve(registry.address, 1, { from: sender })
-              await registry.stake(recipient, 1, '0x', { from: sender })
+              await registry.stake(recipient, 1, { from: sender })
 
               await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.TOTAL_ACTIVE_BALANCE_EXCEEDED)
             })
@@ -766,7 +766,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, stakedBalance)
           await ANT.approve(registry.address, stakedBalance, { from: sender })
-          await registry.stake(recipient, stakedBalance, '0x', { from: sender })
+          await registry.stake(recipient, stakedBalance, { from: sender })
         })
 
         context('when the recipient did not activate any tokens yet', () => {
