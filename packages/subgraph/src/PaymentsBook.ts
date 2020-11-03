@@ -17,7 +17,7 @@ export function handlePaymentReceived(event: PaymentReceived): void {
   payment.token = loadOrCreateERC20(event.params.token).id
   payment.period = event.params.periodId.toString()
   payment.payer = event.params.payer
-  payment.sender = event.params.sender
+  payment.sender = event.transaction.from
   payment.amount = event.params.amount
   payment.data = event.params.data
   payment.createdAt = event.block.timestamp

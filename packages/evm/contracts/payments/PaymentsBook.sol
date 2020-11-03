@@ -61,7 +61,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     // List of periods indexed by ID
     mapping (uint256 => Period) internal periods;
 
-    event PaymentReceived(uint256 indexed periodId, address indexed payer, address indexed token, uint256 amount, address sender, bytes data);
+    event PaymentReceived(uint256 indexed periodId, address indexed payer, address indexed token, uint256 amount, bytes data);
     event GuardianShareClaimed(uint256 indexed periodId, address indexed guardian, address indexed token, uint256 amount);
     event GovernorShareClaimed(uint256 indexed periodId, address indexed token, uint256 amount);
     event GovernorSharePctChanged(uint16 previousGovernorSharePct, uint16 currentGovernorSharePct);
@@ -101,7 +101,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
         // Deposit funds from sender to this contract
         // ETH or token amount checks are handled in `_deposit()`
         _deposit(msg.sender, _token, _amount);
-        emit PaymentReceived(periodId, _payer, _token, _amount, msg.sender, _data);
+        emit PaymentReceived(periodId, _payer, _token, _amount, _data);
     }
 
     /**

@@ -44,15 +44,12 @@ Aragon Protocol does not explicitly require users to provide these extra payment
     - **Period ID:** Period identification number
     - **Guardian:** Address of the guardian claiming the shares for
     - **Tokens:** List of addresses of the tokens being claimed
-    - **Authorization:** Optional authorization granted by the guardian in case of a third party sender
-- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function
+- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function or whitelisted relayers
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure that the requested period has already ended
     - Ensure that the sender has not already claimed their share for the requested token and period
     - Ensure that the sender's share is greater than zero for the requested token and period
 - **State transitions:**
-    - Update next nonce of the guardian if a signature was given
     - Compute period balance checkpoint if it wasn't computed yet
     - Mark the sender's share as claimed for the requested period and token
     - Transfer the corresponding tokens to the sender, revert if the transfer wasn't successful

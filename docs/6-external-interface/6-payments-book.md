@@ -12,7 +12,6 @@ The following events are emitted by the `PaymentsBook`:
     - **Payer:** Address paying on behalf of
     - **Token:** Address of the token used for the payment
     - **Amount:** Amount of tokens being paid
-    - **Sender:** Address paying the token amount
     - **Data:** Arbitrary data
 
 #### 6.6.1.2. Guardian share claimed

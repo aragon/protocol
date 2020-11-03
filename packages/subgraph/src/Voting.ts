@@ -11,7 +11,7 @@ export function handleVoteCommitted(event: VoteCommitted): void {
   const draftId = buildDraftId(disputeRoundId, event.params.voter)
   const draft = loadOrCreateGuardianDraft(draftId, disputeRoundId, event.params.voter, event)
   draft.commitment = event.params.commitment
-  draft.commitmentBy = event.params.sender
+  draft.commitmentBy = event.transaction.from
   draft.commitmentDate = event.block.timestamp
   draft.save()
 
