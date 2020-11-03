@@ -13,6 +13,7 @@ import "./IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
 import "../core/modules/ControlledRelayable.sol";
 import "../core/modules/ControlledRecoverable.sol";
+import "../core/modules/ControlledRelayable.sol";
 
 
 contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, ControlledRelayable {
@@ -250,6 +251,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
         emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
+        // In order to deactivate the unlocked tokens, the request must have been originated from the sender or a whitelisted relayer
         if (_requestDeactivation) {
             _authenticateSender(_guardian);
             _deactivate(_guardian, _amount);
