@@ -16,7 +16,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 
 ### 4.5.2. Delegate
 
-- **Actor:** Any guardian that could potentially be drafted for an adjudication round or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Any guardian that could potentially be drafted for an adjudication round or a whitelisted relayer
 - **Inputs:**
     - **Voter:** Address of the voter setting their delegate
     - **Delegate:** Address of the delegate to be set
@@ -38,7 +38,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 
 ### 4.5.3. Commit
 
-- **Actor:** Guardian drafted for an adjudication round or an external entity incentivized in a drafted guardian
+- **Actor:** Guardian drafted for an adjudication round or a whitelisted relayer
 - **Inputs:**
     - **Vote ID:** Vote identification number
     - **Voter:** Address of the voter committing the vote for
