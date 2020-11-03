@@ -311,7 +311,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           beforeEach('activate', async () => {
             const amount = bigExp(500, 18)
             await ANT.approve(registry.address, amount, { from: guardian500 })
-            await registry.stakeAndActivate(guardian500, amount, '0x', { from: guardian500 })
+            await registry.stakeAndActivate(guardian500, amount, { from: guardian500 })
           })
 
           context('when no guardians were requested', () => {
@@ -404,7 +404,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           beforeEach('activate', async () => {
             for (let i = 0; i < guardians.length; i++) {
               await ANT.approve(registry.address, guardians[i].initialActiveBalance, { from: guardians[i].address })
-              await registry.stakeAndActivate(guardians[i].address, guardians[i].initialActiveBalance, '0x', { from: guardians[i].address })
+              await registry.stakeAndActivate(guardians[i].address, guardians[i].initialActiveBalance, { from: guardians[i].address })
             }
           })
 

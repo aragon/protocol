@@ -3,19 +3,14 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
-const { REGISTRY_ERRORS, SIGNATURES_VALIDATOR_ERRORS } = require('../helpers/utils/errors')
-const { encodeAuthorization } = require('../helpers/utils/modules')
+const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('GuardiansRegistry', ([_, guardian, governor]) => {
+contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
   let controller, registry, disputeManager, ANT
-
-  const wallet = web3.eth.accounts.create('registry')
-  const externalAccount = wallet.address
-  const externalAccountPK = wallet.privateKey
 
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
@@ -32,39 +27,13 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
     await controller.setGuardiansRegistry(registry.address)
   })
 
-  const unstake = async (recipient, amount, sender, authorize = false) => {
-    let calldata = registry.contract.methods.unstake(recipient, amount.toString(), '0x').encodeABI()
-    if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-    return registry.sendTransaction({ from: sender, data: calldata })
-  }
-
-  const activate = async (recipient, amount, sender, authorize = false) => {
-    let calldata = registry.contract.methods.activate(recipient, amount.toString()).encodeABI()
-    if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-    return registry.sendTransaction({ from: sender, data: calldata })
-  }
-
-  const deactivate = async (recipient, amount, sender, authorize = false) => {
-    let calldata = registry.contract.methods.deactivate(recipient, amount.toString()).encodeABI()
-    if (authorize) calldata = await encodeAuthorization(registry, recipient, externalAccountPK, calldata, sender)
-    return registry.sendTransaction({ from: sender, data: calldata })
-  }
-
   describe('stakeAndActivate', () => {
-    const data = '0xabcd'
-
-    const stakeAndActivate = async (guardian, amount, sender, authorize = false) => {
-      let calldata = registry.contract.methods.stakeAndActivate(guardian, amount.toString(), data).encodeABI()
-      if (authorize) calldata = await encodeAuthorization(registry, guardian, externalAccountPK, calldata, sender)
-      return registry.sendTransaction({ from: sender, data: calldata })
-    }
-
-    const itHandlesStakeAndActivateProperly = (recipient, sender, authorize = false) => {
+    const itHandlesStakeAndActivateProperly = (sender) => {
       context('when the given amount is zero', () => {
         const amount = bn(0)
 
         it('reverts', async () => {
-          await assertRevert(stakeAndActivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+          await assertRevert(registry.stakeAndActivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
         })
       })
 
@@ -78,13 +47,13 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           })
 
           it('reverts', async () => {
-            await assertRevert(stakeAndActivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+            await assertRevert(registry.stakeAndActivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
           })
         })
 
         context('when the sender does not have enough token balance', () => {
           it('reverts', async () => {
-            await assertRevert(stakeAndActivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
+            await assertRevert(registry.stakeAndActivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
           })
         })
       })
@@ -98,34 +67,34 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             await ANT.approve(registry.address, amount, { from: sender })
           })
 
-          it('adds the staked amount to the active balance of the recipient', async () => {
-            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+          it('adds the staked amount to the active balance of the guardian', async () => {
+            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
-            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
-            assertBn(previousActiveBalance.add(amount), currentActiveBalance, 'recipient active balances do not match')
+            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
+            assertBn(previousActiveBalance.add(amount), currentActiveBalance, 'guardian active balances do not match')
 
-            assertBn(previousLockedBalance, currentLockedBalance, 'recipient locked balances do not match')
-            assertBn(previousAvailableBalance, currentAvailableBalance, 'recipient available balances do not match')
-            assertBn(previousDeactivationBalance, currentDeactivationBalance, 'recipient deactivation balances do not match')
+            assertBn(previousLockedBalance, currentLockedBalance, 'guardian locked balances do not match')
+            assertBn(previousAvailableBalance, currentAvailableBalance, 'guardian available balances do not match')
+            assertBn(previousDeactivationBalance, currentDeactivationBalance, 'guardian deactivation balances do not match')
           })
 
           it('does not affect the active balance of the current term', async () => {
             const termId = await controller.getLastEnsuredTermId()
-            const currentTermPreviousBalance = await registry.activeBalanceOfAt(recipient, termId)
+            const currentTermPreviousBalance = await registry.activeBalanceOfAt(guardian, termId)
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
-            const currentTermCurrentBalance = await registry.activeBalanceOfAt(recipient, termId)
+            const currentTermCurrentBalance = await registry.activeBalanceOfAt(guardian, termId)
             assertBn(currentTermPreviousBalance, currentTermCurrentBalance, 'current term active balances do not match')
           })
 
-          if (recipient !== sender) {
+          if (guardian !== sender) {
             it('does not affect the sender balances', async () => {
               const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(sender)
 
-              await stakeAndActivate(recipient, amount, sender, authorize)
+              await registry.stakeAndActivate(guardian, amount, { from: sender })
 
               const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(sender)
               assertBn(previousActiveBalance, currentActiveBalance, 'sender active balances do not match')
@@ -135,32 +104,32 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             })
           }
 
-          it('updates the unlocked balance of the recipient', async () => {
+          it('updates the unlocked balance of the guardian', async () => {
             const previousSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(sender)
-            const previousRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+            const previousGuardianUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
             await controller.mockIncreaseTerm()
-            const currentRecipientUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
-            assertBn(previousRecipientUnlockedActiveBalance.add(amount), currentRecipientUnlockedActiveBalance, 'recipient unlocked balances do not match')
+            const currentGuardianUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
+            assertBn(previousGuardianUnlockedActiveBalance.add(amount), currentGuardianUnlockedActiveBalance, 'guardian unlocked balances do not match')
 
-            if (recipient !== sender) {
+            if (guardian !== sender) {
               const currentSenderUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(sender)
               assertBn(previousSenderUnlockedActiveBalance, currentSenderUnlockedActiveBalance, 'sender unlocked balances do not match')
             }
           })
 
-          it('updates the total staked for the recipient', async () => {
+          it('updates the total staked for the guardian', async () => {
             const previousSenderTotalStake = await registry.totalStakedFor(sender)
-            const previousRecipientTotalStake = await registry.totalStakedFor(recipient)
+            const previousGuardianTotalStake = await registry.totalStakedFor(guardian)
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
-            const currentRecipientTotalStake = await registry.totalStakedFor(recipient)
-            assertBn(previousRecipientTotalStake.add(amount), currentRecipientTotalStake, 'recipient total stake amounts do not match')
+            const currentGuardianTotalStake = await registry.totalStakedFor(guardian)
+            assertBn(previousGuardianTotalStake.add(amount), currentGuardianTotalStake, 'guardian total stake amounts do not match')
 
-            if (recipient !== sender) {
+            if (guardian !== sender) {
               const currentSenderTotalStake = await registry.totalStakedFor(sender)
               assertBn(previousSenderTotalStake, currentSenderTotalStake, 'sender total stake amounts do not match')
             }
@@ -169,7 +138,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           it('updates the total staked', async () => {
             const previousTotalStake = await registry.totalStaked()
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
             const currentTotalStake = await registry.totalStaked()
             assertBn(previousTotalStake.add(amount), currentTotalStake, 'total stake amounts do not match')
@@ -178,9 +147,9 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           it('transfers the tokens to the registry', async () => {
             const previousSenderBalance = await ANT.balanceOf(sender)
             const previousRegistryBalance = await ANT.balanceOf(registry.address)
-            const previousRecipientBalance = await ANT.balanceOf(recipient)
+            const previousGuardianBalance = await ANT.balanceOf(guardian)
 
-            await stakeAndActivate(recipient, amount, sender, authorize)
+            await registry.stakeAndActivate(guardian, amount, { from: sender })
 
             const currentSenderBalance = await ANT.balanceOf(sender)
             assertBn(previousSenderBalance.sub(amount), currentSenderBalance, 'sender balances do not match')
@@ -188,49 +157,47 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             const currentRegistryBalance = await ANT.balanceOf(registry.address)
             assertBn(previousRegistryBalance.add(amount), currentRegistryBalance, 'registry balances do not match')
 
-            if (recipient !== sender) {
-              const currentRecipientBalance = await ANT.balanceOf(recipient)
-              assertBn(previousRecipientBalance, currentRecipientBalance, 'recipient balances do not match')
+            if (guardian !== sender) {
+              const currentGuardianBalance = await ANT.balanceOf(guardian)
+              assertBn(previousGuardianBalance, currentGuardianBalance, 'guardian balances do not match')
             }
           })
 
           it('emits a stake event', async () => {
-            const previousTotalStake = await registry.totalStakedFor(recipient)
+            const previousTotalStake = await registry.totalStakedFor(guardian)
 
-            const receipt = await stakeAndActivate(recipient, amount, sender, authorize)
+            const receipt = await registry.stakeAndActivate(guardian, amount, { from: sender })
 
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.STAKED)
-            assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { user: recipient, amount, total: previousTotalStake.add(amount), data } })
+            assertEvent(receipt, REGISTRY_EVENTS.STAKED, { expectedArgs: { guardian: guardian, amount, total: previousTotalStake.add(amount) } })
           })
 
           it('emits an activation event', async () => {
             const termId = await controller.getCurrentTermId()
 
-            const receipt = await stakeAndActivate(recipient, amount, sender, authorize)
+            const receipt = await registry.stakeAndActivate(guardian, amount, { from: sender })
 
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
-            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount, sender: sender } })
+            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian, fromTermId: termId.add(bn(1)), amount } })
           })
         })
 
         context('when the sender does not have enough token balance', () => {
           it('reverts', async () => {
-            await assertRevert(stakeAndActivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
+            await assertRevert(registry.stakeAndActivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.TOKEN_TRANSFER_FAILED)
           })
         })
       })
     }
 
-    context('when the sender is the recipient', () => {
+    context('when the sender is the guardian', () => {
       const sender = guardian
-      const recipient = guardian
 
-      itHandlesStakeAndActivateProperly(recipient, sender)
+      itHandlesStakeAndActivateProperly(sender)
     })
 
-    context('when the sender is not the recipient', () => {
-      const sender = guardian
-      const recipient = externalAccount
+    context('when the sender is not the guardian', () => {
+      const sender = someone
 
       context('when the sender is allowed as activator', () => {
         beforeEach('allow sender as activator', async () => {
@@ -241,17 +208,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: true } })
         })
 
-        context('when the sender is authorized by recipient', () => {
-          const authorized = true
-
-          itHandlesStakeAndActivateProperly(recipient, sender, authorized)
-        })
-
-        context('when the sender is not authorized by recipient', () => {
-          const authorized = false
-
-          itHandlesStakeAndActivateProperly(recipient, sender, authorized)
-        })
+        itHandlesStakeAndActivateProperly(sender)
       })
 
       context('when the sender is not allowed as activator', () => {
@@ -263,17 +220,21 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: false } })
         })
 
-        context('when the sender is authorized by recipient', () => {
-          const authorized = true
+        context('when the sender is a whitelisted relayer', () => {
+          before('whitelist relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, true, { from: governor })
+          })
 
-          itHandlesStakeAndActivateProperly(recipient, sender, authorized)
+          itHandlesStakeAndActivateProperly(sender)
         })
 
-        context('when the sender is not authorized by recipient', () => {
-          const authorized = false
+        context('when the sender is not a whitelisted relayer', () => {
+          before('disallow relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, false, { from: governor })
+          })
 
           it('reverts', async () => {
-            await assertRevert(stakeAndActivate(recipient, MIN_ACTIVE_AMOUNT, sender, authorized), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
+            await assertRevert(registry.stakeAndActivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
           })
         })
       })
@@ -281,13 +242,13 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   })
 
   describe('activate', () => {
-    const itHandlesActivationsProperly = (recipient, sender, authorize = false) => {
-      context('when the recipient has not staked some tokens yet', () => {
+    const itHandlesActivationsProperly = (sender) => {
+      context('when the guardian has not staked some tokens yet', () => {
         context('when the given amount is zero', () => {
           const amount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+            await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
           })
         })
 
@@ -295,7 +256,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
+            await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
           })
         })
 
@@ -303,27 +264,27 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.mul(bn(2))
 
           it('reverts', async () => {
-            await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
+            await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
           })
         })
       })
 
-      context('when the recipient has already staked some tokens', () => {
+      context('when the guardian has already staked some tokens', () => {
         const maxPossibleBalance = TOTAL_ACTIVE_BALANCE_LIMIT
 
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, maxPossibleBalance)
           await ANT.approve(registry.address, maxPossibleBalance, { from: sender })
-          await registry.stake(recipient, maxPossibleBalance, '0x', { from: sender })
+          await registry.stake(guardian, maxPossibleBalance, { from: sender })
         })
 
         const itHandlesActivationProperlyFor = ({ requestedAmount, deactivationAmount = bn(0), deactivationDue = true }) => {
-          it('adds the requested amount to the active balance of the recipient and removes it from the available balance', async () => {
-            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+          it('adds the requested amount to the active balance of the guardian and removes it from the available balance', async () => {
+            const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            await activate(recipient, requestedAmount, sender, authorize)
+            await registry.activate(guardian, requestedAmount, { from: sender })
 
-            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+            const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
 
             assertBn(previousLockedBalance, currentLockedBalance, 'locked balances do not match')
             const activationAmount = requestedAmount.eq(bn(0))
@@ -336,23 +297,23 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
 
           it('does not affect the active balance of the current term', async () => {
             const termId = await controller.getLastEnsuredTermId()
-            const currentTermPreviousBalance = await registry.activeBalanceOfAt(recipient, termId)
+            const currentTermPreviousBalance = await registry.activeBalanceOfAt(guardian, termId)
 
-            await activate(recipient, requestedAmount, sender, authorize)
+            await registry.activate(guardian, requestedAmount, { from: sender })
 
-            const currentTermCurrentBalance = await registry.activeBalanceOfAt(recipient, termId)
+            const currentTermCurrentBalance = await registry.activeBalanceOfAt(guardian, termId)
             assertBn(currentTermPreviousBalance, currentTermCurrentBalance, 'current term active balances do not match')
           })
 
-          it('increments the unlocked balance of the recipient', async () => {
-            const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+          it('increments the unlocked balance of the guardian', async () => {
+            const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-            const { available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+            const { available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            await activate(recipient, requestedAmount, sender, authorize)
+            await registry.activate(guardian, requestedAmount, { from: sender })
 
             await controller.mockIncreaseTerm()
-            const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+            const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
             const activationAmount = requestedAmount.eq(bn(0))
               ? (deactivationDue ? previousAvailableBalance.add(previousDeactivationBalance) : previousAvailableBalance)
               : requestedAmount
@@ -361,25 +322,25 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
 
           it('does not affect the staked balances', async () => {
             const previousTotalStake = await registry.totalStaked()
-            const previousRecipientStake = await registry.totalStakedFor(recipient)
+            const previousGuardianStake = await registry.totalStakedFor(guardian)
 
-            await activate(recipient, requestedAmount, sender, authorize)
+            await registry.activate(guardian, requestedAmount, { from: sender })
 
             const currentTotalStake = await registry.totalStaked()
             assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
 
-            const currentRecipientStake = await registry.totalStakedFor(recipient)
-            assertBn(previousRecipientStake, currentRecipientStake, 'recipient stake amounts do not match')
+            const currentGuardianStake = await registry.totalStakedFor(guardian)
+            assertBn(previousGuardianStake, currentGuardianStake, 'guardian stake amounts do not match')
           })
 
           it('does not affect the token balances', async () => {
-            const previousRecipientBalance = await ANT.balanceOf(sender)
+            const previousGuardianBalance = await ANT.balanceOf(sender)
             const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
-            await activate(recipient, requestedAmount, sender, authorize)
+            await registry.activate(guardian, requestedAmount, { from: sender })
 
             const currentSenderBalance = await ANT.balanceOf(sender)
-            assertBn(previousRecipientBalance, currentSenderBalance, 'sender balances do not match')
+            assertBn(previousGuardianBalance, currentSenderBalance, 'sender balances do not match')
 
             const currentRegistryBalance = await ANT.balanceOf(registry.address)
             assertBn(previousRegistryBalance, currentRegistryBalance, 'registry balances do not match')
@@ -387,26 +348,26 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
 
           it('emits an activation event', async () => {
             const termId = await controller.getLastEnsuredTermId()
-            const { available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+            const { available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-            const receipt = await activate(recipient, requestedAmount, sender, authorize)
+            const receipt = await registry.activate(guardian, requestedAmount, { from: sender })
 
             const activationAmount = requestedAmount.eq(bn(0))
               ? (deactivationDue ? previousAvailableBalance.add(previousDeactivationBalance) : previousAvailableBalance)
               : requestedAmount
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
-            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount: activationAmount, sender } })
+            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian, fromTermId: termId.add(bn(1)), amount: activationAmount } })
           })
 
           if (deactivationAmount.gt(bn(0))) {
             it('emits a deactivation processed event', async () => {
               const termId = await controller.getCurrentTermId()
-              const { availableTermId } = await registry.getDeactivationRequest(recipient)
+              const { availableTermId } = await registry.getDeactivationRequest(guardian)
 
-              const receipt = await activate(recipient, requestedAmount, sender, authorize)
+              const receipt = await registry.activate(guardian, requestedAmount, { from: sender })
 
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED)
-              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian: recipient, amount: deactivationAmount, availableTermId, processedTermId: termId } })
+              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian, amount: deactivationAmount, availableTermId, processedTermId: termId } })
             })
           }
         }
@@ -428,7 +389,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = currentAvailableBalance.add(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
+                  await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
                 })
               })
 
@@ -436,7 +397,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+                  await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
                 })
               })
 
@@ -465,7 +426,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = currentAvailableBalance.add(bn(1))
 
               it('reverts', async () => {
-                await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
+                await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
               })
             })
 
@@ -473,7 +434,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
               it('reverts', async () => {
-                await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+                await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
               })
             })
 
@@ -502,7 +463,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = currentAvailableBalance.add(bn(1))
 
               it('reverts', async () => {
-                await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
+                await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ACTIVATION_AMOUNT)
               })
             })
 
@@ -510,7 +471,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
               it('reverts', async () => {
-                await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+                await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
               })
             })
 
@@ -522,12 +483,12 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           })
         }
 
-        context('when the recipient did not activate any tokens yet', () => {
+        context('when the guardian did not activate any tokens yet', () => {
           const itCreatesAnIdForTheGuardian = amount => {
-            it('creates an id for the given recipient', async () => {
-              await activate(recipient, amount, sender, authorize)
+            it('creates an id for the given guardian', async () => {
+              await registry.activate(guardian, amount, { from: sender })
 
-              const guardianId = await registry.getGuardianId(recipient)
+              const guardianId = await registry.getGuardianId(guardian)
               assertBn(guardianId, 1, 'guardian id does not match')
             })
           }
@@ -543,7 +504,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
             it('reverts', async () => {
-              await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+              await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
             })
           })
 
@@ -568,25 +529,25 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               // max possible balance was already allowed, allowing one more token
               await ANT.generateTokens(sender, 1)
               await ANT.approve(registry.address, 1, { from: sender })
-              await registry.stake(recipient, 1, '0x', { from: sender })
+              await registry.stake(guardian, 1, { from: sender })
 
-              await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.TOTAL_ACTIVE_BALANCE_EXCEEDED)
+              await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.TOTAL_ACTIVE_BALANCE_EXCEEDED)
             })
           })
         })
 
-        context('when the recipient has already activated some tokens', () => {
+        context('when the guardian has already activated some tokens', () => {
           const activeBalance = MIN_ACTIVE_AMOUNT
 
           beforeEach('activate some tokens', async () => {
-            await activate(recipient, activeBalance, sender, true)
+            await registry.activate(guardian, activeBalance, { from: sender })
           })
 
-          context('when the recipient does not have a deactivation request', () => {
+          context('when the guardian does not have a deactivation request', () => {
             context('when the given amount is zero', () => {
               const amount = bn(0)
 
-              context('when the recipient was not slashed and reaches the minimum active amount of tokens', () => {
+              context('when the guardian was not slashed and reaches the minimum active amount of tokens', () => {
                 beforeEach('increase term', async () => {
                   await controller.mockIncreaseTerm()
                 })
@@ -594,23 +555,23 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 itHandlesActivationProperlyFor({ requestedAmount: amount })
               })
 
-              context('when the recipient was slashed and reaches the minimum active amount of tokens', () => {
-                beforeEach('slash recipient', async () => {
-                  await disputeManager.collect(recipient, bigExp(1, 18))
+              context('when the guardian was slashed and reaches the minimum active amount of tokens', () => {
+                beforeEach('slash guardian', async () => {
+                  await disputeManager.collect(guardian, bigExp(1, 18))
                   await controller.mockIncreaseTerm()
                 })
 
                 itHandlesActivationProperlyFor({ requestedAmount: amount })
               })
 
-              context('when the recipient was slashed and does not reach the minimum active amount of tokens', () => {
-                beforeEach('slash recipient', async () => {
-                  await disputeManager.collect(recipient, activeBalance)
-                  await unstake(recipient, maxPossibleBalance.sub(activeBalance).sub(bn(1)), sender, true)
+              context('when the guardian was slashed and does not reach the minimum active amount of tokens', () => {
+                beforeEach('slash guardian', async () => {
+                  await disputeManager.collect(guardian, activeBalance)
+                  await registry.unstake(guardian, maxPossibleBalance.sub(activeBalance).sub(bn(1)), { from: sender })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+                  await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
                 })
               })
             })
@@ -618,7 +579,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             context('when the given amount is greater than zero', () => {
               const amount = bigExp(2, 18)
 
-              context('when the recipient was not slashed and reaches the minimum active amount of tokens', () => {
+              context('when the guardian was not slashed and reaches the minimum active amount of tokens', () => {
                 beforeEach('increase term', async () => {
                   await controller.mockIncreaseTerm()
                 })
@@ -626,42 +587,42 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 itHandlesActivationProperlyFor({ requestedAmount: amount })
               })
 
-              context('when the recipient was slashed and reaches the minimum active amount of tokens', () => {
-                beforeEach('slash recipient', async () => {
-                  await disputeManager.collect(recipient, amount)
+              context('when the guardian was slashed and reaches the minimum active amount of tokens', () => {
+                beforeEach('slash guardian', async () => {
+                  await disputeManager.collect(guardian, amount)
                   await controller.mockIncreaseTerm()
                 })
 
                 itHandlesActivationProperlyFor({ requestedAmount: amount })
               })
 
-              context('when the recipient was slashed and does not reach the minimum active amount of tokens', () => {
-                beforeEach('slash recipient', async () => {
-                  await disputeManager.collect(recipient, activeBalance)
+              context('when the guardian was slashed and does not reach the minimum active amount of tokens', () => {
+                beforeEach('slash guardian', async () => {
+                  await disputeManager.collect(guardian, activeBalance)
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(activate(recipient, amount, sender, authorize), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
+                  await assertRevert(registry.activate(guardian, amount, { from: sender }), REGISTRY_ERRORS.ACTIVE_BALANCE_BELOW_MIN)
                 })
               })
             })
           })
 
-          context('when the recipient has a full deactivation request', () => {
+          context('when the guardian has a full deactivation request', () => {
             beforeEach('deactivate tokens', async () => {
-              await deactivate(recipient, activeBalance, sender, true)
+              await registry.deactivate(guardian, activeBalance, { from: sender })
             })
 
             itHandlesDeactivationRequests(activeBalance)
           })
         })
 
-        context('when the recipient has already activated all tokens', () => {
+        context('when the guardian has already activated all tokens', () => {
           const activeBalance = maxPossibleBalance
 
           beforeEach('activate tokens and deactivate', async () => {
-            await activate(recipient, activeBalance, sender, true)
-            await deactivate(recipient, activeBalance, sender, true)
+            await registry.activate(guardian, activeBalance, { from: sender })
+            await registry.deactivate(guardian, activeBalance, { from: sender })
           })
 
           itHandlesDeactivationRequests(activeBalance)
@@ -669,16 +630,14 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
       })
     }
 
-    context('when the sender is the recipient', () => {
+    context('when the sender is the guardian', () => {
       const sender = guardian
-      const recipient = guardian
 
-      itHandlesActivationsProperly(recipient, sender)
+      itHandlesActivationsProperly(sender)
     })
 
-    context('when the sender is not the recipient', () => {
-      const sender = guardian
-      const recipient = externalAccount
+    context('when the sender is not the guardian', () => {
+      const sender = someone
 
       context('when the sender is allowed as activator', () => {
         beforeEach('allow sender as activator', async () => {
@@ -689,18 +648,8 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: true } })
         })
 
-        context('when the sender is authorized by recipient', () => {
-          const authorize = true
-
-          itHandlesActivationsProperly(recipient, sender, authorize)
-        })
-
-        context('when the sender is not authorized by recipient', () => {
-          const authorized = false
-
-          it('reverts', async () => {
-            await assertRevert(activate(recipient, MIN_ACTIVE_AMOUNT, sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
-          })
+        it('reverts', async () => {
+          await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
 
@@ -713,17 +662,21 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: false } })
         })
 
-        context('when the sender is authorized by recipient', () => {
-          const authorized = true
+        context('when the sender is a whitelisted relayer', () => {
+          before('whitelist relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, true, { from: governor })
+          })
 
-          itHandlesActivationsProperly(recipient, sender, authorized)
+          itHandlesActivationsProperly(sender)
         })
 
-        context('when the sender is not authorized by recipient', () => {
-          const authorized = false
+        context('when the sender is not a whitelisted relayer', () => {
+          before('disallow relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, false, { from: governor })
+          })
 
           it('reverts', async () => {
-            await assertRevert(activate(recipient, MIN_ACTIVE_AMOUNT, sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
+            await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
           })
         })
       })
@@ -731,13 +684,13 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
   })
 
   describe('deactivate',  () => {
-    const itHandlesDeactivationsProperly = (recipient, sender, authorize = false) => {
+    const itHandlesDeactivationsProperly = (sender) => {
       const itRevertsForDifferentAmounts = () => {
         context('when the requested amount is zero', () => {
           const amount = bn(0)
 
           it('reverts', async () => {
-            await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
+            await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_ZERO_AMOUNT)
           })
         })
 
@@ -745,7 +698,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.sub(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+            await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
           })
         })
 
@@ -753,42 +706,42 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           const amount = MIN_ACTIVE_AMOUNT.mul(bn(2))
 
           it('reverts', async () => {
-            await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+            await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
           })
         })
       }
 
-      context('when the recipient has not staked some tokens yet', () => {
+      context('when the guardian has not staked some tokens yet', () => {
         itRevertsForDifferentAmounts()
       })
 
-      context('when the recipient has already staked some tokens', () => {
+      context('when the guardian has already staked some tokens', () => {
         const stakedBalance = MIN_ACTIVE_AMOUNT.mul(bn(5))
 
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(sender, stakedBalance)
           await ANT.approve(registry.address, stakedBalance, { from: sender })
-          await registry.stake(recipient, stakedBalance, '0x', { from: sender })
+          await registry.stake(guardian, stakedBalance, { from: sender })
         })
 
-        context('when the recipient did not activate any tokens yet', () => {
+        context('when the guardian did not activate any tokens yet', () => {
           itRevertsForDifferentAmounts()
         })
 
-        context('when the recipient has already activated some tokens', () => {
+        context('when the guardian has already activated some tokens', () => {
           const activeBalance = MIN_ACTIVE_AMOUNT.mul(bn(4))
 
           beforeEach('activate some tokens', async () => {
-            await activate(recipient, activeBalance, sender, true)
+            await registry.activate(guardian, activeBalance, { from: sender })
           })
 
           const itHandlesDeactivationRequestFor = (requestedAmount, expectedAmount = requestedAmount, previousDeactivationAmount = bn(0)) => {
-            it('decreases the active balance and increases the deactivation balance of the recipient', async () => {
-              const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+            it('decreases the active balance and increases the deactivation balance of the guardian', async () => {
+              const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
 
-              const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+              const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
 
               const expectedActiveBalance = previousActiveBalance.sub(expectedAmount)
               assertBn(currentActiveBalance, expectedActiveBalance, 'active balances do not match')
@@ -804,46 +757,46 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
 
             it('does not affect the active balance of the current term', async () => {
               const termId = await controller.getLastEnsuredTermId()
-              const currentTermPreviousBalance = await registry.activeBalanceOfAt(recipient, termId)
+              const currentTermPreviousBalance = await registry.activeBalanceOfAt(guardian, termId)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
 
-              const currentTermCurrentBalance = await registry.activeBalanceOfAt(recipient, termId)
+              const currentTermCurrentBalance = await registry.activeBalanceOfAt(guardian, termId)
               assertBn(currentTermCurrentBalance, currentTermPreviousBalance, 'current term active balances do not match')
             })
 
-            it('decreases the unlocked balance of the recipient', async () => {
+            it('decreases the unlocked balance of the guardian', async () => {
               await controller.mockIncreaseTerm()
-              const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+              const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
 
               await controller.mockIncreaseTerm()
-              const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
+              const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian)
               assertBn(currentUnlockedActiveBalance, previousUnlockedActiveBalance.sub(expectedAmount), 'unlocked balances do not match')
             })
 
-            it('does not affect the staked balance of the recipient', async () => {
+            it('does not affect the staked balance of the guardian', async () => {
               const previousTotalStake = await registry.totalStaked()
-              const previousRecipientStake = await registry.totalStakedFor(recipient)
+              const previousGuardianStake = await registry.totalStakedFor(guardian)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
 
               const currentTotalStake = await registry.totalStaked()
               assertBn(currentTotalStake, previousTotalStake, 'total stake amounts do not match')
 
-              const currentRecipientStake = await registry.totalStakedFor(recipient)
-              assertBn(currentRecipientStake, previousRecipientStake, 'recipient stake amounts do not match')
+              const currentGuardianStake = await registry.totalStakedFor(guardian)
+              assertBn(currentGuardianStake, previousGuardianStake, 'guardian stake amounts do not match')
             })
 
             it('does not affect the token balances', async () => {
-              const previousRecipientBalance = await ANT.balanceOf(sender)
+              const previousGuardianBalance = await ANT.balanceOf(sender)
               const previousRegistryBalance = await ANT.balanceOf(registry.address)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
 
               const currentSenderBalance = await ANT.balanceOf(sender)
-              assertBn(currentSenderBalance, previousRecipientBalance, 'recipient balances do not match')
+              assertBn(currentSenderBalance, previousGuardianBalance, 'guardian balances do not match')
 
               const currentRegistryBalance = await ANT.balanceOf(registry.address)
               assertBn(currentRegistryBalance, previousRegistryBalance, 'registry balances do not match')
@@ -851,20 +804,20 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
 
             it('emits a deactivation request created event', async () => {
               const termId = await controller.getLastEnsuredTermId()
-              const receipt = await deactivate(recipient, requestedAmount, sender, authorize)
+              const receipt = await registry.deactivate(guardian, requestedAmount, { from: sender })
 
               assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED)
-              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { expectedArgs: { guardian: recipient, availableTermId: termId.add(bn(1)), amount: expectedAmount } })
+              assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { expectedArgs: { guardian, availableTermId: termId.add(bn(1)), amount: expectedAmount } })
             })
 
             it('can be requested at the next term', async () => {
-              const { active: previousActiveBalance, available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+              const { active: previousActiveBalance, available: previousAvailableBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
 
-              await deactivate(recipient, requestedAmount, sender, authorize)
+              await registry.deactivate(guardian, requestedAmount, { from: sender })
               await controller.mockIncreaseTerm()
-              await registry.processDeactivationRequest(recipient)
+              await registry.processDeactivationRequest(guardian)
 
-              const { active: currentActiveBalance, available: currentAvailableBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+              const { active: currentActiveBalance, available: currentAvailableBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
 
               const expectedActiveBalance = previousActiveBalance.sub(expectedAmount)
               assertBn(currentActiveBalance, expectedActiveBalance, 'active balances do not match')
@@ -878,17 +831,17 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             if (previousDeactivationAmount.gt(bn(0))) {
               it('emits a deactivation processed event', async () => {
                 const termId = await controller.getCurrentTermId()
-                const { availableTermId } = await registry.getDeactivationRequest(recipient)
+                const { availableTermId } = await registry.getDeactivationRequest(guardian)
 
-                const receipt = await deactivate(recipient, requestedAmount, sender, authorize)
+                const receipt = await registry.deactivate(guardian, requestedAmount, { from: sender })
 
                 assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED)
-                assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian: recipient, amount: previousDeactivationAmount, availableTermId, processedTermId: termId } })
+                assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_PROCESSED, { expectedArgs: { guardian, amount: previousDeactivationAmount, availableTermId, processedTermId: termId } })
               })
             }
           }
 
-          context('when the recipient does not have a deactivation request', () => {
+          context('when the guardian does not have a deactivation request', () => {
             context('when the requested amount is zero', () => {
               const amount = bn(0)
 
@@ -899,7 +852,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               const amount = activeBalance.sub(MIN_ACTIVE_AMOUNT).add(bn(1))
 
               it('reverts', async () => {
-                await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+                await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
               })
             })
 
@@ -916,12 +869,12 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             })
           })
 
-          context('when the recipient already has a previous deactivation request', () => {
+          context('when the guardian already has a previous deactivation request', () => {
             const previousDeactivationAmount = MIN_ACTIVE_AMOUNT
             const currentActiveBalance = activeBalance.sub(previousDeactivationAmount)
 
             beforeEach('deactivate tokens', async () => {
-              await deactivate(recipient, previousDeactivationAmount, sender, true)
+              await registry.deactivate(guardian, previousDeactivationAmount, { from: sender })
             })
 
             context('when the deactivation request is for the next term', () => {
@@ -935,7 +888,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = currentActiveBalance.sub(MIN_ACTIVE_AMOUNT).add(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
                 })
               })
 
@@ -951,16 +904,16 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 itHandlesDeactivationRequestFor(amount, amount)
               })
 
-              context('when the recipient has an activation lock', () => {
+              context('when the guardian has an activation lock', () => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
                   await registry.updateLockManagerWhitelist(sender, true, { from: governor })
-                  await registry.lockActivation(recipient, sender, amount, { from: sender })
+                  await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
                 })
               })
             })
@@ -980,7 +933,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = currentActiveBalance.sub(MIN_ACTIVE_AMOUNT).add(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
                 })
               })
 
@@ -996,16 +949,16 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 itHandlesDeactivationRequestFor(amount, amount, previousDeactivationAmount)
               })
 
-              context('when the recipient has an activation lock', () => {
+              context('when the guardian has an activation lock', () => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
                   await registry.updateLockManagerWhitelist(sender, true, { from: governor })
-                  await registry.lockActivation(recipient, sender, amount, { from: sender })
+                  await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
                 })
               })
             })
@@ -1026,7 +979,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 const amount = currentActiveBalance.sub(MIN_ACTIVE_AMOUNT).add(bn(1))
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.INVALID_DEACTIVATION_AMOUNT)
                 })
               })
 
@@ -1042,16 +995,16 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
                 itHandlesDeactivationRequestFor(amount, amount, previousDeactivationAmount)
               })
 
-              context('when the recipient has an activation lock', () => {
+              context('when the guardian has an activation lock', () => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
                   await registry.updateLockManagerWhitelist(sender, true, { from: governor })
-                  await registry.lockActivation(recipient, sender, amount, { from: sender })
+                  await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(deactivate(recipient, amount, sender, authorize), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+                  await assertRevert(registry.deactivate(guardian, amount, { from: sender }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
                 })
               })
             })
@@ -1060,28 +1013,30 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
       })
     }
 
-    context('when the sender is the recipient', () => {
+    context('when the sender is the guardian', () => {
       const sender = guardian
-      const recipient = guardian
 
-      itHandlesDeactivationsProperly(recipient, sender)
+      itHandlesDeactivationsProperly(sender)
     })
 
-    context('when the sender is not the recipient', () => {
-      const sender = guardian
-      const recipient = externalAccount
+    context('when the sender is not the guardian', () => {
+      const sender = someone
 
-      context('when the sender is authorized by recipient', () => {
-        const authorize = true
+      context('when the sender is a whitelisted relayer', () => {
+        before('whitelist relayer', async () => {
+          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+        })
 
-        itHandlesDeactivationsProperly(recipient, sender, authorize)
+        itHandlesDeactivationsProperly(sender)
       })
 
-      context('when the sender is not authorized by recipient', () => {
-        const authorized = false
+      context('when the sender is not a whitelisted relayer', () => {
+        before('disallow relayer', async () => {
+          await controller.updateRelayerWhitelist(sender, false, { from: governor })
+        })
 
         it('reverts', async () => {
-          await assertRevert(deactivate(recipient, MIN_ACTIVE_AMOUNT, sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
+          await assertRevert(registry.deactivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
     })

@@ -37,17 +37,17 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         const firstGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(10))
         await ANT.generateTokens(guardian, firstGuardianBalance)
         await ANT.approve(registry.address, firstGuardianBalance, { from: guardian })
-        await registry.stakeAndActivate(guardian, firstGuardianBalance, '0x', { from: guardian })
+        await registry.stakeAndActivate(guardian, firstGuardianBalance, { from: guardian })
 
         const secondGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(5))
         await ANT.generateTokens(secondGuardian, secondGuardianBalance)
         await ANT.approve(registry.address, secondGuardianBalance, { from: secondGuardian })
-        await registry.stakeAndActivate(secondGuardian, secondGuardianBalance, '0x', { from: secondGuardian })
+        await registry.stakeAndActivate(secondGuardian, secondGuardianBalance, { from: secondGuardian })
 
         const thirdGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(20))
         await ANT.generateTokens(thirdGuardian, thirdGuardianBalance)
         await ANT.approve(registry.address, thirdGuardianBalance, { from: thirdGuardian })
-        await registry.stakeAndActivate(thirdGuardian, thirdGuardianBalance, '0x', { from: thirdGuardian })
+        await registry.stakeAndActivate(thirdGuardian, thirdGuardianBalance, { from: thirdGuardian })
 
         await controller.mockIncreaseTerm()
       })
@@ -368,7 +368,7 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(guardian, stakedBalance)
           await ANT.approve(registry.address, stakedBalance, { from: guardian })
-          await registry.stake(guardian, stakedBalance, '0x', { from: guardian })
+          await registry.stake(guardian, stakedBalance, { from: guardian })
         })
 
         context('when the guardian did not activate any tokens yet', () => {

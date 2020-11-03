@@ -6,21 +6,20 @@ import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
 import "../core/modules/Controlled.sol";
 import "../core/modules/Controller.sol";
-import "../core/modules/SignaturesValidator.sol";
+import "../core/modules/ControlledRelayable.sol";
 
 
-contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
+contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
     using SafeMath for uint256;
 
     string private constant ERROR_VOTE_ALREADY_EXISTS = "CRV_VOTE_ALREADY_EXISTS";
     string private constant ERROR_VOTE_DOES_NOT_EXIST = "CRV_VOTE_DOES_NOT_EXIST";
     string private constant ERROR_VOTE_ALREADY_COMMITTED = "CRV_VOTE_ALREADY_COMMITTED";
     string private constant ERROR_VOTE_ALREADY_REVEALED = "CRV_VOTE_ALREADY_REVEALED";
-    string private constant ERROR_SENDER_NOT_REPRESENTATIVE = "CRV_SENDER_NOT_REPRESENTATIVE";
+    string private constant ERROR_SENDER_NOT_DELEGATE = "CRV_SENDER_NOT_DELEGATE";
     string private constant ERROR_INVALID_OUTCOME = "CRV_INVALID_OUTCOME";
     string private constant ERROR_INVALID_OUTCOMES_AMOUNT = "CRV_INVALID_OUTCOMES_AMOUNT";
     string private constant ERROR_INVALID_COMMITMENT_SALT = "CRV_INVALID_COMMITMENT_SALT";
-    string private constant ERROR_INVALID_REPRESENTATIVES_LENGTH = "CRV_INVALID_REPRESENTATIVES_LEN";
 
     // Outcome nr. 0 is used to denote a missing vote (default)
     uint8 internal constant OUTCOME_MISSING = uint8(0);
@@ -47,14 +46,14 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
 
     // Vote records indexed by their ID
     mapping (uint256 => Vote) internal voteRecords;
-    // Representatives indexed by principals
-    mapping (address => mapping (address => bool)) internal representatives;
+    // Delegates indexed by principals
+    mapping (address => address) internal delegates;
 
     event VotingCreated(uint256 indexed voteId, uint8 possibleOutcomes);
-    event VoteCommitted(uint256 indexed voteId, address indexed voter, bytes32 commitment, address sender);
-    event VoteRevealed(uint256 indexed voteId, address indexed voter, uint8 outcome, address revealer);
-    event VoteLeaked(uint256 indexed voteId, address indexed voter, uint8 outcome, address leaker);
-    event RepresentativeChanged(address indexed voter, address indexed representative, bool allowed);
+    event VoteCommitted(uint256 indexed voteId, address indexed voter, bytes32 commitment);
+    event VoteRevealed(uint256 indexed voteId, address indexed voter, uint8 outcome);
+    event VoteLeaked(uint256 indexed voteId, address indexed voter, uint8 outcome);
+    event DelegateSet(address indexed voter, address delegate);
 
     /**
     * @dev Ensure a certain vote exists
@@ -74,17 +73,13 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     }
 
     /**
-    * @notice Set a list of representatives for sender
-    * @param _representatives List of addresses to be configured for the sender
-    * @param _allowed Whether each representative in the list is allowed
+    * @notice Set `_delegate` as the delegate for `_voter`
+    * @param _voter Address of the voter updating the delegate for
+    * @param _delegate Address of the delegate to be set
     */
-    function setRepresentatives(address[] calldata _representatives, bool[] calldata _allowed) external {
-        require(_representatives.length == _allowed.length, ERROR_INVALID_REPRESENTATIVES_LENGTH);
-
-        for (uint256 i = 0; i < _representatives.length; i++) {
-            representatives[msg.sender][_representatives[i]] = _allowed[i];
-            emit RepresentativeChanged(msg.sender, _representatives[i], _allowed[i]);
-        }
+    function delegate(address _voter, address _delegate) external authenticateSender(_voter) {
+        delegates[_voter] = _delegate;
+        emit DelegateSet(_voter, _delegate);
     }
 
     /**
@@ -110,15 +105,15 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     * @param _commitment Hashed outcome to be stored for future reveal
     */
     function commit(uint256 _voteId, address _voter, bytes32 _commitment) external voteExists(_voteId) {
-        bool isSenderAllowed = _isRepresentativeOf(_voter, msg.sender) || _isSignatureValid(_voter);
-        require(isSenderAllowed, ERROR_SENDER_NOT_REPRESENTATIVE);
+        bool isSenderAllowed = _isDelegateOf(_voter, msg.sender) || _isSenderAllowed(_voter);
+        require(isSenderAllowed, ERROR_SENDER_NOT_DELEGATE);
 
         CastVote storage castVote = voteRecords[_voteId].votes[_voter];
         require(castVote.commitment == bytes32(0), ERROR_VOTE_ALREADY_COMMITTED);
         _ensureVoterCanCommit(_voteId, _voter);
 
         castVote.commitment = _commitment;
-        emit VoteCommitted(_voteId, _voter, _commitment, msg.sender);
+        emit VoteCommitted(_voteId, _voter, _commitment);
     }
 
     /**
@@ -136,7 +131,7 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
         // There is no need to check if an outcome is valid if it was leaked.
         // Additionally, leaked votes are not considered for the tally.
         castVote.outcome = OUTCOME_LEAKED;
-        emit VoteLeaked(_voteId, _voter, _outcome, msg.sender);
+        emit VoteLeaked(_voteId, _voter, _outcome);
     }
 
     /**
@@ -156,17 +151,17 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
 
         castVote.outcome = _outcome;
         _updateTally(vote, _outcome, weight);
-        emit VoteRevealed(_voteId, _voter, _outcome, msg.sender);
+        emit VoteRevealed(_voteId, _voter, _outcome);
     }
 
     /**
-    * @dev Tell if a representative currently represents another voter
+    * @dev Tell if a delegate currently represents another voter
     * @param _voter Address of the principal being queried
-    * @param _representative Address of the representative being queried
-    * @return True if the representative currently represents the voter
+    * @param _delegate Address of the delegate being queried
+    * @return True if the given delegate currently represents the voter
     */
-    function isRepresentativeOf(address _voter, address _representative) external view returns (bool) {
-        return _isRepresentativeOf(_voter, _representative);
+    function isDelegateOf(address _voter, address _delegate) external view returns (bool) {
+        return _isDelegateOf(_voter, _delegate);
     }
 
     /**
@@ -343,13 +338,13 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     }
 
     /**
-    * @dev Tell if a representative currently represents another voter
+    * @dev Tell if a delegates represents another voter
     * @param _voter Address of the principal being queried
-    * @param _representative Address of the representative being queried
-    * @return True if the representative currently represents the voter
+    * @param _delegate Address of the delegate being queried
+    * @return True if the given delegate currently represents the voter
     */
-    function _isRepresentativeOf(address _voter, address _representative) internal view returns (bool) {
-        return _voter == _representative || representatives[_voter][_representative];
+    function _isDelegateOf(address _voter, address _delegate) internal view returns (bool) {
+        return _voter == _delegate || delegates[_voter] == _delegate;
     }
 
     /**

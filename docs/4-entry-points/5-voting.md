@@ -14,16 +14,16 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Save the controller address
 
-### 4.5.2. Set representative
+### 4.5.2. Delegate
 
-- **Actor:** Any guardian that could potentially be drafted for an adjudication round
+- **Actor:** Any guardian that could potentially be drafted for an adjudication round or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
-    - **Representatives:** List of representatives addresses
-    - **Allowed:** Whether each representative is allowed or not
-- **Authentication:** Open
+    - **Voter:** Address of the voter setting their delegate
+    - **Delegate:** Address of the delegate to be set
+- **Authentication:** Open. Implicitly voters on their behalf or a whitelisted relayer.
 - **Pre-flight checks:** None
 - **State transitions:**
-    - Update allowance status for each of the representatives in the list
+    - Set the voter's delegate
 
 ### 4.5.3. Create
 
@@ -38,21 +38,18 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 
 ### 4.5.3. Commit
 
-- **Actor:** Guardian drafted for an adjudication round
+- **Actor:** Guardian drafted for an adjudication round or an external entity incentivized in a drafted guardian
 - **Inputs:**
     - **Vote ID:** Vote identification number
     - **Voter:** Address of the voter committing the vote for
     - **Commitment:** Hashed outcome to be stored for future reveal
-    - **Authorization:** Optional authorization granted by the voter in case of a third party sender
-- **Authentication:** Only the voter or an external account allowed by signature. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function.
+- **Authentication:** Only the voter or a whitelisted relayer. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function.
 - **Pre-flight checks:**
-    - Validate signature if given
     - Ensure a vote object with that ID exists
     - Ensure that the sender was drafted for the corresponding dispute's adjudication round
     - Ensure that the sender has not committed a vote before
     - Ensure that votes can still be committed for the adjudication round
 - **State transitions:**
-    - Update next nonce of the voter if a signature was given
     - Create a cast vote object for the sender
 
 ### 4.5.4. Leak

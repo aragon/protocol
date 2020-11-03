@@ -49,7 +49,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 - **Pre-flight checks:**
     - Validate signature if given
     - Ensure that the requested period has already ended
-    - Ensure that the sender has not claimed their share for the requested token and period
+    - Ensure that the sender has not already claimed their share for the requested token and period
     - Ensure that the sender's share is greater than zero for the requested token and period
 - **State transitions:**
     - Update next nonce of the guardian if a signature was given

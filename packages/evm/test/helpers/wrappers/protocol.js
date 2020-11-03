@@ -186,7 +186,7 @@ class ProtocolHelper {
     for (const { address, initialActiveBalance } of guardians) {
       await this.guardianToken.generateTokens(address, initialActiveBalance)
       await this.guardianToken.approve(this.guardiansRegistry.address, initialActiveBalance, { from: address })
-      await this.guardiansRegistry.stakeAndActivate(address, initialActiveBalance, '0x', { from: address })
+      await this.guardiansRegistry.stakeAndActivate(address, initialActiveBalance, { from: address })
     }
   }
 

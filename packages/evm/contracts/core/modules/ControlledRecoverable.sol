@@ -24,14 +24,6 @@ contract ControlledRecoverable is Controlled {
     }
 
     /**
-    * @dev Constructor function
-    * @param _controller Address of the controller
-    */
-    constructor(Controller _controller) Controlled(_controller) public {
-        // solium-disable-previous-line no-empty-blocks
-    }
-
-    /**
     * @notice Transfer all `_token` tokens to `_to`
     * @param _token Address of the token to be recovered
     * @param _to Address of the recipient that will be receive all the funds of the requested token
