@@ -1,4 +1,4 @@
-const { bn } = require('@aragon/contract-helpers-test')
+const { bn, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
@@ -9,7 +9,7 @@ const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS, CONTROLLED_ERRORS } = require('..
 const CRVoting = artifacts.require('CRVoting')
 const DisputeManager = artifacts.require('DisputeManagerMockForVoting')
 
-contract('CRVoting', ([_, voter, someone, representative, governor]) => {
+contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
   let controller, voting, disputeManager
 
   const POSSIBLE_OUTCOMES = 2
@@ -25,74 +25,74 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
     await controller.setVoting(voting.address)
   })
 
-  describe('updateRepresentative', () => {
-    const itAllowsTheRepresentative = sender => {
-      it('allows the representative', async () => {
-        await voting.updateRepresentative(voter, representative, true, { from: sender })
+  describe('delegate', () => {
+    const itSetsTheDelegate = sender => {
+      it('allows the delegate', async () => {
+        await voting.delegate(voter, delegate, { from: sender })
 
-        assert.isTrue(await voting.isRepresentativeOf(voter, representative), 'representative is not allowed')
+        assert.isTrue(await voting.isDelegateOf(voter, delegate), 'delegate is not allowed')
       })
 
       it('emits an event', async () => {
-        const receipt = await voting.updateRepresentative(voter, representative, true, { from: sender })
+        const receipt = await voting.delegate(voter, delegate, { from: sender })
 
-        assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
-        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter, representative, allowed: true } })
+        assertAmountOfEvents(receipt, VOTING_EVENTS.DELEGATE_SET)
+        assertEvent(receipt, VOTING_EVENTS.DELEGATE_SET, { expectedArgs: { voter, delegate } })
       })
     }
 
-    const itDisallowsTheRepresentative = sender => {
-      it('disallows the representative', async () => {
-        await voting.updateRepresentative(voter, representative, false, { from: sender })
+    const itUnsetsTheDelegate = sender => {
+      it('disallows the delegate', async () => {
+        await voting.delegate(voter, ZERO_ADDRESS, { from: sender })
 
-        assert.isFalse(await voting.isRepresentativeOf(voter, representative), 'representative is not allowed')
+        assert.isFalse(await voting.isDelegateOf(voter, delegate), 'delegate is not allowed')
       })
 
       it('emits an event', async () => {
-        const receipt = await voting.updateRepresentative(voter, representative, false, { from: sender })
+        const receipt = await voting.delegate(voter, ZERO_ADDRESS, { from: sender })
 
-        assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
-        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter, representative, allowed: false } })
+        assertAmountOfEvents(receipt, VOTING_EVENTS.DELEGATE_SET)
+        assertEvent(receipt, VOTING_EVENTS.DELEGATE_SET, { expectedArgs: { voter, delegate: ZERO_ADDRESS } })
       })
     }
 
-    const itHandlesRepresentativeChangesProperly = sender => {
-      context('when the representative was not set', () => {
-        context('when the representative is allowed', () => {
-          itAllowsTheRepresentative(sender)
+    const itHandlesDelegatesProperly = sender => {
+      context('when the delegate was not set', () => {
+        context('when the delegate is allowed', () => {
+          itSetsTheDelegate(sender)
         })
 
-        context('when the representative is disallowed', () => {
-          itDisallowsTheRepresentative(sender)
+        context('when the delegate is disallowed', () => {
+          itUnsetsTheDelegate(sender)
         })
       })
 
-      context('when the representative was already set', () => {
-        context('when the representative was allowed', () => {
-          beforeEach('set representative', async () => {
-            await voting.updateRepresentative(voter, representative, true, { from: sender })
+      context('when the delegate was already set', () => {
+        context('when the delegate was allowed', () => {
+          beforeEach('set delegate', async () => {
+            await voting.delegate(voter, delegate, true, { from: sender })
           })
 
-          context('when the representative is allowed', () => {
-            itAllowsTheRepresentative(sender)
+          context('when the delegate is allowed', () => {
+            itSetsTheDelegate(sender)
           })
 
-          context('when the representative is disallowed', () => {
-            itDisallowsTheRepresentative(sender)
+          context('when the delegate is disallowed', () => {
+            itUnsetsTheDelegate(sender)
           })
         })
 
-        context('when the representative was not allowed', () => {
-          beforeEach('set representative', async () => {
-            await voting.updateRepresentative(voter, representative, false, { from: sender })
+        context('when the delegate was not allowed', () => {
+          beforeEach('unset delegate', async () => {
+            await voting.delegate(voter, ZERO_ADDRESS, { from: sender })
           })
 
-          context('when the representative is allowed', () => {
-            itAllowsTheRepresentative(sender)
+          context('when the delegate is allowed', () => {
+            itSetsTheDelegate(sender)
           })
 
-          context('when the representative is disallowed', () => {
-            itDisallowsTheRepresentative(sender)
+          context('when the delegate is disallowed', () => {
+            itUnsetsTheDelegate(sender)
           })
         })
       })
@@ -101,7 +101,7 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
     context('when the sender is the voter', () => {
       const sender = voter
 
-      itHandlesRepresentativeChangesProperly(sender)
+      itHandlesDelegatesProperly(sender)
     })
 
     context('when the sender is not the voter', () => {
@@ -112,7 +112,7 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
           await controller.updateRelayerWhitelist(sender, true, { from: governor })
         })
 
-        itHandlesRepresentativeChangesProperly(sender)
+        itHandlesDelegatesProperly(sender)
       })
 
       context('when the sender is not a whitelisted relayer', () => {
@@ -121,7 +121,7 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
         })
 
         it('reverts', async () => {
-          await assertRevert(voting.updateRepresentative(voter, representative, false, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
+          await assertRevert(voting.delegate(voter, delegate, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
     })
@@ -159,7 +159,7 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
                   const receipt = await voting.commit(voteId, voter, commitment, { from: sender })
 
                   assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_COMMITTED)
-                  assertEvent(receipt, VOTING_EVENTS.VOTE_COMMITTED, { expectedArgs: { voteId, voter, commitment, sender } })
+                  assertEvent(receipt, VOTING_EVENTS.VOTE_COMMITTED, { expectedArgs: { voteId, voter, commitment } })
                 })
 
                 it('does not affect the outcomes tally', async () => {
@@ -267,29 +267,29 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
       })
 
       context('when the sender is not the voter', () => {
-        context('when the sender is a representative', () => {
-          const sender = representative
+        context('when the sender is a delegate', () => {
+          const sender = delegate
 
-          beforeEach('set representative', async () => {
-            await voting.updateRepresentative(voter, representative, true, { from: voter })
+          beforeEach('set delegate', async () => {
+            await voting.delegate(voter, delegate, { from: voter })
           })
 
-          context('when the sender is still a representative', () => {
+          context('when the sender is still a delegate', () => {
             itHandlesCommitsProperly(sender)
           })
 
-          context('when the sender is not a representative any more', () => {
-            beforeEach('set representative', async () => {
-              await voting.updateRepresentative(voter, representative, false, { from: voter })
+          context('when the sender is not a delegate any more', () => {
+            beforeEach('unset delegate', async () => {
+              await voting.delegate(voter, ZERO_ADDRESS, { from: voter })
             })
 
             it('reverts', async () => {
-              await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_REPRESENTATIVE)
+              await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_DELEGATE)
             })
           })
         })
 
-        context('when the sender is not a representative', () => {
+        context('when the sender is not a delegate', () => {
           const sender = someone
 
           context('when the sender is a whitelisted relayer', () => {
@@ -306,7 +306,7 @@ contract('CRVoting', ([_, voter, someone, representative, governor]) => {
             })
 
             it('reverts', async () => {
-              await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_REPRESENTATIVE)
+              await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_DELEGATE)
             })
           })
         })

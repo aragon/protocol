@@ -14,17 +14,16 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Save the controller address
 
-### 4.5.2. Update representative
+### 4.5.2. Delegate
 
 - **Actor:** Any guardian that could potentially be drafted for an adjudication round or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
-    - **Voter:** Address of the voter updating the representative for
-    - **Representatives:** Address of the representative to be changed
-    - **Allowed:** Whether the representative is allowed or not
+    - **Voter:** Address of the voter setting their delegate
+    - **Delegate:** Address of the delegate to be set
 - **Authentication:** Open. Implicitly voters on their behalf or a whitelisted relayer.
 - **Pre-flight checks:** None
 - **State transitions:**
-    - Update the representative status for the given voter
+    - Set the voter's delegate
 
 ### 4.5.3. Create
 
