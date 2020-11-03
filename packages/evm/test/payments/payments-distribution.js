@@ -3,10 +3,8 @@ const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { getPKForAccount } = require('../helpers/utils/accounts')
-const { encodeAuthorization } = require('../helpers/utils/modules')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
-const { PAYMENTS_BOOK_ERRORS, SIGNATURES_VALIDATOR_ERRORS } = require('../helpers/utils/errors')
+const { PAYMENTS_BOOK_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const ERC20 = artifacts.require('ERC20Mock')
 const PaymentsBook = artifacts.require('PaymentsBook')
@@ -132,13 +130,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
           })
 
-          it('can be claimed by an authorized account', async () => {
+          it('can be claimed by a whitelisted relayer', async () => {
             assert.isTrue((await paymentsBook.canGuardianClaim(periodId, guardian, [token.address])).every(Boolean))
             const previousBalance = await token.balanceOf(guardian)
 
-            const calldata = paymentsBook.contract.methods.claimGuardianShare(periodId, guardian, [token.address]).encodeABI()
-            const data = await encodeAuthorization(paymentsBook, guardian, getPKForAccount(guardian), calldata, someone)
-            await paymentsBook.sendTransaction({ from: someone, data })
+            await controller.updateRelayerWhitelist(someone, true, { from: governor })
+            await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone })
 
             assert.isFalse((await paymentsBook.canGuardianClaim(periodId, guardian, [token.address])).every(Boolean))
 
@@ -147,7 +144,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
           })
 
           it("cannot claim a guardian's share twice", async () => {
-            await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone }), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
+            await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
           })
 
           it("cannot claim a guardian's share twice", async () => {

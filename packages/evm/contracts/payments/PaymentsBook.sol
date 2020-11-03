@@ -10,11 +10,11 @@ import "../lib/standards/IERC20.sol";
 import "./IPaymentsBook.sol";
 import "../registry/IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRelayable.sol";
 import "../core/modules/ControlledRecoverable.sol";
-import "../core/modules/SignaturesValidator.sol";
 
 
-contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, SignaturesValidator {
+contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayable, TimeHelpers {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SafeMath64 for uint64;
@@ -111,7 +111,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, TimeHelpers, Sign
     * @param _guardian Address of the guardian claiming the shares for
     * @param _tokens List of token addresses to be claimed
     */
-    function claimGuardianShare(uint256 _periodId, address payable _guardian, address[] calldata _tokens) external authenticate(_guardian) {
+    function claimGuardianShare(uint256 _periodId, address payable _guardian, address[] calldata _tokens) external authenticateSender(_guardian) {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
