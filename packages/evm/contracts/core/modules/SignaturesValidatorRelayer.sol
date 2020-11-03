@@ -3,7 +3,7 @@ pragma solidity ^0.5.17;
 import "../../lib/utils/TimeHelpers.sol";
 
 
-contract SignaturesValidator is TimeHelpers {
+contract SignaturesValidatorRelayer is TimeHelpers {
     string private constant ERROR_INVALID_SIGNATURE = "SV_INVALID_SIGNATURE";
 
     // deadline + [r,s,v] signature
@@ -15,12 +15,33 @@ contract SignaturesValidator is TimeHelpers {
     // bytes32 private constant VERSION_HASH = keccak256("1")
     bytes32 internal constant VERSION_HASH = 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
 
-    modifier authenticate(address _user) {
-        _validateSignature(_user);
-        _;
-    }
-
     mapping (address => uint256) internal nextNonce;
+
+    /**
+    * @notice Relay transaction from `_user` to `_target` with data `_data`
+    * @param _target Address forwarding the call to
+    * @param _user Address sending the call on behalf of
+    * @param _data Arbitrary data to be included in the call
+    * @param _deadline Encoded due date for the given signature
+    * @param _v V component of the signature authorizing the sender to execute this transaction
+    * @param _r R component of the signature authorizing the sender to execute this transaction
+    * @param _s S component of the signature authorizing the sender to execute this transaction
+    */
+    function relay(address _target, address _user, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s)
+        external
+    {
+        // TODO: support payable relays
+        bytes memory data = _data;
+        require(_isSignatureValid(_target, _user, data, nextNonce[_user]++, _deadline, _v, _r, _s), ERROR_INVALID_SIGNATURE);
+
+        assembly {
+            let ptr := mload(0x40)
+            let result := call(gas, _target, 0, add(data, 0x20), mload(data), 0, 0)
+            returndatacopy(ptr, 0, returndatasize)
+            switch result case 0 { revert(ptr, returndatasize) }
+            default { return(ptr, returndatasize) }
+        }
+    }
 
     /**
     * @dev Get next nonce for an address
@@ -37,34 +58,19 @@ contract SignaturesValidator is TimeHelpers {
     }
 
     /**
-    * @dev Validate signature
-    */
-    function _validateSignature(address _user) internal {
-        require(_isSignatureValid(_user), ERROR_INVALID_SIGNATURE);
-    }
-
-    /**
-    * @dev Tell whether a signature is valid and update nonce
-    */
-    function _isSignatureValid(address _user) internal returns (bool) {
-        return msg.sender == _user || _isSignatureValid(_user, nextNonce[_user]++);
-    }
-
-    /**
     * @dev Tell whether a signature is valid
     */
-    function _isSignatureValid(address _user, uint256 _nonce) internal view returns (bool) {
-        if (msg.sender == _user) {
-            return true;
-        }
-
-        (bytes memory data, uint256 deadline, bytes32 r, bytes32 s, uint8 v) = _decodeCalldata();
-        bytes32 encodeData = keccak256(abi.encode(data, msg.sender, _nonce, deadline));
+    function _isSignatureValid(address _target, address _user, bytes memory _data, uint256 _nonce, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s)
+        internal
+        view
+        returns (bool)
+    {
+        bytes32 encodeData = keccak256(abi.encode(address(this), _target, _data, msg.sender, _nonce, _deadline));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _getDomainSeparator(), encodeData));
-        address recoveredAddress = ecrecover(digest, v, r, s);
+        address recoveredAddress = ecrecover(digest, _v, _r, _s);
 
         // Explicitly disallow authorizations for address(0) as ecrecover returns address(0) on malformed messages
-        return deadline >= getTimestamp() && recoveredAddress != address(0) && recoveredAddress == _user;
+        return _deadline >= getTimestamp() && recoveredAddress != address(0) && recoveredAddress == _user;
     }
 
     /**
@@ -79,23 +85,5 @@ contract SignaturesValidator is TimeHelpers {
     */
     function _chainId() internal pure returns (uint256 chainId) {
         assembly { chainId := chainid() }
-    }
-
-    /**
-    * @dev Decode extra calldata
-    */
-    function _decodeCalldata() internal pure returns (bytes memory data, uint256 deadline, bytes32 r, bytes32 s, uint8 v) {
-        data = msg.data;
-        if (data.length > EXTRA_CALLDATA_LENGTH) {
-            assembly {
-                let realCalldataSize := sub(calldatasize, EXTRA_CALLDATA_LENGTH)
-                let extraCalldataPtr := add(add(data, 0x20), realCalldataSize)
-                deadline := mload(extraCalldataPtr)
-                r := mload(add(extraCalldataPtr, 0x20))
-                s := mload(add(extraCalldataPtr, 0x40))
-                v := byte(0, mload(add(extraCalldataPtr, 0x60)))
-                mstore(data, realCalldataSize)
-            }
-        }
     }
 }
