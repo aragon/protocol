@@ -20,7 +20,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Save the guardian token address
     - Save the total active balance limit
 
-### 4.4.1. Stake
+### 4.4.2. Stake
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -33,7 +33,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Update the available balance of the guardian
     - Pull the corresponding amount of guardian tokens from the sender to the `GuardiansRegistry` module, revert if the ERC20-transfer wasn't successful
 
-### 4.4.2. Unstake
+### 4.4.3. Unstake
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -51,7 +51,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Transfer the requested amount of guardian tokens from the `GuardiansRegistry` module to the guardian, revert if the ERC20-transfer wasn't successful
 
-### 4.4.3. Activate
+### 4.4.4. Activate
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -73,7 +73,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Update the guardian's active balance for the next term
     - Decrease the guardian's available balance
 
-### 4.4.4. Deactivate
+### 4.4.5. Deactivate
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -92,7 +92,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Create a new deactivation request object for the next term
 
-### 4.4.5. Stake and activate
+### 4.4.6. Stake and activate
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -109,7 +109,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Activate the staked amount if requested. This includes processing pending deactivation requests.
     - Pull the corresponding amount of guardian tokens from the sender to the `GuardiansRegistry` module, revert if the ERC20-transfer wasn't successful
 
-### 4.4.6. Lock activation
+### 4.4.7. Lock activation
 
 - **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
 - **Inputs:**
@@ -126,7 +126,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Increase the total amount locked for the guardian
     - Increase the amount locked for the guardian by the given lock manager
 
-### 4.4.7. Unlock activation
+### 4.4.8. Unlock activation
 
 - **Actor:** External entity incentivized to unlock the activation of a guardian of the Protocol
 - **Inputs:**
@@ -146,7 +146,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Decrease the amount locked for the guardian by the given lock manager
     - If the sender is the guardian or someone allowed with a signature, schedule a deactivation if requested
 
-### 4.4.8. Process deactivation request
+### 4.4.9. Process deactivation request
 
 - **Actor:** External entity incentivized to update guardians available balances
 - **Inputs:**
@@ -160,7 +160,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Increase the available balance of the guardian
     - Reset the deactivation request of the guardian
 
-### 4.4.9. Assign tokens
+### 4.4.10. Assign tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -171,7 +171,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Increase the guardian's available balance
 
-### 4.4.10. Burn tokens
+### 4.4.11. Burn tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -181,7 +181,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Increase the burn address's available balance
 
-### 4.4.11. Draft
+### 4.4.12. Draft
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -202,7 +202,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Update the locked active balance of each drafted guardian
     - Decrease previous deactivation requests if there is any and needed to draft the guardian
 
-### 4.4.12. Slash or unlock
+### 4.4.13. Slash or unlock
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -218,7 +218,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Decrease the unlocked balance of each guardian based on their corresponding given amounts
     - In case of a guardian being slashed, decrease their active balance for the next term
 
-### 4.4.13. Collect tokens
+### 4.4.14. Collect tokens
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -232,7 +232,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - Decrease the active balance of the guardian for the next term
     - Decrease previous deactivation requests if there is any and its necessary to collect the requested amount of tokens from a guardian
 
-### 4.4.14. Lock withdrawals
+### 4.4.15. Lock withdrawals
 
 - **Actor:** `DisputeManager` module
 - **Inputs:**
@@ -243,7 +243,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the guardian's state with the term ID until which their withdrawals will be locked
 
-### 4.4.15. Set total active balance limit
+### 4.4.16. Set total active balance limit
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -254,7 +254,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the total active balance limit
 
-### 4.4.16. Change activator whitelist
+### 4.4.17. Change activator whitelist
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -265,7 +265,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the activator status
 
-### 4.4.17. Change lock manager whitelist
+### 4.4.18. Change lock manager whitelist
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
@@ -276,7 +276,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the lock manager status
 
-### 4.4.18. Recover funds
+### 4.4.19. Recover funds
 
 - **Actor:** External entity in charge of maintaining the protocol
 - **Inputs:**
