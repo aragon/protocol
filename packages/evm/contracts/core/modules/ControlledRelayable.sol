@@ -11,8 +11,8 @@ contract ControlledRelayable is Controlled {
 
     /**
     * @dev Modifier for modules to support relayed transactions.
-    *      This modifier will check that the sender is the user acting on behalf of or a whitelisted relayer.
-    * @param _user Address of the user executing an action for
+    *      This modifier will check that the sender is the user to act on behalf of or a whitelisted relayer.
+    * @param _user Address of the user to act on behalf of
     */
     modifier authenticateSender(address _user) {
         require(_isSenderAllowed(_user), ERROR_SENDER_NOT_ALLOWED);
@@ -28,7 +28,7 @@ contract ControlledRelayable is Controlled {
     }
 
     /**
-    * @dev Tell whether a sender is allowed or not
+    * @dev Tell whether the sender is the user to act on behalf of or a whitelisted relayer
     * @return True if the sender is allowed, false otherwise
     */
     function _isSenderAllowed(address _user) internal view returns (bool) {
