@@ -132,7 +132,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
 
     event Staked(address indexed guardian, uint256 amount, uint256 total);
     event Unstaked(address indexed guardian, uint256 amount, uint256 total);
-    event GuardianActivated(address indexed guardian, uint64 fromTermId, uint256 amount, address sender);
+    event GuardianActivated(address indexed guardian, uint64 fromTermId, uint256 amount);
     event GuardianDeactivationRequested(address indexed guardian, uint64 availableTermId, uint256 amount);
     event GuardianDeactivationProcessed(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 processedTermId);
     event GuardianDeactivationUpdated(address indexed guardian, uint64 availableTermId, uint256 amount, uint64 updateTermId);
@@ -679,7 +679,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
         }
 
         _updateAvailableBalanceOf(_guardian, amountToActivate, false);
-        emit GuardianActivated(_guardian, nextTermId, amountToActivate, msg.sender);
+        emit GuardianActivated(_guardian, nextTermId, amountToActivate);
     }
 
     /**

@@ -207,7 +207,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
             const receipt = await stakeAndActivate(recipient, amount, sender, authorize)
 
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
-            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount, sender: sender } })
+            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount } })
           })
         })
 
@@ -393,7 +393,7 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
               ? (deactivationDue ? previousAvailableBalance.add(previousDeactivationBalance) : previousAvailableBalance)
               : requestedAmount
             assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED)
-            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount: activationAmount, sender } })
+            assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATED, { expectedArgs: { guardian: recipient, fromTermId: termId.add(bn(1)), amount: activationAmount } })
           })
 
           if (deactivationAmount.gt(bn(0))) {
