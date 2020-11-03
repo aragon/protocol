@@ -20,7 +20,6 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     string private constant ERROR_INVALID_OUTCOME = "CRV_INVALID_OUTCOME";
     string private constant ERROR_INVALID_OUTCOMES_AMOUNT = "CRV_INVALID_OUTCOMES_AMOUNT";
     string private constant ERROR_INVALID_COMMITMENT_SALT = "CRV_INVALID_COMMITMENT_SALT";
-    string private constant ERROR_INVALID_REPRESENTATIVES_LENGTH = "CRV_INVALID_REPRESENTATIVES_LEN";
 
     // Outcome nr. 0 is used to denote a missing vote (default)
     uint8 internal constant OUTCOME_MISSING = uint8(0);
@@ -74,17 +73,14 @@ contract CRVoting is ICRVoting, Controlled, SignaturesValidator {
     }
 
     /**
-    * @notice Set a list of representatives for sender
-    * @param _representatives List of addresses to be configured for the sender
-    * @param _allowed Whether each representative in the list is allowed
+    * @notice `_allowed ? 'Allow' : 'Disallow'` `_representative` as a representative for voter `_voter`
+    * @param _voter Address of the voter updating the representative for
+    * @param _representative Address of the representative to be changed
+    * @param _allowed Whether the representative is allowed
     */
-    function setRepresentatives(address[] calldata _representatives, bool[] calldata _allowed) external {
-        require(_representatives.length == _allowed.length, ERROR_INVALID_REPRESENTATIVES_LENGTH);
-
-        for (uint256 i = 0; i < _representatives.length; i++) {
-            representatives[msg.sender][_representatives[i]] = _allowed[i];
-            emit RepresentativeChanged(msg.sender, _representatives[i], _allowed[i]);
-        }
+    function updateRepresentative(address _voter, address _representative, bool _allowed) external authenticate(_voter) {
+        representatives[_voter][_representative] = _allowed;
+        emit RepresentativeChanged(_voter, _representative, _allowed);
     }
 
     /**

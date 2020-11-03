@@ -5,7 +5,7 @@ const { buildHelper } = require('../helpers/wrappers/protocol')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { encodeAuthorization } = require('../helpers/utils/modules')
 const { OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
-const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS } = require('../helpers/utils/errors')
+const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS, SIGNATURES_VALIDATOR_ERRORS } = require('../helpers/utils/errors')
 
 const CRVoting = artifacts.require('CRVoting')
 const DisputeManager = artifacts.require('DisputeManagerMockForVoting')
@@ -30,73 +30,107 @@ contract('CRVoting', ([_, someone, representative, governor]) => {
     await controller.setVoting(voting.address)
   })
 
-  describe('setRepresentatives', () => {
-    const itAllowsTheRepresentative = () => {
+  describe('updateRepresentative', () => {
+    const updateRepresentative = async (voter, allowed, sender, authorized = false) => {
+      let calldata = voting.contract.methods.updateRepresentative(voter, representative, allowed).encodeABI()
+      if (authorized) calldata = await encodeAuthorization(voting, voter, externalAccountPK, calldata, sender)
+      return voting.sendTransaction({ from: sender, data: calldata })
+    }
+
+    const itAllowsTheRepresentative = (voter, sender, authorized = false) => {
       it('allows the representative', async () => {
-        await voting.setRepresentatives([representative], [true], { from: someone })
+        await updateRepresentative(voter, true, sender, authorized)
 
-        assert.isTrue(await voting.isRepresentativeOf(someone, representative), 'representative is not allowed')
+        assert.isTrue(await voting.isRepresentativeOf(voter, representative), 'representative is not allowed')
       })
 
       it('emits an event', async () => {
-        const receipt = await voting.setRepresentatives([representative], [true], { from: someone })
+        const receipt = await updateRepresentative(voter, true, sender, authorized)
 
         assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
-        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter: someone, representative, allowed: true } })
+        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter, representative, allowed: true } })
       })
     }
 
-    const itDisallowsTheRepresentative = () => {
+    const itDisallowsTheRepresentative = (voter, sender, authorized = false) => {
       it('disallows the representative', async () => {
-        await voting.setRepresentatives([representative], [false], { from: someone })
+        await updateRepresentative(voter, false, sender, authorized)
 
-        assert.isFalse(await voting.isRepresentativeOf(someone, representative), 'representative is not allowed')
+        assert.isFalse(await voting.isRepresentativeOf(voter, representative), 'representative is not allowed')
       })
 
       it('emits an event', async () => {
-        const receipt = await voting.setRepresentatives([representative], [false], { from: someone })
+        const receipt = await updateRepresentative(voter, false, sender, authorized)
 
         assertAmountOfEvents(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED)
-        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter: someone, representative, allowed: false } })
+        assertEvent(receipt, VOTING_EVENTS.REPRESENTATIVE_CHANGED, { expectedArgs: { voter, representative, allowed: false } })
       })
     }
 
-    context('when the representative was not set', () => {
-      context('when the representative is allowed', () => {
-        itAllowsTheRepresentative()
+    const itHandlesRepresentativeChangesProperly = (voter, sender, authorized = false) => {
+      context('when the representative was not set', () => {
+        context('when the representative is allowed', () => {
+          itAllowsTheRepresentative(voter, sender, authorized)
+        })
+
+        context('when the representative is disallowed', () => {
+          itDisallowsTheRepresentative(voter, sender, authorized)
+        })
       })
 
-      context('when the representative is disallowed', () => {
-        itDisallowsTheRepresentative()
+      context('when the representative was already set', () => {
+        context('when the representative was allowed', () => {
+          beforeEach('set representative', async () => {
+            await updateRepresentative(voter, true, sender, authorized)
+          })
+
+          context('when the representative is allowed', () => {
+            itAllowsTheRepresentative(voter, sender, authorized)
+          })
+
+          context('when the representative is disallowed', () => {
+            itDisallowsTheRepresentative(voter, sender, authorized)
+          })
+        })
+
+        context('when the representative was not allowed', () => {
+          beforeEach('set representative', async () => {
+            await updateRepresentative(voter, false, sender, authorized)
+          })
+
+          context('when the representative is allowed', () => {
+            itAllowsTheRepresentative(voter, sender, authorized)
+          })
+
+          context('when the representative is disallowed', () => {
+            itDisallowsTheRepresentative(voter, sender, authorized)
+          })
+        })
       })
+    }
+
+    context('when the sender is the voter', () => {
+      const sender = someone
+      const voter = someone
+
+      itHandlesRepresentativeChangesProperly(voter, sender)
     })
 
-    context('when the representative was already set', () => {
-      context('when the representative was allowed', () => {
-        beforeEach('set representative', async () => {
-          await voting.setRepresentatives([representative], [true])
-        })
+    context('when the sender is not the voter', () => {
+      const sender = someone
+      const voter = externalAccount
 
-        context('when the representative is allowed', () => {
-          itAllowsTheRepresentative()
-        })
+      context('when the sender is authorized', () => {
+        const authorized = true
 
-        context('when the representative is disallowed', () => {
-          itDisallowsTheRepresentative()
-        })
+        itHandlesRepresentativeChangesProperly(voter, sender, authorized)
       })
 
-      context('when the representative was not allowed', () => {
-        beforeEach('set representative', async () => {
-          await voting.setRepresentatives([representative], [false])
-        })
+      context('when the sender is authorized', () => {
+        const authorized = false
 
-        context('when the representative is allowed', () => {
-          itAllowsTheRepresentative()
-        })
-
-        context('when the representative is disallowed', () => {
-          itDisallowsTheRepresentative()
+        it('reverts', async () => {
+          await assertRevert(updateRepresentative(voter, true, sender, authorized), SIGNATURES_VALIDATOR_ERRORS.INVALID_SIGNATURE)
         })
       })
     })
@@ -253,7 +287,7 @@ contract('CRVoting', ([_, someone, representative, governor]) => {
         const sender = representative
 
         beforeEach('set representative', async () => {
-          await voting.setRepresentatives([representative], [true], { from: voter })
+          await voting.updateRepresentative(voter, representative, true, { from: voter })
         })
 
         context('when the sender is still a representative', () => {
@@ -262,7 +296,7 @@ contract('CRVoting', ([_, someone, representative, governor]) => {
 
         context('when the sender is not a representative any more', () => {
           beforeEach('set representative', async () => {
-            await voting.setRepresentatives([representative], [false], { from: voter })
+            await voting.updateRepresentative(voter, representative, false, { from: voter })
           })
 
           it('reverts', async () => {
