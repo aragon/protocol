@@ -49,6 +49,9 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     // List of custom function targets indexed by signature
     mapping (bytes4 => address) internal customFunctions;
 
+    // List of whitelisted relayers indexed by address
+    mapping (address => bool) internal whitelistedRelayers;
+
     event ModuleSet(bytes32 id, address addr);
     event ModuleEnabled(bytes32 id, address addr);
     event ModuleDisabled(bytes32 id, address addr);
@@ -56,6 +59,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     event FundsGovernorChanged(address previousGovernor, address currentGovernor);
     event ConfigGovernorChanged(address previousGovernor, address currentGovernor);
     event ModulesGovernorChanged(address previousGovernor, address currentGovernor);
+    event RelayerWhitelistChanged(address indexed relayer, bool allowed);
 
     /**
     * @dev Ensure the msg.sender is the funds governor
@@ -348,6 +352,16 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
+    * @notice `_allowed ? 'Allow' : 'Disallow'` `_relayer` as a relayer
+    * @param _relayer Address of the relayer to be changed
+    * @param _allowed Whether the relayer is whitelisted
+    */
+    function updateRelayerWhitelist(address _relayer, bool _allowed) external onlyConfigGovernor {
+        whitelistedRelayers[_relayer] = _allowed;
+        emit RelayerWhitelistChanged(_relayer, _allowed);
+    }
+
+    /**
     * @dev Tell the full Protocol configuration parameters at a certain term
     * @param _termId Identification number of the term querying the Protocol config of
     * @return token Address of the token used to pay for fees
@@ -519,6 +533,15 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     */
     function getCustomFunction(bytes4 _sig) external view returns (address) {
         return customFunctions[_sig];
+    }
+
+    /**
+    * @dev Tell whether a relayer is whitelisted
+    * @param _relayer Address of the relayer being queried
+    * @return True if the relayer is whitelisted
+    */
+    function isRelayerWhitelisted(address _relayer) external view returns (bool) {
+        return whitelistedRelayers[_relayer];
     }
 
     /**
