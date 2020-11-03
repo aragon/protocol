@@ -22,7 +22,6 @@ contract('GuardiansRegistry', ([_, something]) => {
       it('sets initial config correctly', async () => {
         const registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
 
-        assert.isFalse(await registry.supportsHistory())
         assert.equal(await registry.controller(), controller.address, 'registry controller does not match')
         assert.equal(await registry.token(), ANT.address, 'token address does not match')
         assertBn((await registry.totalGuardiansActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')

@@ -1,7 +1,6 @@
 pragma solidity ^0.5.17;
 
 import "../../lib/math/SafeMath.sol";
-import "../../lib/standards/ApproveAndCall.sol";
 
 
 contract ERC20Mock {
@@ -95,20 +94,6 @@ contract ERC20Mock {
 
         allowed[msg.sender][_spender] = _amount;
         emit Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    /**
-    * @dev `msg.sender` approves `_spender` to send `_amount` tokens on its behalf, and then a function is
-    *       triggered in the contract that is being approved, `_spender`. This allows users to use their
-    *       tokens to interact with contracts in one function call instead of two
-    * @param _spender Address of the contract able to transfer the tokens
-    * @param _amount The amount of tokens to be approved for transfer
-    * @return True if the function call was successful
-    */
-    function approveAndCall(ApproveAndCallFallBack _spender, uint256 _amount, bytes memory _extraData) public returns (bool) {
-        require(approve(address(_spender), _amount), 'ERROR_APPROVE_FAILED');
-        _spender.receiveApproval(msg.sender, _amount, address(this), _extraData);
         return true;
     }
 

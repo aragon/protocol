@@ -2,8 +2,8 @@ const { ZERO_BYTES32, bn, bigExp, getEventAt, decodeEvents } = require('@aragon/
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
+const { countGuardian } = require('../helpers/utils/guardians')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
-const { ACTIVATE_DATA, countGuardian } = require('../helpers/utils/guardians')
 const { MATH_ERRORS, CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistryMock')
@@ -36,15 +36,18 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
       beforeEach('activate guardians', async () => {
         const firstGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(10))
         await ANT.generateTokens(guardian, firstGuardianBalance)
-        await ANT.approveAndCall(registry.address, firstGuardianBalance, ACTIVATE_DATA, { from: guardian })
+        await ANT.approve(registry.address, firstGuardianBalance, { from: guardian })
+        await registry.stakeAndActivate(guardian, firstGuardianBalance, { from: guardian })
 
         const secondGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(5))
         await ANT.generateTokens(secondGuardian, secondGuardianBalance)
-        await ANT.approveAndCall(registry.address, secondGuardianBalance, ACTIVATE_DATA, { from: secondGuardian })
+        await ANT.approve(registry.address, secondGuardianBalance, { from: secondGuardian })
+        await registry.stakeAndActivate(secondGuardian, secondGuardianBalance, { from: secondGuardian })
 
         const thirdGuardianBalance = MIN_ACTIVE_AMOUNT.mul(bn(20))
         await ANT.generateTokens(thirdGuardian, thirdGuardianBalance)
-        await ANT.approveAndCall(registry.address, thirdGuardianBalance, ACTIVATE_DATA, { from: thirdGuardian })
+        await ANT.approve(registry.address, thirdGuardianBalance, { from: thirdGuardian })
+        await registry.stakeAndActivate(thirdGuardian, thirdGuardianBalance, { from: thirdGuardian })
 
         await controller.mockIncreaseTerm()
       })
@@ -364,7 +367,8 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
 
         beforeEach('stake some tokens', async () => {
           await ANT.generateTokens(guardian, stakedBalance)
-          await ANT.approveAndCall(registry.address, stakedBalance, '0x', { from: guardian })
+          await ANT.approve(registry.address, stakedBalance, { from: guardian })
+          await registry.stake(guardian, stakedBalance, { from: guardian })
         })
 
         context('when the guardian did not activate any tokens yet', () => {
@@ -391,7 +395,7 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
           const activeBalance = MIN_ACTIVE_AMOUNT.mul(bn(4))
 
           beforeEach('activate some tokens', async () => {
-            await registry.activate(activeBalance, { from: guardian })
+            await registry.activate(guardian, activeBalance, { from: guardian })
             await controller.mockIncreaseTerm()
           })
 
@@ -420,7 +424,7 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
             const currentActiveBalance = activeBalance.sub(deactivationAmount)
 
             beforeEach('deactivate tokens', async () => {
-              await registry.deactivate(deactivationAmount, { from: guardian })
+              await registry.deactivate(guardian, deactivationAmount, { from: guardian })
             })
 
             context('when the deactivation request is for the next term', () => {

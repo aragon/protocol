@@ -1,11 +1,9 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
-const { ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os/acl')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { ACTIVATE_DATA } = require('../helpers/utils/guardians')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
-const { REGISTRY_ERRORS } = require('../helpers/utils/errors')
+const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const LockManager = artifacts.require('LockManagerMock')
@@ -29,9 +27,22 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     anotherLockManager = await LockManager.new(registry.address)
   })
 
-  const activateTokens = async (amount) => {
+  const activate = async (amount) => {
     await ANT.generateTokens(guardian, amount)
-    await ANT.approveAndCall(registry.address, amount, ACTIVATE_DATA, { from: guardian })
+    await ANT.approve(registry.address, amount, { from: guardian })
+    return registry.stakeAndActivate(guardian, amount, { from: guardian })
+  }
+
+  const lockActivation = async (lockManager, amount, sender = undefined) => {
+    return sender
+      ? registry.lockActivation(guardian, lockManager.address, amount, { from: sender })
+      : lockManager.lockActivation(guardian, amount)
+  }
+
+  const unlockActivation = async (amount, sender = undefined, deactivate = false) => {
+    return sender
+      ? registry.unlockActivation(guardian, lockManager.address, amount, deactivate, { from: sender })
+      : lockManager.unlock(guardian, amount)
   }
 
   describe('lockActivation', () => {
@@ -48,9 +59,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
     }
 
-    const itCreatesTheActivationLock = () => {
+    const itCreatesTheActivationLock = (sender = undefined) => {
       it('creates the lock', async () => {
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+        await lockActivation(lockManager, lockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
         assertBn(amount, lockAmount, 'locked amount does not match')
@@ -58,19 +69,19 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       it('emits an event', async () => {
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
-        const receipt = await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+        await lockActivation(lockManager, lockAmount, sender)
+        const receipt = await lockActivation(lockManager, lockAmount, sender)
 
-        assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED)
-        assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { expectedArgs: { guardian, lockManager, amount: lockAmount.mul(bn(2)), total: lockAmount.mul(bn(2)) } })
+        assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { decodeForAbi: registry.abi })
+        assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { decodeForAbi: registry.abi, expectedArgs: { guardian, lockManager, amount: lockAmount.mul(bn(2)), total: lockAmount.mul(bn(2)) } })
       })
 
       it('can creates multiple locks', async () => {
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+        await lockActivation(lockManager, lockAmount, sender)
+        await lockActivation(lockManager, lockAmount, sender)
 
         await registry.updateLockManagerWhitelist(anotherLockManager.address, true, { from: governor })
-        await registry.lockActivation(anotherLockManager.address, lockAmount, { from: guardian })
+        await lockActivation(anotherLockManager, lockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
         assertBn(amount, lockAmount.mul(bn(2)), 'locked amount does not match')
@@ -78,50 +89,90 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       it('does not allow to deactivate the locked amount for present active tokens', async () => {
-        await activateTokens(lockAmount)
+        await activate(lockAmount)
 
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+        await lockActivation(lockManager, lockAmount, sender)
 
-        await assertRevert(registry.deactivate(lockAmount, { from: guardian }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+        await assertRevert(registry.deactivate(guardian, lockAmount, { from: guardian }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
       })
 
       it('does not allow to deactivate the locked amount for future active tokens', async () => {
-        await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+        await lockActivation(lockManager, lockAmount, sender)
 
-        await activateTokens(lockAmount)
+        await activate(lockAmount)
 
-        await assertRevert(registry.deactivate(lockAmount, { from: guardian }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
+        await assertRevert(registry.deactivate(guardian, lockAmount, { from: guardian }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
       })
     }
 
-    context('when the given lock manager is allowed', async () => {
-      allowLockManager(lockManager, true)
+    context('when the sender is the guardian', () => {
+      const sender = guardian
 
-      context('when any lock manager is allowed', async () => {
-        allowLockManager(ANY_ENTITY, true)
-        itCreatesTheActivationLock()
+      context('when the given lock manager is allowed', () => {
+        allowLockManager(lockManager, true)
+
+        itCreatesTheActivationLock(sender)
       })
 
-      context('when any lock manager is not allowed', async () => {
-        allowLockManager(ANY_ENTITY, false)
-        itCreatesTheActivationLock()
+      context('when the given lock manager is not allowed', () => {
+        allowLockManager(lockManager, false)
+
+        it('reverts', async () => {
+          await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
+        })
       })
     })
 
-    context('when the given lock manager is not allowed', async () => {
-      allowLockManager(lockManager, false)
+    context('when the sender is not the guardian', () => {
+      context('when the sender is a lock manager', () => {
+        const sender = undefined // will use the lock manager
 
-      context('when any lock manager is allowed', async () => {
-        allowLockManager(ANY_ENTITY, true)
+        context('when the given lock manager is allowed', () => {
+          allowLockManager(lockManager, true)
 
-        itCreatesTheActivationLock()
+          itCreatesTheActivationLock(sender)
+        })
+
+        context('when the given lock manager is not allowed', () => {
+          allowLockManager(lockManager, false)
+
+          it('reverts', async () => {
+            await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
+          })
+        })
       })
 
-      context('when any lock manager is not allowed', async () => {
-        allowLockManager(ANY_ENTITY, false)
+      context('when the sender is not a lock manager', () => {
+        const sender = someone
 
-        it('reverts', async () => {
-          await assertRevert(registry.lockActivation(lockManager.address, lockAmount, { from: guardian }), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
+        context('when the sender is a whitelisted relayer', () => {
+          before('whitelist relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, true, { from: governor })
+          })
+
+          context('when the given lock manager is allowed', () => {
+            allowLockManager(lockManager, true)
+
+            itCreatesTheActivationLock(sender)
+          })
+
+          context('when the given lock manager is not allowed', () => {
+            allowLockManager(lockManager, false)
+
+            it('reverts', async () => {
+              await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
+            })
+          })
+        })
+
+        context('when the sender is not a whitelisted relayer', () => {
+          before('disallow relayer', async () => {
+            await controller.updateRelayerWhitelist(sender, false, { from: governor })
+          })
+
+          it('reverts', async () => {
+            await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
+          })
         })
       })
     })
@@ -131,10 +182,10 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     const lockAmount = bigExp(1000, 18)
     const unlockAmount = bigExp(100, 18)
 
-    const itUnlocksTheActivation = (from) => {
+    const itUnlocksTheActivation = (sender) => {
       it('decreases the lock', async () => {
-        await registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from })
-        await registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from })
+        await unlockActivation(unlockAmount, sender)
+        await unlockActivation(unlockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
         assertBn(amount, lockAmount.sub(unlockAmount.mul(bn(2))), 'locked amount does not match')
@@ -142,19 +193,19 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       it('emits an event', async () => {
-        await registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from })
-        const receipt = await registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from })
+        await unlockActivation(unlockAmount, sender)
+        const receipt = await unlockActivation(unlockAmount, sender)
 
         assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED)
         assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { expectedArgs: { guardian, lockManager, amount: lockAmount.sub(unlockAmount.mul(bn(2))), total: lockAmount.sub(unlockAmount.mul(bn(2))) } })
       })
 
       it('allows to deactivate the unlocked amount', async () => {
-        await activateTokens(lockAmount)
+        await activate(lockAmount)
 
-        await registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from })
+        await unlockActivation(unlockAmount, sender)
 
-        const receipt = await registry.deactivate(unlockAmount, { from: guardian })
+        const receipt = await registry.deactivate(guardian, unlockAmount, { from: guardian })
         assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { decodeForAbi: GuardiansRegistry.abi, expectedArgs: { guardian, amount: unlockAmount } })
       })
     }
@@ -165,44 +216,75 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           await lockManager.mockCanUnlock(true)
         })
 
-        context('when there was a locked amount', () => {
-          beforeEach('create lock', async () => {
-            await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
-            await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
-          })
+        context('when the sender is the guardian', () => {
+          const sender = guardian
 
-          context('when the sender is the guardian', () => {
-            const from = guardian
+          context('when there was a locked amount', () => {
+            beforeEach('create lock', async () => {
+              await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+              await lockManager.lockActivation(guardian, lockAmount)
+            })
 
-            itUnlocksTheActivation(from)
+            itUnlocksTheActivation(sender)
 
             it('can request a deactivation in the same call', async () => {
-              await activateTokens(lockAmount)
+              await activate(lockAmount)
 
-              const receipt = await registry.unlockActivation(guardian, lockManager.address, unlockAmount, true, { from })
+              const receipt = await unlockActivation(unlockAmount, sender, true)
 
               assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { decodeForAbi: GuardiansRegistry.abi, expectedArgs: { guardian, amount: unlockAmount } })
             })
           })
 
-          context('when the sender is not the guardian', () => {
-            const from = someone
-
-            itUnlocksTheActivation(from)
-
-            it('can request a deactivation in the same call', async () => {
-              await activateTokens(lockAmount)
-
-              const receipt = await registry.unlockActivation(guardian, lockManager.address, unlockAmount, true, { from })
-
-              assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { expectedAmount: 0 })
+          context('when there was no locked amount', () => {
+            it('reverts', async () => {
+              await assertRevert(unlockActivation(unlockAmount, sender), REGISTRY_ERRORS.ZERO_LOCK_ACTIVATION)
             })
           })
         })
 
-        context('when there was no locked amount', () => {
-          it('reverts', async () => {
-            await assertRevert(registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from: guardian }), REGISTRY_ERRORS.ZERO_LOCK_ACTIVATION)
+        context('when the sender is not the guardian', () => {
+          const sender = someone
+
+          context('when there was a locked amount', () => {
+            beforeEach('create lock', async () => {
+              await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+              await lockManager.lockActivation(guardian, lockAmount)
+            })
+
+            itUnlocksTheActivation(sender)
+
+            context('when sender is a whitelisted relayer', () => {
+              before('whitelist relayer', async () => {
+                await controller.updateRelayerWhitelist(sender, true, { from: governor })
+              })
+
+              it('can request a deactivation in the same call', async () => {
+                await activate(lockAmount)
+
+                const receipt = await unlockActivation(unlockAmount, sender, true)
+
+                assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { decodeForAbi: GuardiansRegistry.abi, expectedArgs: { guardian, amount: unlockAmount } })
+              })
+            })
+
+            context('when sender was not a whitelisted relayer', () => {
+              before('disallow relayer', async () => {
+                await controller.updateRelayerWhitelist(sender, false, { from: governor })
+              })
+
+              it('cannot request a deactivation in the same call', async () => {
+                await activate(lockAmount)
+
+                await assertRevert(unlockActivation(unlockAmount, sender, true), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
+              })
+            })
+          })
+
+          context('when there was no locked amount', () => {
+            it('reverts', async () => {
+              await assertRevert(unlockActivation(unlockAmount, sender), REGISTRY_ERRORS.ZERO_LOCK_ACTIVATION)
+            })
           })
         })
       })
@@ -212,24 +294,29 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           await lockManager.mockCanUnlock(false)
         })
 
-        beforeEach('create lock', async () => {
-          await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
-          await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
-        })
-
         context('when the sender is the guardian', () => {
-          const from = guardian
+          const sender = guardian
+
+          beforeEach('create lock', async () => {
+            await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+            await lockManager.lockActivation(guardian, lockAmount)
+          })
 
           it('reverts', async () => {
-            await assertRevert(registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from }), REGISTRY_ERRORS.CANNOT_UNLOCK_ACTIVATION)
+            await assertRevert(unlockActivation(unlockAmount, sender), REGISTRY_ERRORS.CANNOT_UNLOCK_ACTIVATION)
           })
         })
 
         context('when the sender is not the guardian', () => {
-          const from = someone
+          const sender = someone
+
+          beforeEach('create lock', async () => {
+            await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+            await lockManager.lockActivation(guardian, lockAmount)
+          })
 
           it('reverts', async () => {
-            await assertRevert(registry.unlockActivation(guardian, lockManager.address, unlockAmount, false, { from }), REGISTRY_ERRORS.CANNOT_UNLOCK_ACTIVATION)
+            await assertRevert(unlockActivation(unlockAmount, sender), REGISTRY_ERRORS.CANNOT_UNLOCK_ACTIVATION)
           })
         })
       })
@@ -239,7 +326,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       context('when there was a locked amount', () => {
         beforeEach('create lock', async () => {
           await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
-          await registry.lockActivation(lockManager.address, lockAmount, { from: guardian })
+          await lockManager.lockActivation(guardian, lockAmount)
         })
 
         it('decreases the lock', async () => {
@@ -258,11 +345,11 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
         })
 
         it('allows to deactivate the unlocked amount', async () => {
-          await activateTokens(lockAmount)
+          await activate(lockAmount)
 
           await lockManager.unlock(guardian, unlockAmount)
 
-          const receipt = await registry.deactivate(unlockAmount, { from: guardian })
+          const receipt = await registry.deactivate(guardian, unlockAmount, { from: guardian })
           assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_DEACTIVATION_REQUESTED, { decodeForAbi: GuardiansRegistry.abi, expectedArgs: { guardian, amount: unlockAmount } })
         })
       })

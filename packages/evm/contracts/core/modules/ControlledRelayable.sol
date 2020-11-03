@@ -15,16 +15,16 @@ contract ControlledRelayable is Controlled {
     * @param _user Address of the user to act on behalf of
     */
     modifier authenticateSender(address _user) {
-        require(_isSenderAllowed(_user), ERROR_SENDER_NOT_ALLOWED);
+        _authenticateSender(_user);
         _;
     }
 
     /**
-    * @dev Constructor function
-    * @param _controller Address of the controller
+    * @dev Ensure that the sender is the user to act on behalf of or a whitelisted relayer
+    * @param _user Address of the user to act on behalf of
     */
-    constructor(Controller _controller) Controlled(_controller) public {
-        // solium-disable-previous-line no-empty-blocks
+    function _authenticateSender(address _user) internal view {
+        require(_isSenderAllowed(_user), ERROR_SENDER_NOT_ALLOWED);
     }
 
     /**

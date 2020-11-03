@@ -1,8 +1,5 @@
 const { toChecksumAddress } = require('web3-utils')
 
-const ACTIVATE_DATA = web3.eth.abi.encodeFunctionSignature('activate(uint256)')
-const LOCK_ACTIVATION_DATA = web3.eth.abi.encodeFunctionSignature('lockActivation(address,uint256)')
-
 const filterGuardians = (guardiansList, guardiansToFiler) => {
   const addressesToFiler = guardiansToFiler.map(j => toChecksumAddress(j.address))
   return guardiansList.filter(guardian => !addressesToFiler.includes(toChecksumAddress(guardian.address)))
@@ -29,8 +26,6 @@ const countEqualGuardians = addresses => {
 }
 
 module.exports = {
-  ACTIVATE_DATA,
-  LOCK_ACTIVATION_DATA,
   countGuardian,
   countEqualGuardians,
   filterGuardians,
