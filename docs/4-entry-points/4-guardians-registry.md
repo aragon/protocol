@@ -35,7 +35,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.3. Unstake
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian unstaking the tokens from
     - **Amount:** Amount of tokens to be unstaked
@@ -50,7 +50,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.4. Activate
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian activating the tokens for
     - **Amount:** Amount of guardian tokens to be activated for the next term
@@ -69,7 +69,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.5. Deactivate
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian deactivating the tokens for
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
@@ -85,13 +85,12 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.6. Stake and activate
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian, a whitelisted relayer, or a whitelisted activator
 - **Inputs:**
     - **Guardian:** Address of the guardian to stake and activate an amount of tokens to
     - **Amount:** Amount of tokens to be staked
-- **Authentication:** The guardian or a whitelisted relayer. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function
+- **Authentication:** The guardian, a whitelisted relayer, or a whitelisted activator. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function.
 - **Pre-flight checks:**
-    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted activator
     - Ensure that the given amount is greater than zero
 - **State transitions:**
     - Update the available balance of the guardian
@@ -100,14 +99,13 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.7. Lock activation
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian, whitelsited lock manager, or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian lock the activation for
     - **Lock manager**: Address of the lock manager that will control the lock
     - **Amount**: Amount of active tokens to be locked
-- **Authentication:** Only the guardian, an external account allowed by signature, or a whitelisted lock manager.
+- **Authentication:** Only the guardian, a whitelisted lock manager, or a whitelisted relayer
 - **Pre-flight checks:**
-    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted lock manager
     - Ensure that the given lock manager is whitelisted by the `GuardiansRegistry`
 - **State transitions:**
     - Increase the total amount locked for the guardian
