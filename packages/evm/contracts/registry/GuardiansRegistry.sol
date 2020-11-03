@@ -47,9 +47,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
     // Address that will be used to burn guardian tokens
     address internal constant BURN_ACCOUNT = address(0x000000000000000000000000000000000000dEaD);
 
-    // Address to be used for permissions configuration
-    address internal constant ANY_ENTITY = address(-1);
-
     // Maximum number of sortition iterations allowed per draft call
     uint256 internal constant MAX_DRAFT_ITERATIONS = 10;
 
@@ -228,8 +225,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Signatu
         // Make sure the sender is the guardian, someone allowed by the guardian, or the lock manager itself
         bool isLockManagerAllowed = msg.sender == _lockManager || _isSignatureValid(_guardian);
         // Make sure that the given lock manager is whitelisted or that any entity actually is
-        bool isLockManagerWhitelisted = _isLockManagerWhitelisted(_lockManager) || _isLockManagerWhitelisted(ANY_ENTITY);
-        require(isLockManagerAllowed && isLockManagerWhitelisted, ERROR_LOCK_MANAGER_NOT_ALLOWED);
+        require(isLockManagerAllowed && _isLockManagerWhitelisted(_lockManager), ERROR_LOCK_MANAGER_NOT_ALLOWED);
 
         _lockActivation(_guardian, _lockManager, _amount);
     }

@@ -1,5 +1,4 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
-const { ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os/acl')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
@@ -128,34 +127,14 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
       context('when the given lock manager is allowed', () => {
         allowLockManager(lockManager, true)
 
-        context('when any lock manager is allowed', async () => {
-          allowLockManager(ANY_ENTITY, true)
-
-          itCreatesTheActivationLock(recipient, sender)
-        })
-
-        context('when any lock manager is not allowed', async () => {
-          allowLockManager(ANY_ENTITY, false)
-
-          itCreatesTheActivationLock(recipient, sender)
-        })
+        itCreatesTheActivationLock(recipient, sender)
       })
 
       context('when the given lock manager is not allowed', () => {
         allowLockManager(lockManager, false)
 
-        context('when any lock manager is allowed', async () => {
-          allowLockManager(ANY_ENTITY, true)
-
-          itCreatesTheActivationLock(recipient, sender)
-        })
-
-        context('when any lock manager is not allowed', async () => {
-          allowLockManager(ANY_ENTITY, false)
-
-          it('reverts', async () => {
-            await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
-          })
+        it('reverts', async () => {
+          await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
         })
       })
     })
@@ -169,34 +148,14 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
         context('when the given lock manager is allowed', () => {
           allowLockManager(lockManager, true)
 
-          context('when any lock manager is allowed', async () => {
-            allowLockManager(ANY_ENTITY, true)
-
-            itCreatesTheActivationLock(recipient, sender)
-          })
-
-          context('when any lock manager is not allowed', async () => {
-            allowLockManager(ANY_ENTITY, false)
-
-            itCreatesTheActivationLock(recipient, sender)
-          })
+          itCreatesTheActivationLock(recipient, sender)
         })
 
         context('when the given lock manager is not allowed', () => {
           allowLockManager(lockManager, false)
 
-          context('when any lock manager is allowed', async () => {
-            allowLockManager(ANY_ENTITY, true)
-
-            itCreatesTheActivationLock(recipient, sender)
-          })
-
-          context('when any lock manager is not allowed', async () => {
-            allowLockManager(ANY_ENTITY, false)
-
-            it('reverts', async () => {
-              await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
-            })
+          it('reverts', async () => {
+            await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
           })
         })
       })
@@ -210,34 +169,14 @@ contract('GuardiansRegistry', ([_, guardian, governor]) => {
           context('when the given lock manager is allowed', () => {
             allowLockManager(lockManager, true)
 
-            context('when any lock manager is allowed', async () => {
-              allowLockManager(ANY_ENTITY, true)
-
-              itCreatesTheActivationLock(recipient, sender, authorized)
-            })
-
-            context('when any lock manager is not allowed', async () => {
-              allowLockManager(ANY_ENTITY, false)
-
-              itCreatesTheActivationLock(recipient, sender, authorized)
-            })
+            itCreatesTheActivationLock(recipient, sender, authorized)
           })
 
           context('when the given lock manager is not allowed', () => {
             allowLockManager(lockManager, false)
 
-            context('when any lock manager is allowed', async () => {
-              allowLockManager(ANY_ENTITY, true)
-
-              itCreatesTheActivationLock(recipient, sender, authorized)
-            })
-
-            context('when any lock manager is not allowed', async () => {
-              allowLockManager(ANY_ENTITY, false)
-
-              it('reverts', async () => {
-                await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender, authorized), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
-              })
+            it('reverts', async () => {
+              await assertRevert(lockActivation(recipient, lockManager, lockAmount, sender, authorized), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
             })
           })
         })
