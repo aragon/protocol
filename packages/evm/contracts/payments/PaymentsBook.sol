@@ -28,6 +28,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     string private constant ERROR_ETH_DEPOSIT_TOKEN_MISMATCH = "PB_ETH_DEPOSIT_TOKEN_MISMATCH";
     string private constant ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH = "PB_ETH_DEPOSIT_AMOUNT_MISMATCH";
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
+    string private constant ERROR_TOKEN_NOT_CONTRACT = "PB_TOKEN_NOT_CONTRACT";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
     string private constant ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED = "PB_GUARDIAN_SHARE_ALREADY_CLAIMED";
@@ -339,6 +340,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
             require(_token == address(0), ERROR_ETH_DEPOSIT_TOKEN_MISMATCH);
             require(msg.value == _amount, ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH);
         } else {
+            require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
             require(IERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
         }
     }
