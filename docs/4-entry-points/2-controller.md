@@ -224,7 +224,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
-    - **Module ID:** Identification word of the module to be set
+    - **Module ID:** ID of the module to be set
     - **Address:** Address of the module to be set
 - **Authentication:** Only modules governor
 - **Pre-flight checks:**
@@ -237,16 +237,16 @@ To read more information about its responsibilities and structure, go to [sectio
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
     - **New modules' IDs:** List of IDs of the new modules to be set
-    - **New modules' address:** List of addresses of the new modules to be set
-    - **New modules' IDs to be linked :** List of IDs of the modules to be linked in the new modules to be set
-    - **Current modules to be synced:** List of addresses of current modules to be linked based on the new modules' IDs to be set
+    - **New modules' addresses:** List of addresses of the new modules to be set
+    - **New modules' links:** List of IDs of the modules to be linked in the new modules being set
+    - **Current modules to be synced:** List of addresses of current modules to be re-linked to the new modules being set
 - **Authentication:** Only modules governor
 - **Pre-flight checks:**
     - Ensure both input lists have the same length
     - Ensure that the module addresses are contracts
     - Ensure that all the modules to be linked actually exist
 - **State transitions:**
-    - Save all the modules' address for their corresponding module ID
+    - Save all the modules' addresses for their corresponding module ID
     - Link the implementations of the requested module IDs in the new modules set
     - Link the implementations of the new modules set in the requested current modules
 
@@ -254,14 +254,14 @@ To read more information about its responsibilities and structure, go to [sectio
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
-    - **Current modules to be synced:** List of addresses of current modules to be linked based on the implementations of the modules to be set
-    - **IDs to be set :** List of IDs of the modules whose references will be linked in the requested list of modules
+    - **Current modules to be synced:** List of addresses of current modules to be linked based on the implementations of the modules being set
+    - **IDs to be set:** List of IDs of the modules whose references will be linked in the requested list of modules
 - **Authentication:** Only modules governor
 - **Pre-flight checks:**
     - Ensure both input lists have at least one item
     - Ensure that all the modules to be linked actually exist
 - **State transitions:**
-    - Link the implementations of the requested module IDs on each of the requested module
+    - Link the implementations of the requested module IDs in each of the requested modules
 
 ### 4.2.18. Disable module
 

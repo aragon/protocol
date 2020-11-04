@@ -251,7 +251,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
         emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
-        // In order to deactivate the unlocked tokens, the request must have been originated from the sender or a whitelisted relayer
+        // In order to request a deactivation, the request must have been originally authorized from the guardian
         if (_requestDeactivation) {
             _authenticateSender(_guardian);
             _deactivate(_guardian, _amount);

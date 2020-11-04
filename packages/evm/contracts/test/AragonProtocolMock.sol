@@ -34,7 +34,7 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
     {}
 
     function setDisputeManagerMock(address _addr) external {
-        // This function allows setting any address as the DisputeManager module (including EOAs)
+        // This function allows setting any address (including EOAs) as the DisputeManager module in this controller
         currentModules[MODULE_ID_DISPUTE_MANAGER] = _addr;
         allModules[_addr].id = MODULE_ID_DISPUTE_MANAGER;
         emit ModuleSet(MODULE_ID_DISPUTE_MANAGER, _addr);

@@ -96,7 +96,7 @@ contract AragonProtocol is Controller, IArbitrator {
 
     /**
     * @notice Submit `_evidence` as evidence from `_submitter` for dispute #`_disputeId`
-    * @dev This entry point can be used to submit evidences for previous Dispute Manager instances
+    * @dev This entry point can be used to submit evidences to previous Dispute Manager instances
     * @param _disputeManager Dispute manager to be used
     * @param _disputeId Id of the dispute in the Protocol
     * @param _submitter Address of the account submitting the evidence
@@ -116,7 +116,7 @@ contract AragonProtocol is Controller, IArbitrator {
 
     /**
     * @notice Close the evidence period of dispute #`_disputeId`
-    * @dev This entry point can be used to close evidence periods for previous Dispute Manager instances
+    * @dev This entry point can be used to close evidence periods on previous Dispute Manager instances
     * @param _disputeManager Dispute manager to be used
     * @param _disputeId Identification number of the dispute to close its evidence submitting period
     */
@@ -136,7 +136,7 @@ contract AragonProtocol is Controller, IArbitrator {
 
     /**
     * @notice Rule dispute #`_disputeId` if ready
-    * @dev This entry point can be used to rule disputes for previous Dispute Manager instances
+    * @dev This entry point can be used to rule disputes on previous Dispute Manager instances
     * @param _disputeManager Dispute manager to be used
     * @param _disputeId Identification number of the dispute to be ruled
     * @return subject Arbitrable instance associated to the dispute

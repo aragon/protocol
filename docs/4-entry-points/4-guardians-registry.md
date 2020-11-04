@@ -100,7 +100,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.7. Lock activation
 
-- **Actor:** Guardian, whitelsited lock manager, or a whitelisted relayer
+- **Actor:** Guardian, whitelisted lock manager, or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian lock the activation for
     - **Lock manager**: Address of the lock manager that will control the lock

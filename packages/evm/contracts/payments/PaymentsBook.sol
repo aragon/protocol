@@ -240,7 +240,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     * @param _periodId Identification number of the period being queried
     * @param _guardian Address of the guardian being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the guardian
+    * @return List of claimed status for each requested token
     */
     function hasGuardianClaimed(uint256 _periodId, address _guardian, address[] calldata _tokens)
         external
@@ -274,7 +274,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     * @dev Tell if the governor has already claimed the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the governor
+    * @return List of claimed status for each requested token
     */
     function hasGovernorClaimed(uint256 _periodId, address[] calldata _tokens)
         external
