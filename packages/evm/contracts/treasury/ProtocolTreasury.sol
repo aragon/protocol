@@ -60,19 +60,6 @@ contract ProtocolTreasury is ITreasury, ControlledRecoverable, ControlledRelayab
     }
 
     /**
-    * @notice Withdraw all the tokens from `_from` to themselves
-    * @param _token ERC20 token to be withdrawn
-    * @param _from Address withdrawing the tokens from and where the tokens will be transferred
-    */
-    function withdrawAll(IERC20 _token, address _from) external {
-        bool canWithdrawAll = _isSenderAllowed(_from) || _protocolConfig().areWithdrawalsAllowedFor(_from);
-        require(canWithdrawAll, ERROR_WITHDRAWS_DISALLOWED);
-
-        uint256 amount = _balanceOf(_token, _from);
-        _withdraw(_token, _from, _from, amount);
-    }
-
-    /**
     * @dev Tell the token balance of a certain holder
     * @param _token ERC20 token balance being queried
     * @param _holder Address of the holder querying the balance of
