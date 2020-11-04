@@ -102,7 +102,7 @@ contract AragonProtocol is IArbitrator, Controller {
     */
     function submitEvidenceForModule(IDisputeManager _disputeManager, uint256 _disputeId, address _submitter, bytes calldata _evidence)
         external
-        onlyActiveDisputeManagers(_disputeManager)
+        onlyActiveDisputeManager(_disputeManager)
     {
         _submitEvidence(_disputeManager, _disputeId, _submitter, _evidence);
     }
@@ -123,7 +123,7 @@ contract AragonProtocol is IArbitrator, Controller {
     */
     function closeEvidencePeriodForModule(IDisputeManager _disputeManager, uint256 _disputeId)
         external
-        onlyActiveDisputeManagers(_disputeManager)
+        onlyActiveDisputeManager(_disputeManager)
     {
         _closeEvidencePeriod(_disputeManager, _disputeId);
     }
@@ -148,7 +148,7 @@ contract AragonProtocol is IArbitrator, Controller {
     */
     function ruleForModule(IDisputeManager _disputeManager, uint256 _disputeId)
         external
-        onlyActiveDisputeManagers(_disputeManager)
+        onlyActiveDisputeManager(_disputeManager)
         returns (address subject, uint256 ruling)
     {
         return _rule(_disputeManager, _disputeId);

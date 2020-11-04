@@ -130,7 +130,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
 
     context('when the sender is not the arbitrable of the dispute', () => {
       it('reverts', async () => {
-        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), DISPUTE_MANAGER_ERRORS.SENDER_NOT_DISPUTE_SUBJECT)
+        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), DISPUTE_MANAGER_ERRORS.SUBJECT_NOT_DISPUTE_SUBJECT)
       })
     })
 

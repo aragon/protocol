@@ -24,7 +24,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     using Uint256Helpers for uint256;
 
     // Disputes-related error messages
-    string private constant ERROR_SENDER_NOT_DISPUTE_SUBJECT = "DM_SENDER_NOT_DISPUTE_SUBJECT";
+    string private constant ERROR_SUBJECT_NOT_DISPUTE_SUBJECT = "DM_SUBJECT_NOT_DISPUTE_SUBJECT";
     string private constant ERROR_EVIDENCE_PERIOD_IS_CLOSED = "DM_EVIDENCE_PERIOD_IS_CLOSED";
     string private constant ERROR_TERM_OUTDATED = "DM_TERM_OUTDATED";
     string private constant ERROR_DISPUTE_DOES_NOT_EXIST = "DM_DISPUTE_DOES_NOT_EXIST";
@@ -194,7 +194,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
         onlyController
     {
         (Dispute storage dispute, ) = _getDisputeAndRound(_disputeId, 0);
-        require(dispute.subject == _subject, ERROR_SENDER_NOT_DISPUTE_SUBJECT);
+        require(dispute.subject == _subject, ERROR_SUBJECT_NOT_DISPUTE_SUBJECT);
         emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
     }
 
@@ -205,7 +205,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     */
     function closeEvidencePeriod(IArbitrable _subject, uint256 _disputeId) external onlyController {
         (Dispute storage dispute, AdjudicationRound storage round) = _getDisputeAndRound(_disputeId, 0);
-        require(dispute.subject == _subject, ERROR_SENDER_NOT_DISPUTE_SUBJECT);
+        require(dispute.subject == _subject, ERROR_SUBJECT_NOT_DISPUTE_SUBJECT);
 
         // Check current term is within the evidence submission period
         uint64 termId = _ensureCurrentTerm();
@@ -1122,6 +1122,16 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     }
 
     /**
+    * @dev Internal function to get the Protocol config used for a dispute
+    * @param _dispute Dispute querying the Protocol config of
+    * @return Protocol config used for the given dispute
+    */
+    function _getDisputeConfig(Dispute storage _dispute) internal view returns (Config memory) {
+        // Note that it is safe to access a Protocol config directly for a past term
+        return _getConfigAt(_dispute.createTermId);
+    }
+
+    /**
     * @dev Internal function to fetch a dispute and round
     * @param _disputeId Identification number of the dispute to be fetched
     * @param _roundId Identification number of the round to be fetched
@@ -1166,20 +1176,8 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
         view
         returns (Dispute storage dispute, AdjudicationRound storage round, Config memory config)
     {
-        dispute = _getDispute(_disputeId);
-        _checkRoundExists(dispute, _roundId);
-        round = dispute.rounds[_roundId];
+        (dispute, round) = _getDisputeAndRound(_disputeId, _roundId);
         config = _getDisputeConfig(dispute);
-    }
-
-    /**
-    * @dev Internal function to get the Protocol config used for a dispute
-    * @param _dispute Dispute querying the Protocol config of
-    * @return Protocol config used for the given dispute
-    */
-    function _getDisputeConfig(Dispute storage _dispute) internal view returns (Config memory) {
-        // Note that it is safe to access a Protocol config directly for a past term
-        return _getConfigAt(_dispute.createTermId);
     }
 
     /**

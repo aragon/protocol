@@ -90,7 +90,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     /**
     * @dev Ensure the given dispute manager is active
     */
-    modifier onlyActiveDisputeManagers(IDisputeManager _disputeManager) {
+    modifier onlyActiveDisputeManager(IDisputeManager _disputeManager) {
         require(!_isModuleDisabled(address(_disputeManager)), ERROR_DISPUTE_MANAGER_NOT_ACTIVE);
         _;
     }

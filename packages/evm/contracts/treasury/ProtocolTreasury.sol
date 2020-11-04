@@ -39,7 +39,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _to Address of the recipient that will be assigned the tokens to
     * @param _amount Amount of tokens to be assigned to the recipient
     */
-    function assign(IERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManagers {
+    function assign(IERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManager {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
 
         address tokenAddress = address(_token);
