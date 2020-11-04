@@ -16,7 +16,7 @@ import "../registry/IGuardiansRegistry.sol";
 import "../core/modules/ControlledRecoverable.sol";
 
 
-contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManager {
+contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using SafeMath64 for uint64;
@@ -24,7 +24,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     using Uint256Helpers for uint256;
 
     // Disputes-related error messages
-    string private constant ERROR_SENDER_NOT_DISPUTE_SUBJECT = "DM_SENDER_NOT_DISPUTE_SUBJECT";
+    string private constant ERROR_SUBJECT_NOT_DISPUTE_SUBJECT = "DM_SUBJECT_NOT_DISPUTE_SUBJECT";
     string private constant ERROR_EVIDENCE_PERIOD_IS_CLOSED = "DM_EVIDENCE_PERIOD_IS_CLOSED";
     string private constant ERROR_TERM_OUTDATED = "DM_TERM_OUTDATED";
     string private constant ERROR_DISPUTE_DOES_NOT_EXIST = "DM_DISPUTE_DOES_NOT_EXIST";
@@ -127,35 +127,17 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     Dispute[] internal disputes;
 
     event DisputeStateChanged(uint256 indexed disputeId, DisputeState indexed state);
+    event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence);
     event EvidencePeriodClosed(uint256 indexed disputeId, uint64 indexed termId);
-    event NewDispute(uint256 indexed disputeId, IArbitrable indexed subject, uint64 indexed draftTermId, uint64 guardiansNumber, bytes metadata);
+    event NewDispute(uint256 indexed disputeId, IArbitrable indexed subject, uint64 indexed draftTermId, bytes metadata);
     event GuardianDrafted(uint256 indexed disputeId, uint256 indexed roundId, address indexed guardian);
     event RulingAppealed(uint256 indexed disputeId, uint256 indexed roundId, uint8 ruling);
-    event RulingAppealConfirmed(uint256 indexed disputeId, uint256 indexed roundId, uint64 indexed draftTermId, uint256 guardiansNumber);
+    event RulingAppealConfirmed(uint256 indexed disputeId, uint256 indexed roundId, uint64 indexed draftTermId);
     event RulingComputed(uint256 indexed disputeId, uint8 indexed ruling);
     event PenaltiesSettled(uint256 indexed disputeId, uint256 indexed roundId, uint256 collectedTokens);
     event RewardSettled(uint256 indexed disputeId, uint256 indexed roundId, address guardian, uint256 tokens, uint256 fees);
     event AppealDepositSettled(uint256 indexed disputeId, uint256 indexed roundId);
-    event MaxGuardiansPerDraftBatchChanged(uint64 previousMaxGuardiansPerDraftBatch, uint64 currentMaxGuardiansPerDraftBatch);
-
-    /**
-    * @dev Ensure a dispute exists
-    * @param _disputeId Identification number of the dispute to be ensured
-    */
-    modifier disputeExists(uint256 _disputeId) {
-        _checkDisputeExists(_disputeId);
-        _;
-    }
-
-    /**
-    * @dev Ensure a dispute round exists
-    * @param _disputeId Identification number of the dispute to be ensured
-    * @param _roundId Identification number of the dispute round to be ensured
-    */
-    modifier roundExists(uint256 _disputeId, uint256 _roundId) {
-        _checkRoundExists(_disputeId, _roundId);
-        _;
-    }
+    event MaxGuardiansPerDraftBatchChanged(uint64 maxGuardiansPerDraftBatch);
 
     /**
     * @dev Constructor function
@@ -187,11 +169,11 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         dispute.createTermId = termId;
 
         Config memory config = _getConfigAt(termId);
-        uint64 guardiansNumber = config.disputes.firstRoundGuardiansNumber;
         uint64 draftTermId = termId.add(config.disputes.evidenceTerms);
-        emit NewDispute(disputeId, _subject, draftTermId, guardiansNumber, _metadata);
+        emit NewDispute(disputeId, _subject, draftTermId, _metadata);
 
         // Create first adjudication round of the dispute
+        uint64 guardiansNumber = config.disputes.firstRoundGuardiansNumber;
         (IERC20 feeToken, uint256 guardianFees, uint256 totalFees) = _getRegularRoundFees(config.fees, guardiansNumber);
         _createRound(disputeId, DisputeState.PreDraft, draftTermId, guardiansNumber, guardianFees);
 
@@ -201,14 +183,29 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
+    * @notice Submit evidence for a dispute #`_disputeId`
+    * @param _subject Arbitrable instance submitting the dispute
+    * @param _disputeId Identification number of the dispute receiving new evidence
+    * @param _submitter Address of the account submitting the evidence
+    * @param _evidence Data submitted for the evidence of the dispute
+    */
+    function submitEvidence(IArbitrable _subject, uint256 _disputeId, address _submitter, bytes calldata _evidence)
+        external
+        onlyController
+    {
+        (Dispute storage dispute, ) = _getDisputeAndRound(_disputeId, 0);
+        require(dispute.subject == _subject, ERROR_SUBJECT_NOT_DISPUTE_SUBJECT);
+        emit EvidenceSubmitted(_disputeId, _submitter, _evidence);
+    }
+
+    /**
     * @notice Close the evidence period of dispute #`_disputeId`
     * @param _subject IArbitrable instance requesting to close the evidence submission period
     * @param _disputeId Identification number of the dispute to close its evidence submitting period
     */
-    function closeEvidencePeriod(IArbitrable _subject, uint256 _disputeId) external onlyController roundExists(_disputeId, 0) {
-        Dispute storage dispute = disputes[_disputeId];
-        AdjudicationRound storage round = dispute.rounds[0];
-        require(dispute.subject == _subject, ERROR_SENDER_NOT_DISPUTE_SUBJECT);
+    function closeEvidencePeriod(IArbitrable _subject, uint256 _disputeId) external onlyController {
+        (Dispute storage dispute, AdjudicationRound storage round) = _getDisputeAndRound(_disputeId, 0);
+        require(dispute.subject == _subject, ERROR_SUBJECT_NOT_DISPUTE_SUBJECT);
 
         // Check current term is within the evidence submission period
         uint64 termId = _ensureCurrentTerm();
@@ -224,7 +221,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @notice Draft guardians for the next round of dispute #`_disputeId`
     * @param _disputeId Identification number of the dispute to be drafted
     */
-    function draft(uint256 _disputeId) external disputeExists(_disputeId) {
+    function draft(uint256 _disputeId) external {
         // Drafts can only be computed when the Protocol is up-to-date. Note that forcing a term transition won't work since the term randomness
         // is always based on the next term which means it won't be available anyway.
         IClock clock = _clock();
@@ -233,7 +230,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         uint64 currentTermId = _getLastEnsuredTermId();
 
         // Ensure dispute has not been drafted yet
-        Dispute storage dispute = disputes[_disputeId];
+        Dispute storage dispute = _getDispute(_disputeId);
         require(dispute.state == DisputeState.PreDraft, ERROR_ROUND_ALREADY_DRAFTED);
 
         // Ensure draft term randomness can be computed for the current block number
@@ -262,11 +259,10 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _roundId Identification number of the dispute round being appealed
     * @param _ruling Ruling appealing a dispute round in favor of
     */
-    function createAppeal(uint256 _disputeId, uint256 _roundId, uint8 _ruling) external roundExists(_disputeId, _roundId) {
+    function createAppeal(uint256 _disputeId, uint256 _roundId, uint8 _ruling) external {
         // Ensure current term and check that the given round can be appealed.
         // Note that if there was a final appeal the adjudication state will be 'Ended'.
-        Dispute storage dispute = disputes[_disputeId];
-        Config memory config = _getDisputeConfig(dispute);
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         _ensureAdjudicationState(dispute, _roundId, AdjudicationState.Appealing, config.disputes);
 
         // Ensure that the ruling being appealed in favor of is valid and different from the current winning ruling
@@ -276,7 +272,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         require(roundWinningRuling != _ruling && voting.isValidOutcome(voteId, _ruling), ERROR_INVALID_APPEAL_RULING);
 
         // Update round appeal state
-        AdjudicationRound storage round = dispute.rounds[_roundId];
         Appeal storage appeal = round.appeal;
         appeal.maker = msg.sender;
         appeal.appealedRuling = _ruling;
@@ -293,15 +288,13 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _roundId Identification number of the dispute round confirming an appeal of
     * @param _ruling Ruling being confirmed against a dispute round appeal
     */
-    function confirmAppeal(uint256 _disputeId, uint256 _roundId, uint8 _ruling) external roundExists(_disputeId, _roundId) {
+    function confirmAppeal(uint256 _disputeId, uint256 _roundId, uint8 _ruling) external {
         // Ensure current term and check that the given round is appealed and can be confirmed.
         // Note that if there was a final appeal the adjudication state will be 'Ended'.
-        Dispute storage dispute = disputes[_disputeId];
-        Config memory config = _getDisputeConfig(dispute);
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         _ensureAdjudicationState(dispute, _roundId, AdjudicationState.ConfirmingAppeal, config.disputes);
 
         // Ensure that the ruling being confirmed in favor of is valid and different from the appealed ruling
-        AdjudicationRound storage round = dispute.rounds[_roundId];
         Appeal storage appeal = round.appeal;
         uint256 voteId = _getVoteId(_disputeId, _roundId);
         require(appeal.appealedRuling != _ruling && _voting().isValidOutcome(voteId, _ruling), ERROR_INVALID_APPEAL_RULING);
@@ -314,7 +307,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         // Update previous round appeal state
         appeal.taker = msg.sender;
         appeal.opposedRuling = _ruling;
-        emit RulingAppealConfirmed(_disputeId, newRoundId, nextRound.startTerm, nextRound.guardiansNumber);
+        emit RulingAppealConfirmed(_disputeId, newRoundId, nextRound.startTerm);
 
         // Pay appeal confirm deposit
         _depositAmount(msg.sender, nextRound.feeToken, nextRound.confirmAppealDeposit);
@@ -326,11 +319,10 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return subject Arbitrable instance associated to the dispute
     * @return finalRuling Final ruling decided for the given dispute
     */
-    function computeRuling(uint256 _disputeId) external disputeExists(_disputeId) returns (IArbitrable subject, uint8 finalRuling) {
-        Dispute storage dispute = disputes[_disputeId];
-        subject = dispute.subject;
+    function computeRuling(uint256 _disputeId) external returns (IArbitrable subject, uint8 finalRuling) {
+        (Dispute storage dispute, Config memory config) = _getDisputeWithConfig(_disputeId);
 
-        Config memory config = _getDisputeConfig(dispute);
+        subject = dispute.subject;
         finalRuling = _ensureFinalRuling(dispute, _disputeId, config);
 
         if (dispute.state != DisputeState.Ruled) {
@@ -349,18 +341,16 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _guardiansToSettle Maximum number of guardians to be slashed in this call. It can be set to zero to slash all the losing guardians of the
     *        given round. This argument is only used when settling regular rounds.
     */
-    function settlePenalties(uint256 _disputeId, uint256 _roundId, uint256 _guardiansToSettle) external roundExists(_disputeId, _roundId) {
+    function settlePenalties(uint256 _disputeId, uint256 _roundId, uint256 _guardiansToSettle) external {
         // Enforce that rounds are settled in order to avoid one round without incentive to settle. Even if there is a settle fee
         // it may not be big enough and all guardians in the round could be slashed.
-        Dispute storage dispute = disputes[_disputeId];
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         require(_roundId == 0 || dispute.rounds[_roundId - 1].settledPenalties, ERROR_PREV_ROUND_NOT_SETTLED);
 
         // Ensure given round has not been fully settled yet
-        AdjudicationRound storage round = dispute.rounds[_roundId];
         require(!round.settledPenalties, ERROR_ROUND_ALREADY_SETTLED);
 
         // Ensure the final ruling of the given dispute is already computed
-        Config memory config = _getDisputeConfig(dispute);
         uint8 finalRuling = _ensureFinalRuling(dispute, _disputeId, config);
 
         // Set the number of guardians that voted in favor of the final ruling if we haven't started settling yet
@@ -401,10 +391,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _roundId Identification number of the dispute round to settle rewards for
     * @param _guardian Address of the guardian to settle their rewards
     */
-    function settleReward(uint256 _disputeId, uint256 _roundId, address _guardian) external roundExists(_disputeId, _roundId) {
+    function settleReward(uint256 _disputeId, uint256 _roundId, address _guardian) external {
         // Ensure dispute round penalties are settled first
-        Dispute storage dispute = disputes[_disputeId];
-        AdjudicationRound storage round = dispute.rounds[_roundId];
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         require(round.settledPenalties, ERROR_ROUND_NOT_SETTLED);
 
         // Ensure given guardian was not rewarded yet and was drafted for the given round
@@ -432,7 +421,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         }
 
         // Reward the winning guardian with fees
-        Config memory config = _getDisputeConfig(dispute);
         // Note that the number of coherent guardians has to be greater than zero since we already ensured the guardian has voted in favor of the
         // final ruling, therefore there will be at least one coherent guardian and divisions below are safe.
         uint256 rewardFees = _getRoundWeightedAmount(round, guardianState, round.guardianFees);
@@ -456,10 +444,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _disputeId Identification number of the dispute to settle appeal deposits for
     * @param _roundId Identification number of the dispute round to settle appeal deposits for
     */
-    function settleAppealDeposit(uint256 _disputeId, uint256 _roundId) external roundExists(_disputeId, _roundId) {
+    function settleAppealDeposit(uint256 _disputeId, uint256 _roundId) external {
         // Ensure dispute round penalties are settled first
-        Dispute storage dispute = disputes[_disputeId];
-        AdjudicationRound storage round = dispute.rounds[_roundId];
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         require(round.settledPenalties, ERROR_ROUND_NOT_SETTLED);
 
         // Ensure given round was appealed and has not been settled yet
@@ -470,7 +457,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
         emit AppealDepositSettled(_disputeId, _roundId);
 
         // Load next round details
-        Config memory config = _getDisputeConfig(dispute);
         NextRoundDetails memory nextRound = _getNextRoundDetails(round, _roundId, config);
         IERC20 feeToken = nextRound.feeToken;
         uint256 totalFees = nextRound.totalFees;
@@ -506,8 +492,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _voteId ID of the vote instance to request the weight of a voter for
     */
     function ensureCanCommit(uint256 _voteId) external {
-        (Dispute storage dispute, uint256 roundId) = _decodeVoteId(_voteId);
-        Config memory config = _getDisputeConfig(dispute);
+        (Dispute storage dispute, uint256 roundId, Config memory config) = _decodeVoteId(_voteId);
 
         // Ensure current term and check that votes can still be committed for the given round
         _ensureAdjudicationState(dispute, roundId, AdjudicationState.Committing, config.disputes);
@@ -520,8 +505,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _voter Address of the voter querying the weight of
     */
     function ensureCanCommit(uint256 _voteId, address _voter) external onlyActiveVoting {
-        (Dispute storage dispute, uint256 roundId) = _decodeVoteId(_voteId);
-        Config memory config = _getDisputeConfig(dispute);
+        (Dispute storage dispute, uint256 roundId, Config memory config) = _decodeVoteId(_voteId);
 
         // Ensure current term and check that votes can still be committed for the given round
         _ensureAdjudicationState(dispute, roundId, AdjudicationState.Committing, config.disputes);
@@ -537,8 +521,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return Weight of the requested guardian for the requested dispute's round
     */
     function ensureCanReveal(uint256 _voteId, address _voter) external returns (uint64) {
-        (Dispute storage dispute, uint256 roundId) = _decodeVoteId(_voteId);
-        Config memory config = _getDisputeConfig(dispute);
+        (Dispute storage dispute, uint256 roundId, Config memory config) = _decodeVoteId(_voteId);
 
         // Ensure current term and check that votes can still be revealed for the given round
         _ensureAdjudicationState(dispute, roundId, AdjudicationState.Revealing, config.disputes);
@@ -575,10 +558,17 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return lastRoundId Identification number of the last round created for the dispute
     * @return createTermId Identification number of the term when the dispute was created
     */
-    function getDispute(uint256 _disputeId) external view disputeExists(_disputeId)
-        returns (IArbitrable subject, uint8 possibleRulings, DisputeState state, uint8 finalRuling, uint256 lastRoundId, uint64 createTermId)
+    function getDispute(uint256 _disputeId) external view
+        returns (
+            IArbitrable subject,
+            uint8 possibleRulings,
+            DisputeState state,
+            uint8 finalRuling,
+            uint256 lastRoundId,
+            uint64 createTermId
+        )
     {
-        Dispute storage dispute = disputes[_disputeId];
+        Dispute storage dispute = _getDispute(_disputeId);
 
         subject = dispute.subject;
         possibleRulings = dispute.possibleRulings;
@@ -602,7 +592,7 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return coherentGuardians Number of guardians that voted in favor of the final ruling in the requested round
     * @return state Adjudication state of the requested round
     */
-    function getRound(uint256 _disputeId, uint256 _roundId) external view roundExists(_disputeId, _roundId)
+    function getRound(uint256 _disputeId, uint256 _roundId) external view
         returns (
             uint64 draftTerm,
             uint64 delayedTerms,
@@ -615,10 +605,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
             AdjudicationState state
         )
     {
-        Dispute storage dispute = disputes[_disputeId];
-        state = _adjudicationStateAt(dispute, _roundId, _getCurrentTermId(), _getDisputeConfig(dispute).disputes);
+        (Dispute storage dispute, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
+        state = _adjudicationStateAt(dispute, _roundId, _getCurrentTermId(), config.disputes);
 
-        AdjudicationRound storage round = dispute.rounds[_roundId];
         draftTerm = round.draftTermId;
         delayedTerms = round.delayedTerms;
         guardiansNumber = round.guardiansNumber;
@@ -638,10 +627,13 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return taker Address of the account confirming the appeal of the given round
     * @return opposedRuling Ruling confirmed by the appeal taker of the given round
     */
-    function getAppeal(uint256 _disputeId, uint256 _roundId) external view roundExists(_disputeId, _roundId)
+    function getAppeal(uint256 _disputeId, uint256 _roundId)
+        external
+        view
         returns (address maker, uint64 appealedRuling, address taker, uint64 opposedRuling)
     {
-        Appeal storage appeal = disputes[_disputeId].rounds[_roundId].appeal;
+        (, AdjudicationRound storage round) = _getDisputeAndRound(_disputeId, _roundId);
+        Appeal storage appeal = round.appeal;
 
         maker = appeal.maker;
         appealedRuling = appeal.appealedRuling;
@@ -674,13 +666,9 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
             uint256 confirmAppealDeposit
         )
     {
-        _checkRoundExists(_disputeId, _roundId);
-
-        Dispute storage dispute = disputes[_disputeId];
-        Config memory config = _getDisputeConfig(dispute);
+        (, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
         require(_isRegularRound(_roundId, config), ERROR_ROUND_IS_FINAL);
 
-        AdjudicationRound storage round = dispute.rounds[_roundId];
         NextRoundDetails memory nextRound = _getNextRoundDetails(round, _roundId, config);
         return (
             nextRound.startTerm,
@@ -702,12 +690,12 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @return weight Guardian weight drafted for the requested round
     * @return rewarded Whether or not the given guardian was rewarded based on the requested round
     */
-    function getGuardian(uint256 _disputeId, uint256 _roundId, address _guardian) external view roundExists(_disputeId, _roundId)
+    function getGuardian(uint256 _disputeId, uint256 _roundId, address _guardian)
+        external
+        view
         returns (uint64 weight, bool rewarded)
     {
-        Dispute storage dispute = disputes[_disputeId];
-        AdjudicationRound storage round = dispute.rounds[_roundId];
-        Config memory config = _getDisputeConfig(dispute);
+        (, AdjudicationRound storage round, Config memory config) = _getDisputeAndRoundWithConfig(_disputeId, _roundId);
 
         if (_isRegularRound(_roundId, config)) {
             weight = _getGuardianWeight(round, _guardian);
@@ -931,8 +919,8 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     */
     function _setMaxGuardiansPerDraftBatch(uint64 _maxGuardiansPerDraftBatch) internal {
         require(_maxGuardiansPerDraftBatch > 0, ERROR_BAD_MAX_DRAFT_BATCH_SIZE);
-        emit MaxGuardiansPerDraftBatchChanged(maxGuardiansPerDraftBatch, _maxGuardiansPerDraftBatch);
         maxGuardiansPerDraftBatch = _maxGuardiansPerDraftBatch;
+        emit MaxGuardiansPerDraftBatchChanged(_maxGuardiansPerDraftBatch);
     }
 
     /**
@@ -1097,16 +1085,6 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to get the Protocol config used for a dispute
-    * @param _dispute Dispute querying the Protocol config of
-    * @return Protocol config used for the given dispute
-    */
-    function _getDisputeConfig(Dispute storage _dispute) internal view returns (Config memory) {
-        // Note that it is safe to access a Protocol config directly for a past term
-        return _getConfigAt(_dispute.createTermId);
-    }
-
-    /**
     * @dev Internal function to check if a certain appeal exists
     * @param _appeal Appeal to be checked
     * @return True if the given appeal has a maker address associated to it, false otherwise
@@ -1125,21 +1103,81 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     }
 
     /**
-    * @dev Internal function to check if a certain dispute exists, it reverts if it doesn't
-    * @param _disputeId Identification number of the dispute to be checked
+    * @dev Internal function to check if a certain dispute round exists, it reverts if it doesn't
+    * @param _dispute Dispute to be checked
+    * @param _roundId Identification number of the dispute round to be checked
     */
-    function _checkDisputeExists(uint256 _disputeId) internal view {
-        require(_disputeId < disputes.length, ERROR_DISPUTE_DOES_NOT_EXIST);
+    function _checkRoundExists(Dispute storage _dispute, uint256 _roundId) internal view {
+        require(_roundId < _dispute.rounds.length, ERROR_ROUND_DOES_NOT_EXIST);
     }
 
     /**
-    * @dev Internal function to check if a certain dispute round exists, it reverts if it doesn't
-    * @param _disputeId Identification number of the dispute to be checked
-    * @param _roundId Identification number of the dispute round to be checked
+    * @dev Internal function to fetch a dispute
+    * @param _disputeId Identification number of the dispute to be fetched
+    * @return Dispute instance requested
     */
-    function _checkRoundExists(uint256 _disputeId, uint256 _roundId) internal view {
-        _checkDisputeExists(_disputeId);
-        require(_roundId < disputes[_disputeId].rounds.length, ERROR_ROUND_DOES_NOT_EXIST);
+    function _getDispute(uint256 _disputeId) internal view returns (Dispute storage) {
+        require(_disputeId < disputes.length, ERROR_DISPUTE_DOES_NOT_EXIST);
+        return disputes[_disputeId];
+    }
+
+    /**
+    * @dev Internal function to get the Protocol config used for a dispute
+    * @param _dispute Dispute querying the Protocol config of
+    * @return Protocol config used for the given dispute
+    */
+    function _getDisputeConfig(Dispute storage _dispute) internal view returns (Config memory) {
+        // Note that it is safe to access a Protocol config directly for a past term
+        return _getConfigAt(_dispute.createTermId);
+    }
+
+    /**
+    * @dev Internal function to fetch a dispute and round
+    * @param _disputeId Identification number of the dispute to be fetched
+    * @param _roundId Identification number of the round to be fetched
+    * @return dispute Dispute instance requested
+    * @return round Round instance requested
+    */
+    function _getDisputeAndRound(uint256 _disputeId, uint256 _roundId)
+        internal
+        view
+        returns (Dispute storage dispute, AdjudicationRound storage round)
+    {
+        dispute = _getDispute(_disputeId);
+        _checkRoundExists(dispute, _roundId);
+        round = dispute.rounds[_roundId];
+    }
+
+    /**
+    * @dev Internal function to fetch a dispute with its config
+    * @param _disputeId Identification number of the dispute to be fetched
+    * @return dispute Dispute instance requested
+    * @return config Protocol config used for the given dispute
+    */
+    function _getDisputeWithConfig(uint256 _disputeId)
+        internal
+        view
+        returns (Dispute storage dispute, Config memory config)
+    {
+        dispute = _getDispute(_disputeId);
+        config = _getDisputeConfig(dispute);
+    }
+
+    /**
+    * @dev Internal function to fetch a dispute and round with its config
+    * @param _disputeId Identification number of the dispute to be fetched
+    * @param _roundId Identification number of the round to be fetched
+    * @return dispute Dispute instance requested
+    * @return round Round instance requested
+    * @return config Protocol config used for the given dispute
+    */
+    function _getDisputeAndRoundWithConfig(uint256 _disputeId, uint256 _roundId)
+        internal
+        view
+        returns (Dispute storage dispute, AdjudicationRound storage round, Config memory config)
+    {
+        (dispute, round) = _getDisputeAndRound(_disputeId, _roundId);
+        config = _getDisputeConfig(dispute);
     }
 
     /**
@@ -1147,12 +1185,18 @@ contract DisputeManager is ControlledRecoverable, ICRVotingOwner, IDisputeManage
     * @param _voteId Identification number of the vote querying the dispute round of
     * @return dispute Dispute for the given vote
     * @return roundId Identification number of the dispute round for the given vote
+    * @return config Protocol config used for the given dispute
     */
-    function _decodeVoteId(uint256 _voteId) internal view returns (Dispute storage dispute, uint256 roundId) {
+    function _decodeVoteId(uint256 _voteId)
+        internal
+        view
+        returns (Dispute storage dispute, uint256 roundId, Config memory config)
+    {
         uint256 disputeId = _voteId >> 128;
         roundId = _voteId & VOTE_ID_MASK;
-        _checkRoundExists(disputeId, roundId);
-        dispute = disputes[disputeId];
+        dispute = _getDispute(disputeId);
+        _checkRoundExists(dispute, roundId);
+        config = _getDisputeConfig(dispute);
     }
 
     /**

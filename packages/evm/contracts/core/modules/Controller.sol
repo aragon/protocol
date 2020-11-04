@@ -6,6 +6,7 @@ import "./ModuleIds.sol";
 import "./IModulesLinker.sol";
 import "../clock/ProtocolClock.sol";
 import "../config/ProtocolConfig.sol";
+import "../../disputes/IDisputeManager.sol";
 
 
 contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
@@ -14,6 +15,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
     string private constant ERROR_MODULE_ALREADY_ENABLED = "CTR_MODULE_ALREADY_ENABLED";
     string private constant ERROR_MODULE_ALREADY_DISABLED = "CTR_MODULE_ALREADY_DISABLED";
+    string private constant ERROR_DISPUTE_MANAGER_NOT_ACTIVE = "CTR_DISPUTE_MANAGER_NOT_ACTIVE";
     string private constant ERROR_CUSTOM_FUNCTION_NOT_SET = "CTR_CUSTOM_FUNCTION_NOT_SET";
     string private constant ERROR_IMPLEMENTATION_NOT_CONTRACT = "CTR_IMPLEMENTATION_NOT_CONTRACT";
     string private constant ERROR_INVALID_IMPLS_INPUT_LENGTH = "CTR_INVALID_IMPLS_INPUT_LENGTH";
@@ -82,6 +84,14 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     */
     modifier onlyModulesGovernor {
         require(msg.sender == governor.modules, ERROR_SENDER_NOT_GOVERNOR);
+        _;
+    }
+
+    /**
+    * @dev Ensure the given dispute manager is active
+    */
+    modifier onlyActiveDisputeManager(IDisputeManager _disputeManager) {
+        require(!_isModuleDisabled(address(_disputeManager)), ERROR_DISPUTE_MANAGER_NOT_ACTIVE);
         _;
     }
 
@@ -595,7 +605,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
 
         // Load the addresses of all the modules to be updated
         for (uint256 i = 0; i < _idsToBeSet.length; i++) {
-            address moduleAddress = currentModules[_idsToBeSet[i]];
+            address moduleAddress = _getModuleAddress(_idsToBeSet[i]);
             Module storage module = allModules[moduleAddress];
             _ensureModuleExists(module);
             addressesToBeSet[i] = moduleAddress;
@@ -630,7 +640,25 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function _getModule(bytes32 _id) internal view returns (address addr, bool disabled) {
-        addr = currentModules[_id];
-        disabled = allModules[addr].disabled;
+        addr = _getModuleAddress(_id);
+        disabled = _isModuleDisabled(addr);
+    }
+
+    /**
+    * @dev Tell the current address for a module by ID
+    * @param _id ID of the module being queried
+    * @return Current address of the requested module
+    */
+    function _getModuleAddress(bytes32 _id) internal view returns (address) {
+        return currentModules[_id];
+    }
+
+    /**
+    * @dev Tell whether a module is disabled
+    * @param _addr Address of the module being queried
+    * @return True if the module is disabled, false otherwise
+    */
+    function _isModuleDisabled(address _addr) internal view returns (bool) {
+        return allModules[_addr].disabled;
     }
 }

@@ -272,7 +272,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     * @param _guardian Guardian to add an amount of tokens to
     * @param _amount Amount of tokens to be added to the available balance of a guardian
     */
-    function assignTokens(address _guardian, uint256 _amount) external onlyActiveDisputeManagers {
+    function assignTokens(address _guardian, uint256 _amount) external onlyActiveDisputeManager {
         if (_amount > 0) {
             _updateAvailableBalanceOf(_guardian, _amount, true);
             emit GuardianTokensAssigned(_guardian, _amount);
@@ -283,7 +283,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     * @notice Burn `@tokenAmount(self.token(), _amount)`
     * @param _amount Amount of tokens to be burned
     */
-    function burnTokens(uint256 _amount) external onlyActiveDisputeManagers {
+    function burnTokens(uint256 _amount) external onlyActiveDisputeManager {
         if (_amount > 0) {
             _updateAvailableBalanceOf(BURN_ACCOUNT, _amount, true);
             emit GuardianTokensBurned(_amount);
@@ -304,7 +304,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     * @return guardians List of guardians selected for the draft
     * @return length Size of the list of the draft result
     */
-    function draft(uint256[7] calldata _params) external onlyActiveDisputeManagers returns (address[] memory guardians, uint256 length) {
+    function draft(uint256[7] calldata _params) external onlyActiveDisputeManager returns (address[] memory guardians, uint256 length) {
         DraftParams memory draftParams = _buildDraftParams(_params);
         guardians = new address[](draftParams.batchRequestedGuardians);
 
@@ -365,7 +365,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     */
     function slashOrUnlock(uint64 _termId, address[] calldata _guardians, uint256[] calldata _lockedAmounts, bool[] calldata _rewardedGuardians)
         external
-        onlyActiveDisputeManagers
+        onlyActiveDisputeManager
         returns (uint256)
     {
         require(_guardians.length == _lockedAmounts.length, ERROR_INVALID_LOCKED_AMOUNTS_LENGTH);
@@ -403,7 +403,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     * @param _termId Current term id
     * @return True if the guardian has enough unlocked tokens to be collected for the requested term, false otherwise
     */
-    function collectTokens(address _guardian, uint256 _amount, uint64 _termId) external onlyActiveDisputeManagers returns (bool) {
+    function collectTokens(address _guardian, uint256 _amount, uint64 _termId) external onlyActiveDisputeManager returns (bool) {
         if (_amount == 0) {
             return true;
         }
@@ -440,7 +440,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     * @param _guardian Address of the guardian to be locked
     * @param _termId Term ID until which the guardian's withdrawals will be locked
     */
-    function lockWithdrawals(address _guardian, uint64 _termId) external onlyActiveDisputeManagers {
+    function lockWithdrawals(address _guardian, uint64 _termId) external onlyActiveDisputeManager {
         Guardian storage guardian = guardiansByAddress[_guardian];
         guardian.withdrawalsLockTermId = _termId;
     }

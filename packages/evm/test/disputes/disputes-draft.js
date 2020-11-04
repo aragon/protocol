@@ -481,12 +481,10 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
         })
 
         it('emits an event', async () => {
-          const previousMaxGuardiansPerDraftBatch = await disputeManager.maxGuardiansPerDraftBatch()
-
           const receipt = await disputeManager.setMaxGuardiansPerDraftBatch(newGuardiansPerDraftBatch, { from })
 
           assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.MAX_GUARDIANS_PER_DRAFT_BATCH_CHANGED)
-          assertEvent(receipt, DISPUTE_MANAGER_EVENTS.MAX_GUARDIANS_PER_DRAFT_BATCH_CHANGED, { expectedArgs: { previousMaxGuardiansPerDraftBatch, currentMaxGuardiansPerDraftBatch: newGuardiansPerDraftBatch } })
+          assertEvent(receipt, DISPUTE_MANAGER_EVENTS.MAX_GUARDIANS_PER_DRAFT_BATCH_CHANGED, { expectedArgs: { maxGuardiansPerDraftBatch: newGuardiansPerDraftBatch } })
         })
       })
 

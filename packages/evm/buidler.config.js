@@ -43,7 +43,7 @@ module.exports = {
     version: '0.5.17',
     optimizer: {
       enabled: true,
-      runs: 250
+      runs: 400
     }
   },
   // The gas reporter plugin do not properly handle the buidlerevm
