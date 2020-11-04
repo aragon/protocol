@@ -7,17 +7,13 @@ import "../standards/IERC20.sol";
 
 
 library SafeERC20 {
-    // Before 0.5, solidity has a mismatch between `address.transfer()` and `token.transfer()`:
-    // https://github.com/ethereum/solidity/issues/3544
-    bytes4 private constant TRANSFER_SELECTOR = 0xa9059cbb;
-
     /**
     * @dev Same as a standards-compliant ERC20.transfer() that never reverts (returns false).
     *      Note that this makes an external call to the token.
     */
     function safeTransfer(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
         bytes memory transferCallData = abi.encodeWithSelector(
-            TRANSFER_SELECTOR,
+            _token.transfer.selector,
             _to,
             _amount
         );
