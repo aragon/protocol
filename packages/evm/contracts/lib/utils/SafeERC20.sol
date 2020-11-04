@@ -9,7 +9,8 @@ import "../standards/IERC20.sol";
 library SafeERC20 {
     /**
     * @dev Same as a standards-compliant ERC20.transfer() that never reverts (returns false).
-    *      Note that this makes an external call to the token.
+    *      Note that this makes an external call to the provided token and expects it to be already
+    *      verified as a contract.
     */
     function safeTransfer(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
         bytes memory transferCallData = abi.encodeWithSelector(
@@ -22,7 +23,8 @@ library SafeERC20 {
 
     /**
     * @dev Same as a standards-compliant ERC20.transferFrom() that never reverts (returns false).
-    *      Note that this makes an external call to the token.
+    *      Note that this makes an external call to the provided token and expects it to be already
+    *      verified as a contract.
     */
     function safeTransferFrom(IERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
         bytes memory transferFromCallData = abi.encodeWithSelector(
@@ -36,7 +38,8 @@ library SafeERC20 {
 
     /**
     * @dev Same as a standards-compliant ERC20.approve() that never reverts (returns false).
-    *      Note that this makes an external call to the token.
+    *      Note that this makes an external call to the provided token and expects it to be already
+    *      verified as a contract.
     */
     function safeApprove(IERC20 _token, address _spender, uint256 _amount) internal returns (bool) {
         bytes memory approveCallData = abi.encodeWithSelector(

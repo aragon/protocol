@@ -97,6 +97,8 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
         balances[tokenAddress][_from] = balance - _amount;
         emit Withdraw(_token, _from, _to, _amount);
 
+        // No need to verify _token to be a contract as we are already requiring a positive balance
+        // on a token that is permissioned under the active DisputeManager
         require(_token.safeTransfer(_to, _amount), ERROR_WITHDRAW_FAILED);
     }
 
