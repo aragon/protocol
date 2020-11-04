@@ -451,9 +451,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
             await controller.updateRelayerWhitelist(sender, false, { from: governor })
           })
 
-          it('reverts', async () => {
-            await assertRevert(treasury.withdrawAll(DAI.address, holder, { from: sender }), TREASURY_ERRORS.WITHDRAWALS_DISALLOWED)
-          })
+          itHandlesWithdrawAllsProperly(sender)
         })
       })
     })
