@@ -268,14 +268,14 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       beforeEach('simulate guardian without enough balance to vote on a final round', async () => {
         const expectedActiveBalance = bigExp(1, 18)
-        const { active: previousActiveBalance } = await protocolHelper.guardiansRegistry.balanceOf(poorGuardian)
+        const { active: previousActiveBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
 
         if (previousActiveBalance.gt(expectedActiveBalance)) {
           await protocolHelper.guardiansRegistry.collect(poorGuardian, previousActiveBalance.sub(expectedActiveBalance))
           await protocolHelper.passTerms(bn(1))
         }
 
-        const { active: currentActiveBalance } = await protocolHelper.guardiansRegistry.balanceOf(poorGuardian)
+        const { active: currentActiveBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
         assertBn(currentActiveBalance, expectedActiveBalance, 'poor guardian active balance does not match')
       })
 
