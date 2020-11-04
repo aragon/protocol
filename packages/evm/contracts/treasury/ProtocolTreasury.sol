@@ -7,10 +7,10 @@ import "../lib/standards/IERC20.sol";
 import "./ITreasury.sol";
 import "../core/modules/Controller.sol";
 import "../core/modules/ControlledRecoverable.sol";
-import "../core/modules/SignaturesValidator.sol";
+import "../core/modules/ControlledRelayable.sol";
 
 
-contract ProtocolTreasury is ITreasury, ControlledRecoverable, SignaturesValidator {
+contract ProtocolTreasury is ITreasury, ControlledRecoverable, ControlledRelayable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -55,17 +55,17 @@ contract ProtocolTreasury is ITreasury, ControlledRecoverable, SignaturesValidat
     * @param _to Address of the recipient that will receive the tokens
     * @param _amount Amount of tokens to be withdrawn from the sender
     */
-    function withdraw(IERC20 _token, address _from, address _to, uint256 _amount) external authenticate(_from) {
+    function withdraw(IERC20 _token, address _from, address _to, uint256 _amount) external authenticateSender(_from) {
         _withdraw(_token, _from, _to, _amount);
     }
 
     /**
-    * @notice Withdraw all the tokens from `_from` to themself
+    * @notice Withdraw all the tokens from `_from` to themselves
     * @param _token ERC20 token to be withdrawn
     * @param _from Address withdrawing the tokens from and where the tokens will be transferred
     */
     function withdrawAll(IERC20 _token, address _from) external {
-        bool canWithdrawAll = _isSignatureValid(_from) || _protocolConfig().areWithdrawalsAllowedFor(_from);
+        bool canWithdrawAll = _isSenderAllowed(_from) || _protocolConfig().areWithdrawalsAllowedFor(_from);
         require(canWithdrawAll, ERROR_WITHDRAWS_DISALLOWED);
 
         uint256 amount = _balanceOf(_token, _from);
