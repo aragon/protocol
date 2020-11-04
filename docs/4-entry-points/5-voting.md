@@ -14,16 +14,16 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Save the controller address
 
-### 4.5.2. Set representative
+### 4.5.2. Delegate
 
-- **Actor:** Any guardian that could potentially be drafted for an adjudication round
+- **Actor:** Any guardian that could potentially be drafted for an adjudication round or a whitelisted relayer
 - **Inputs:**
-    - **Representatives:** List of representatives addresses
-    - **Allowed:** Whether each representative is allowed or not
-- **Authentication:** Open
+    - **Voter:** Address of the voter setting their delegate
+    - **Delegate:** Address of the delegate to be set
+- **Authentication:** Open. Implicitly voters on their behalf or a whitelisted relayer.
 - **Pre-flight checks:** None
 - **State transitions:**
-    - Update allowance status for each of the representatives in the list
+    - Set the voter's delegate
 
 ### 4.5.3. Create
 
@@ -38,11 +38,12 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 
 ### 4.5.3. Commit
 
-- **Actor:** Guardian drafted for an adjudication round
+- **Actor:** Guardian drafted for an adjudication round or a whitelisted relayer
 - **Inputs:**
     - **Vote ID:** Vote identification number
+    - **Voter:** Address of the voter committing the vote for
     - **Commitment:** Hashed outcome to be stored for future reveal
-- **Authentication:** Open. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function
+- **Authentication:** Only the voter or a whitelisted relayer. Implicitly, only guardians that were drafted for the corresponding adjudication round can call this function.
 - **Pre-flight checks:**
     - Ensure a vote object with that ID exists
     - Ensure that the sender was drafted for the corresponding dispute's adjudication round
@@ -51,42 +52,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Create a cast vote object for the sender
 
-### 4.5.4. Commit for
-
-- **Actor:** Representative of a guardian drafted for an adjudication round
-- **Inputs:**
-    - **Vote ID:** Vote identification number
-    - **Voter:** Address of the guardian voting on behalf of
-    - **Commitment:** Hashed outcome to be stored for future reveal
-- **Authentication:** Open. Implicitly, only representatives of the guardians that were drafted for the corresponding adjudication round can call this function
-- **Pre-flight checks:**
-    - Ensure a vote object with that ID exists
-    - Ensure that the voter was allowed as a representative by the given voter
-    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
-    - Ensure that the voter has not committed a vote before
-    - Ensure that votes can still be committed for the adjudication round
-- **State transitions:**
-    - Create a cast vote object for the voter
-
-### 4.5.5. Commit for with signature
-
-- **Actor:** Representative of a guardian drafted for an adjudication round
-- **Inputs:**
-    - **Vote ID:** Vote identification number
-    - **Voter:** Address of the guardian voting on behalf of
-    - **Commitment:** Hashed outcome to be stored for future reveal
-    - **Signature:** Message signed by the voter allowing the sender to cast a vote on their behalf for the given vote 
-- **Authentication:** Open. Implicitly, only representatives of the guardians that were drafted for the corresponding adjudication round can call this function
-- **Pre-flight checks:**
-    - Ensure a vote object with that ID exists
-    - Ensure that the message was actually signed by the voter
-    - Ensure that the voter was drafted for the corresponding dispute's adjudication round
-    - Ensure that the voter has not committed a vote before
-    - Ensure that votes can still be committed for the adjudication round
-- **State transitions:**
-    - Create a cast vote object for the voter
-
-### 4.5.6. Leak
+### 4.5.4. Leak
 
 - **Actor:** External entity incentivized to slash a guardian
 - **Inputs:**
@@ -101,7 +67,7 @@ In particular, the first version of the protocol uses a commit-reveal mechanism.
 - **State transitions:**
     - Update the voter's cast vote object marking it as leaked
 
-### 4.5.7. Reveal
+### 4.5.5. Reveal
 
 - **Actor:** Guardian drafted for an adjudication round
 - **Inputs:**

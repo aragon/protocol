@@ -11,6 +11,7 @@ import "../lib/standards/IERC20.sol";
 import "./ILockManager.sol";
 import "./IGuardiansRegistry.sol";
 import "../core/modules/Controller.sol";
+import "../core/modules/ControlledRelayable.sol";
 import "../core/modules/ControlledRecoverable.sol";
 import "../core/modules/ControlledRelayable.sol";
 

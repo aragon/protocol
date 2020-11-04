@@ -91,6 +91,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Amount:** Amount of tokens to be staked
 - **Authentication:** The guardian, a whitelisted relayer, or a whitelisted activator. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function.
 - **Pre-flight checks:**
+    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted activator
     - Ensure that the given amount is greater than zero
 - **State transitions:**
     - Update the available balance of the guardian

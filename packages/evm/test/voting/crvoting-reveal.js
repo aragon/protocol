@@ -44,7 +44,7 @@ contract('CRVoting reveal', ([_, voter, someone]) => {
 
           beforeEach('commit a vote', async () => {
             await disputeManager.mockVoterWeight(voter, 10)
-            await voting.commit(voteId, commitment, { from: voter })
+            await voting.commit(voteId, voter, commitment, { from: voter })
           })
 
           context('when the owner does not revert when checking the weight of the voter', () => {
@@ -73,7 +73,7 @@ contract('CRVoting reveal', ([_, voter, someone]) => {
                       const receipt = await voting.reveal(voteId, voter, outcome, salt, { from })
 
                       assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_REVEALED)
-                      assertEvent(receipt, VOTING_EVENTS.VOTE_REVEALED, { expectedArgs: { voteId, voter, outcome, revealer: from } })
+                      assertEvent(receipt, VOTING_EVENTS.VOTE_REVEALED, { expectedArgs: { voteId, voter, outcome } })
                     })
 
                     it('updates the outcomes tally', async () => {
@@ -159,7 +159,7 @@ contract('CRVoting reveal', ([_, voter, someone]) => {
 
           beforeEach('commit a vote', async () => {
             await disputeManager.mockVoterWeight(voter, 10)
-            await voting.commit(voteId, commitment, { from: voter })
+            await voting.commit(voteId, voter, commitment, { from: voter })
           })
 
           it('reverts', async () => {

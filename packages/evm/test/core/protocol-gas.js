@@ -99,7 +99,7 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
-        itCostsAtMost('commit', 107e3, () => voting.commit(voteId, vote, { from: draftedGuardians[0].address }))
+        itCostsAtMost('commit', 108e3, () => voting.commit(voteId, draftedGuardians[0].address, vote, { from: draftedGuardians[0].address }))
       })
 
       context('when the current term is outdated by one term', () => {
@@ -109,7 +109,7 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
-        itCostsAtMost('commit', 168e3, () => voting.commit(voteId, vote, { from: draftedGuardians[0].address }))
+        itCostsAtMost('commit', 168e3, () => voting.commit(voteId, draftedGuardians[0].address, vote, { from: draftedGuardians[0].address }))
       })
     })
 

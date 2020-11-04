@@ -256,7 +256,7 @@ class ProtocolHelper {
       let { address, outcome } = voters[i]
       // if no outcome was set for the given outcome, pick one based on its index
       if (!outcome) outcome = outcomeFor(i)
-      await this.voting.commit(voteId, hashVote(outcome), { from: address })
+      await this.voting.commit(voteId, address, hashVote(outcome), { from: address })
       if (outcome === OUTCOMES.LEAKED) {
         await this.voting.leak(voteId, address, outcome, SALT)
       }

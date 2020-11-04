@@ -30,7 +30,7 @@ contract('CRVoting', ([_, voterWeighted1, voterWeighted2, voterWeighted3, voterW
     for (const voter in votes) {
       const { weight, outcome, reveal, leak } = votes[voter]
       await disputeManager.mockVoterWeight(voter, weight)
-      if (outcome) await voting.commit(voteId, hashVote(outcome), { from: voter })
+      if (outcome) await voting.commit(voteId, voter, hashVote(outcome), { from: voter })
       if (reveal) await voting.reveal(voteId, voter, outcome, SALT, { from: someone })
       if (leak) await voting.leak(voteId, voter, outcome, SALT, { from: someone })
     }

@@ -51,7 +51,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
             ? VOTING_ERRORS.VOTE_ALREADY_COMMITTED
             : DISPUTE_MANAGER_ERRORS.INVALID_ADJUDICATION_STATE
 
-          await assertRevert(voting.commit(voteId, hashVote(OUTCOMES.LOW), { from: address }), expectedErrorMessage)
+          await assertRevert(voting.commit(voteId, address, hashVote(OUTCOMES.LOW), { from: address }), expectedErrorMessage)
         }
       })
     }
@@ -101,7 +101,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
             it('reverts', async () => {
               for (const { address } of draftedGuardians) {
-                await assertRevert(voting.commit(voteId, vote, { from: address }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_VOTING)
+                await assertRevert(voting.commit(voteId, address, vote, { from: address }), CONTROLLED_ERRORS.SENDER_NOT_ACTIVE_VOTING)
               }
             })
           })
@@ -113,7 +113,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
             it('allows to commit a vote', async () => {
               for (const { address } of draftedGuardians) {
-                const receipt = await voting.commit(voteId, vote, { from: address })
+                const receipt = await voting.commit(voteId, address, vote, { from: address })
                 assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_COMMITTED)
               }
             })
@@ -123,7 +123,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
         context('when the sender was not drafted', () => {
           it('reverts', async () => {
             for (const { address } of nonDraftedGuardians) {
-              await assertRevert(voting.commit(voteId, vote, { from: address }), DISPUTE_MANAGER_ERRORS.VOTER_WEIGHT_ZERO)
+              await assertRevert(voting.commit(voteId, address, vote, { from: address }), DISPUTE_MANAGER_ERRORS.VOTER_WEIGHT_ZERO)
             }
           })
         })
@@ -301,7 +301,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
         context('when the sender has enough active balance', () => {
           it('allows to commit a vote', async () => {
             for (const { address, outcome } of voters) {
-              const receipt = await voting.commit(voteId, hashVote(outcome), { from: address })
+              const receipt = await voting.commit(voteId, address, hashVote(outcome), { from: address })
               assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_COMMITTED)
             }
           })
@@ -309,7 +309,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
         context('when the sender does not have enough active balance', () => {
           it('reverts', async () => {
-            await assertRevert(voting.commit(voteId, hashVote(OUTCOMES.LOW), { from: poorGuardian }), DISPUTE_MANAGER_ERRORS.VOTER_WEIGHT_ZERO)
+            await assertRevert(voting.commit(voteId, poorGuardian, hashVote(OUTCOMES.LOW), { from: poorGuardian }), DISPUTE_MANAGER_ERRORS.VOTER_WEIGHT_ZERO)
           })
         })
       })

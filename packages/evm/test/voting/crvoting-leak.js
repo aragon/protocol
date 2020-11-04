@@ -44,7 +44,7 @@ contract('CRVoting leak', ([_, voter, someone]) => {
 
           beforeEach('commit a vote', async () => {
             await disputeManager.mockVoterWeight(voter, 10)
-            await voting.commit(voteId, commitment, { from: voter })
+            await voting.commit(voteId, voter, commitment, { from: voter })
           })
 
           context('when the owner does not revert when checking the weight of the voter', () => {
@@ -72,7 +72,7 @@ contract('CRVoting leak', ([_, voter, someone]) => {
                     const receipt = await voting.leak(voteId, voter, outcome, salt, { from: someone })
 
                     assertAmountOfEvents(receipt, VOTING_EVENTS.VOTE_LEAKED)
-                    assertEvent(receipt, VOTING_EVENTS.VOTE_LEAKED, { expectedArgs: { voteId, voter, outcome, leaker: someone } })
+                    assertEvent(receipt, VOTING_EVENTS.VOTE_LEAKED, { expectedArgs: { voteId, voter, outcome } })
                   })
 
                   it('does not affect the outcomes tally', async () => {

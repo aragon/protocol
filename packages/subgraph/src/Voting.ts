@@ -23,7 +23,7 @@ export function handleVoteLeaked(event: VoteLeaked): void {
   const draftId = buildDraftId(roundId, event.params.voter)
   const draft = GuardianDraft.load(draftId)
   draft.outcome = event.params.outcome
-  draft.leaker = event.params.leaker
+  draft.leaker = event.transaction.from
   draft.save()
 
   updateVote(event.params.voteId, event)
