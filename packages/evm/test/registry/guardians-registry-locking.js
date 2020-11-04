@@ -59,9 +59,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
     }
 
-    const itCreatesTheActivationLock = (sender = undefined, authorize = false) => {
+    const itCreatesTheActivationLock = (sender = undefined) => {
       it('creates the lock', async () => {
-        await lockActivation(lockManager, lockAmount, sender, authorize)
+        await lockActivation(lockManager, lockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
         assertBn(amount, lockAmount, 'locked amount does not match')
@@ -69,19 +69,19 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       it('emits an event', async () => {
-        await lockActivation(lockManager, lockAmount, sender, authorize)
-        const receipt = await lockActivation(lockManager, lockAmount, sender, authorize)
+        await lockActivation(lockManager, lockAmount, sender)
+        const receipt = await lockActivation(lockManager, lockAmount, sender)
 
         assertAmountOfEvents(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { decodeForAbi: registry.abi })
         assertEvent(receipt, REGISTRY_EVENTS.GUARDIAN_ACTIVATION_LOCK_CHANGED, { decodeForAbi: registry.abi, expectedArgs: { guardian, lockManager, amount: lockAmount.mul(bn(2)), total: lockAmount.mul(bn(2)) } })
       })
 
       it('can creates multiple locks', async () => {
-        await lockActivation(lockManager, lockAmount, sender, authorize)
-        await lockActivation(lockManager, lockAmount, sender, authorize)
+        await lockActivation(lockManager, lockAmount, sender)
+        await lockActivation(lockManager, lockAmount, sender)
 
         await registry.updateLockManagerWhitelist(anotherLockManager.address, true, { from: governor })
-        await lockActivation(anotherLockManager, lockAmount, sender, authorize)
+        await lockActivation(anotherLockManager, lockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
         assertBn(amount, lockAmount.mul(bn(2)), 'locked amount does not match')
@@ -91,13 +91,13 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       it('does not allow to deactivate the locked amount for present active tokens', async () => {
         await activate(lockAmount)
 
-        await lockActivation(lockManager, lockAmount, sender, authorize)
+        await lockActivation(lockManager, lockAmount, sender)
 
         await assertRevert(registry.deactivate(guardian, lockAmount, { from: guardian }), REGISTRY_ERRORS.DEACTIVATION_AMOUNT_EXCEEDS_LOCK)
       })
 
       it('does not allow to deactivate the locked amount for future active tokens', async () => {
-        await lockActivation(lockManager, lockAmount, sender, authorize)
+        await lockActivation(lockManager, lockAmount, sender)
 
         await activate(lockAmount)
 
