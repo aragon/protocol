@@ -240,9 +240,11 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
 
         uint256 amountToUnlock = _amount == 0 ? lockedAmount : _amount;
+        require(amountToUnlock <= lockedAmount, ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT);
+
+        // Always allow the lock manager to unlock
         bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, amountToUnlock);
         require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
-        require(amountToUnlock <= lockedAmount, ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT);
 
         uint256 newLockedAmount = lockedAmount.sub(amountToUnlock);
         uint256 newTotalLocked = activationLocks.total.sub(amountToUnlock);
