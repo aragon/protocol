@@ -83,7 +83,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
     }) => {
       for (const guardian of guardians) {
         guardian.unlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian.address)
-        const { active } = await registry.balanceOfAt(guardian.address, TERM_ID)
+        const { active } = await registry.detailedBalanceOfAt(guardian.address, TERM_ID)
         guardian.activeBalance = active
       }
 
@@ -124,14 +124,14 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
     const deactivateFirstExpectedGuardian = async ({ disputeId = DISPUTE_ID, batchRequestedGuardians, roundRequestedGuardians }) => {
       const guardian = await getFirstExpectedGuardianAddress({ disputeId, batchRequestedGuardians, roundRequestedGuardians })
       await registry.deactivate(guardian, 0, { from: guardian })
-      const { active } = await registry.balanceOf(guardian)
+      const { active } = await registry.detailedBalanceOf(guardian)
       assertBn(active, 0, 'first expected guardian active balance does not match')
     }
 
     const lockFirstExpectedGuardian = async ({ disputeId, batchRequestedGuardians, roundRequestedGuardians, leftUnlockedAmount = bn(0) }) => {
       const guardian = await getFirstExpectedGuardianAddress({ disputeId, batchRequestedGuardians, roundRequestedGuardians })
       await registry.mockLock(guardian, leftUnlockedAmount)
-      const { active, locked } = await registry.balanceOfAt(guardian, TERM_ID)
+      const { active, locked } = await registry.detailedBalanceOfAt(guardian, TERM_ID)
       assertBn(locked, active.sub(leftUnlockedAmount), 'guardian locked balance does not match')
     }
 
@@ -210,7 +210,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           const previousLockedBalances = {}
           for (let i = 0; i < guardians.length; i++) {
             const address = guardians[i].address
-            const { locked } = await registry.balanceOf(address)
+            const { locked } = await registry.detailedBalanceOf(address)
             previousLockedBalances[address] = locked
           }
 
@@ -224,7 +224,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           const countedGuardians = countEqualGuardians(expectedGuardians)
 
           for (const guardian of countedGuardians) {
-            const { locked: currentLockedBalance } = await registry.balanceOf(guardian.address)
+            const { locked: currentLockedBalance } = await registry.detailedBalanceOf(guardian.address)
             const previousLockedBalance = previousLockedBalances[guardian.address]
             const expectedLockedBalance = guardian.count * DRAFT_LOCKED_AMOUNT
 
@@ -237,7 +237,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           const previousTotalBalances = {}
           for (let i = 0; i < guardians.length; i++) {
             const address = guardians[i].address
-            const balances = await registry.balanceOf(address)
+            const balances = await registry.detailedBalanceOf(address)
             previousTotalBalances[address] = balances.available.add(balances.active).add(balances.locked).add(balances.pendingDeactivation)
           }
 
@@ -260,7 +260,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
           await disputeManager.slashOrUnlock(settledGuardians, lockedAmounts, rewardedGuardians)
           await controller.mockIncreaseTerm()
 
-          const balances = await registry.balanceOf(firstSelectedGuardian.address)
+          const balances = await registry.detailedBalanceOf(firstSelectedGuardian.address)
           const currentTotalBalance = balances.available.add(balances.active).add(balances.locked).add(balances.pendingDeactivation)
           let expectedTotalBalance = previousTotalBalances[firstSelectedGuardian.address]
           if (!unlock) {
