@@ -30,8 +30,8 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
-    string private constant ERROR_GUARDIAN_CANNOT_CLAIM_SHARE = "PB_GUARDIAN_CANNOT_CLAIM_SHARE";
-    string private constant ERROR_GOVERNOR_CANNOT_CLAIM_SHARE = "PB_GOVERNOR_CANNOT_CLAIM_SHARE";
+    string private constant ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED = "PB_GUARDIAN_SHARE_ALREADY_CLAIMED";
+    string private constant ERROR_GOVERNOR_SHARE_ALREADY_CLAIMED = "PB_GOVERNOR_SHARE_ALREADY_CLAIMED";
     string private constant ERROR_OVERRATED_GOVERNOR_SHARE_PCT = "PB_OVERRATED_GOVERNOR_SHARE_PCT";
 
     // Term 0 is for guardians on-boarding
@@ -111,7 +111,10 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     * @param _guardian Address of the guardian claiming the shares for
     * @param _tokens List of token addresses to be claimed
     */
-    function claimGuardianShare(uint256 _periodId, address payable _guardian, address[] calldata _tokens) external authenticateSender(_guardian) {
+    function claimGuardianShare(uint256 _periodId, address payable _guardian, address[] calldata _tokens)
+        external
+        authenticateSender(_guardian)
+    {
         require(_periodId < _getCurrentPeriodId(), ERROR_NON_PAST_PERIOD);
 
         Period storage period = periods[_periodId];
@@ -121,7 +124,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            require(_canGuardianClaim(period, _guardian, token), ERROR_GUARDIAN_CANNOT_CLAIM_SHARE);
+            require(!_hasGuardianClaimed(period, _guardian, token), ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED);
             uint256 amount = _getGuardianShare(period, token, guardianActiveBalance, totalActiveBalance);
             _claimGuardianShare(period, _periodId, _guardian, token, amount);
         }
@@ -141,7 +144,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
         // We assume the token contract is not malicious
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
-            require(_canGovernorClaim(period, token), ERROR_GOVERNOR_CANNOT_CLAIM_SHARE);
+            require(!_hasGovernorClaimed(period, token), ERROR_GOVERNOR_SHARE_ALREADY_CLAIMED);
             _claimGovernorShare(period, _periodId, governor, token);
         }
     }
@@ -233,22 +236,22 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     }
 
     /**
-    * @dev Tell if a guardian can claim the owed share for a certain period
+    * @dev Tell if a given guardian has already claimed the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _guardian Address of the guardian being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the guardian can claim the given list of tokens
+    * @return List of status to tell whether the corresponding token was claimed by the guardian
     */
-    function canGuardianClaim(uint256 _periodId, address _guardian, address[] calldata _tokens)
+    function hasGuardianClaimed(uint256 _periodId, address _guardian, address[] calldata _tokens)
         external
         view
-        returns (bool[] memory canClaim)
+        returns (bool[] memory claimed)
     {
         Period storage period = periods[_periodId];
 
-        canClaim = new bool[](_tokens.length);
+        claimed = new bool[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            canClaim[i] = _canGuardianClaim(period, _guardian, _tokens[i]);
+            claimed[i] = _hasGuardianClaimed(period, _guardian, _tokens[i]);
         }
     }
 
@@ -268,21 +271,21 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     }
 
     /**
-    * @dev Tell if the governor can claim the owed share for a certain period
+    * @dev Tell if the governor has already claimed the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of statuses to tell whether the governor can claim the given list of tokens
+    * @return List of status to tell whether the corresponding token was claimed by the governor
     */
-    function canGovernorClaim(uint256 _periodId, address[] calldata _tokens)
+    function hasGovernorClaimed(uint256 _periodId, address[] calldata _tokens)
         external
         view
-        returns (bool[] memory canClaim)
+        returns (bool[] memory claimed)
     {
         Period storage period = periods[_periodId];
 
-        canClaim = new bool[](_tokens.length);
+        claimed = new bool[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            canClaim[i] = _canGovernorClaim(period, _tokens[i]);
+            claimed[i] = _hasGovernorClaimed(period, _tokens[i]);
         }
     }
 
@@ -480,14 +483,14 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     }
 
     /**
-    * @dev Tell if a guardian can claim the owed share for a certain period
+    * @dev Tell if a guardian has already claimed the owed share for a certain period
     * @param _period Period being queried
     * @param _guardian Address of the guardian being queried
     * @param _token Address of the token to be queried
-    * @return True if the guardian can claim their share
+    * @return True if the guardian has already claimed their share
     */
-    function _canGuardianClaim(Period storage _period, address _guardian, address _token) internal view returns (bool) {
-        return !_period.claimedGuardians[_guardian][_token];
+    function _hasGuardianClaimed(Period storage _period, address _guardian, address _token) internal view returns (bool) {
+        return _period.claimedGuardians[_guardian][_token];
     }
 
     /**
@@ -501,12 +504,12 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     }
 
     /**
-    * @dev Tell if the governor can claim the owed share for a certain period
+    * @dev Tell if the governor has already claimed the owed share for a certain period
     * @param _period Period being queried
     * @param _token Address of the token to be queried
-    * @return True if the governor can claim their share
+    * @return True if the governor has already claimed their share
     */
-    function _canGovernorClaim(Period storage _period, address _token) internal view returns (bool) {
-        return !_period.claimedGovernor[_token];
+    function _hasGovernorClaimed(Period storage _period, address _token) internal view returns (bool) {
+        return _period.claimedGovernor[_token];
     }
 }

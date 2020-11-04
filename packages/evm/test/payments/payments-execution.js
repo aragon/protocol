@@ -129,7 +129,7 @@ contract('PaymentBook', ([_, someone, payer]) => {
               const receipt = await paymentsBook.pay(eth.address, amount, someone, data, { from, value: amount })
 
               assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED)
-              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED, { expectedArgs: { periodId: currentPeriodId, payer: someone, sender: from, token: eth, amount } })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.PAYMENT_RECEIVED, { expectedArgs: { periodId: currentPeriodId, payer: someone, token: eth, amount } })
             })
 
             it('reverts when specifying another amount', async () => {
