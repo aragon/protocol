@@ -3,8 +3,8 @@ const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { buildHelper } = require('../helpers/wrappers/protocol')
-const { PAYMENTS_BOOK_ERRORS } = require('../helpers/utils/errors')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
+const { PAYMENTS_BOOK_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const ERC20 = artifacts.require('ERC20Mock')
 const PaymentsBook = artifacts.require('PaymentsBook')
@@ -12,11 +12,10 @@ const GuardiansRegistry = artifacts.require('GuardiansRegistry')
 const DisputeManager = artifacts.require('DisputeManagerMockForRegistry')
 
 contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeriod0Term3, guardianMidPeriod1, governor]) => {
-  let controller, paymentsBook, guardiansRegistry, eth, token, anotherToken, guardianToken
+  let controller, paymentsBook, guardiansRegistry, eth, token, anotherToken, guardianToken, tokens
 
   const PCT_BASE = bn(10000)
-  const PERIOD_DURATION = 24 * 30           // 30 days, assuming terms are 1h
-
+  const PERIOD_DURATION = 24 * 30
   const MIN_GUARDIANS_ACTIVE_TOKENS = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
@@ -24,6 +23,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
     eth = { address: ZERO_ADDRESS }
     token = await ERC20.new('Some Token', 'FOO', 18)
     anotherToken = await ERC20.new('Another Token', 'BAR', 18)
+    tokens = [token.address, anotherToken.address, eth.address]
   })
 
   beforeEach('create base contracts', async () => {
@@ -111,30 +111,46 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
           })
 
           it("estimates guardian's share correctly", async () => {
-            const share = await paymentsBook.getGuardianShare(periodId, guardian, token.address)
-            const otherShares = await paymentsBook.getManyGuardianShare(periodId, guardian, [anotherToken.address, eth.address])
+            const shares = await paymentsBook.getGuardianShare(periodId, guardian, tokens)
 
-            assertBn(share, expectedGuardianTokenShare, 'guardian token share does not match')
-            assertBn(otherShares[0], expectedGuardianAnotherTokenShare, 'guardian another token share does not match')
-            assertBn(otherShares[1], expectedGuardianEthShare, 'guardian eth share does not match')
+            assertBn(shares[0], expectedGuardianTokenShare, 'guardian token share does not match')
+            assertBn(shares[1], expectedGuardianAnotherTokenShare, 'guardian another token share does not match')
+            assertBn(shares[2], expectedGuardianEthShare, 'guardian eth share does not match')
           })
 
           it('transfers share of payments to the guardian', async () => {
-            assert.isFalse(await paymentsBook.hasGuardianClaimed(periodId, guardian, token.address))
+            assert.isFalse((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
             const previousBalance = await token.balanceOf(guardian)
 
-            await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
+            await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: guardian })
 
-            assert.isTrue(await paymentsBook.hasGuardianClaimed(periodId, guardian, token.address))
+            assert.isTrue((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
+
+            const currentBalance = await token.balanceOf(guardian)
+            assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
+          })
+
+          it('can be claimed by a whitelisted relayer', async () => {
+            assert.isFalse((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
+            const previousBalance = await token.balanceOf(guardian)
+
+            await controller.updateRelayerWhitelist(someone, true, { from: governor })
+            await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone })
+
+            assert.isTrue((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
 
             const currentBalance = await token.balanceOf(guardian)
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
           })
 
           it("cannot claim a guardian's share twice", async () => {
-            await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
+            await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
+          })
 
-            await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian }), PAYMENTS_BOOK_ERRORS.GUARDIAN_SHARE_ALREADY_CLAIMED)
+          it("cannot claim a guardian's share twice", async () => {
+            await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: guardian })
+
+            await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: guardian }), PAYMENTS_BOOK_ERRORS.GUARDIAN_SHARE_ALREADY_CLAIMED)
           })
 
           it("can claim a guardian's remaining share of payments", async () => {
@@ -142,10 +158,9 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             const previousEthBalance = bn(await web3.eth.getBalance(guardian))
             const previousTokenBalance = await anotherToken.balanceOf(guardian)
 
-            await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
-            await paymentsBook.claimManyGuardianShare(periodId, tokens, { from: guardian })
+            await paymentsBook.claimGuardianShare(periodId, guardian, tokens, { from: guardian })
 
-            const hasClaimed = await paymentsBook.hasGuardianClaimedMany(periodId, guardian, tokens)
+            const hasClaimed = await paymentsBook.hasGuardianClaimed(periodId, guardian, tokens)
             assert.isTrue(hasClaimed.every(Boolean), 'guardian claim share status does not match')
 
             const currentTokenBalance = await anotherToken.balanceOf(guardian)
@@ -156,17 +171,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
           })
 
           it("emits an event when claiming a guardian's share", async () => {
-            const tokens = [anotherToken.address, eth.address]
+            const receipt = await paymentsBook.claimGuardianShare(periodId, guardian, tokens, { from: guardian })
 
-            const receipt = await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
-            const anotherReceipt = await paymentsBook.claimManyGuardianShare(periodId, tokens, { from: guardian })
-
-            assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED)
-            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { expectedArgs: { guardian, periodId, token, amount: expectedGuardianTokenShare } })
-
-            assertAmountOfEvents(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { expectedAmount: 2 })
-            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { index: 0, expectedArgs: { guardian, periodId, token: tokens[0], amount: expectedGuardianAnotherTokenShare } })
-            assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { index: 1, expectedArgs: { guardian, periodId, token: tokens[1], amount: expectedGuardianEthShare } })
+            assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { expectedAmount: 3 })
+            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { index: 0, expectedArgs: { guardian, periodId, token: tokens[0], amount: expectedGuardianTokenShare } })
+            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { index: 1, expectedArgs: { guardian, periodId, token: tokens[1], amount: expectedGuardianAnotherTokenShare } })
+            assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { index: 2, expectedArgs: { guardian, periodId, token: tokens[2], amount: expectedGuardianEthShare } })
           })
 
           if (governorSharePct.eq(bn(0))) {
@@ -175,7 +185,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
               const previousAnotherTokenBalance = await token.balanceOf(paymentsBook.address)
               const previousEthBalance = bn(await web3.eth.getBalance(paymentsBook.address))
 
-              await paymentsBook.transferManyGovernorShare(periodId, [token.address, anotherToken.address, eth.address])
+              const receipt = await paymentsBook.claimGovernorShare(periodId, tokens)
 
               const currentTokenBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentTokenBalance, previousTokenBalance, 'payments book token balance does not match')
@@ -185,37 +195,34 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
 
               const currentEthBalance = bn(await web3.eth.getBalance(paymentsBook.address))
               assertBn(currentEthBalance, previousEthBalance, 'payments book eth balance does not match')
+
+              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { expectedAmount: 0 })
             })
           } else {
             it("estimates governor's share of payments correctly", async () => {
-              const share = await paymentsBook.getGovernorShare(periodId, token.address)
-              const otherShares = await paymentsBook.getManyGovernorShare(periodId, [anotherToken.address, eth.address])
+              const shares = await paymentsBook.getGovernorShare(periodId, tokens)
 
-              assertBn(share, expectedGovernorTokenAmount, 'governor token share does not match')
-              assertBn(otherShares[0], expectedGovernorAnotherTokenAmount, 'governor another token share does not match')
-              assertBn(otherShares[1], expectedGovernorEthAmount, 'governor eth share does not match')
+              assertBn(shares[0], expectedGovernorTokenAmount, 'governor token share does not match')
+              assertBn(shares[1], expectedGovernorAnotherTokenAmount, 'governor another token share does not match')
+              assertBn(shares[2], expectedGovernorEthAmount, 'governor eth share does not match')
             })
 
             it("transfers governor's share of payments", async () => {
               const previousBalance = await token.balanceOf(governor)
+              assert.isFalse((await paymentsBook.hasGovernorClaimed(periodId, [token.address])).every(Boolean))
 
-              await paymentsBook.transferGovernorShare(periodId, token.address)
+              await paymentsBook.claimGovernorShare(periodId, [token.address])
 
-              const share = await paymentsBook.getGovernorShare(periodId, token.address)
-              assertBn(share, 0, 'governor token share does not match')
+              assert.isTrue((await paymentsBook.hasGovernorClaimed(periodId, [token.address])).every(Boolean))
 
               const currentBalance = await token.balanceOf(governor)
               assertBn(currentBalance, previousBalance.add(expectedGovernorTokenAmount), 'governor token balance does not match')
             })
 
-            it('ignores duplicated governor requests', async () => {
-              const previousBalance = await token.balanceOf(governor)
+            it('cannot claim the governor share twice', async () => {
+              await paymentsBook.claimGovernorShare(periodId, [token.address])
 
-              await paymentsBook.transferGovernorShare(periodId, token.address)
-              await paymentsBook.transferGovernorShare(periodId, token.address)
-
-              const currentBalance = await token.balanceOf(governor)
-              assertBn(currentBalance, previousBalance.add(expectedGovernorTokenAmount), 'governor token balance does not match')
+              await assertRevert(paymentsBook.claimGovernorShare(periodId, [token.address]), PAYMENTS_BOOK_ERRORS.GOVERNOR_SHARE_ALREADY_CLAIMED)
             })
 
             it("can claim governor's remaining share of payments", async () => {
@@ -223,12 +230,10 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
               const previousEthBalance = bn(await web3.eth.getBalance(governor))
               const previousTokenBalance = await anotherToken.balanceOf(governor)
 
-              await paymentsBook.transferGovernorShare(periodId, token.address)
-              await paymentsBook.transferManyGovernorShare(periodId, tokens)
+              await paymentsBook.claimGovernorShare(periodId, tokens)
 
-              const otherShares = await paymentsBook.getManyGovernorShare(periodId, tokens)
-              assertBn(otherShares[0], 0, 'governor another token share does not match')
-              assertBn(otherShares[1], 0, 'governor eth share does not match')
+              const claimed = await paymentsBook.hasGovernorClaimed(periodId, tokens)
+              assert.isTrue(claimed.every(Boolean), 'guardian claim share status does not match')
 
               const currentTokenBalance = await anotherToken.balanceOf(governor)
               assertBn(currentTokenBalance, previousTokenBalance.add(expectedGovernorAnotherTokenAmount), 'guardian token balance does not match')
@@ -238,17 +243,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             })
 
             it("emits an event when requesting governor's share", async () => {
-              const tokens = [anotherToken.address, eth.address]
+              const receipt = await paymentsBook.claimGovernorShare(periodId, tokens)
 
-              const receipt = await paymentsBook.transferGovernorShare(periodId, token.address)
-              const anotherReceipt = await paymentsBook.transferManyGovernorShare(periodId, tokens)
-
-              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED)
-              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { expectedArgs: { periodId, token, amount: expectedGovernorTokenAmount } })
-
-              assertAmountOfEvents(anotherReceipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { expectedAmount: 2 })
-              assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { index: 0, expectedArgs: { periodId, token: tokens[0], amount: expectedGovernorAnotherTokenAmount } })
-              assertEvent(anotherReceipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_TRANSFERRED, { index: 1, expectedArgs: { periodId, token: tokens[1], amount: expectedGovernorEthAmount } })
+              assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { expectedAmount: 3 })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 0, expectedArgs: { periodId, token: tokens[0], amount: expectedGovernorTokenAmount } })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 1, expectedArgs: { periodId, token: tokens[1], amount: expectedGovernorAnotherTokenAmount } })
+              assertEvent(receipt, PAYMENTS_BOOK_EVENTS.GOVERNOR_SHARE_CLAIMED, { index: 2, expectedArgs: { periodId, token: tokens[2], amount: expectedGovernorEthAmount } })
             })
           }
         }
@@ -291,15 +291,15 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             beforeEach('execute payments', executePayments)
 
             it("estimates guardian's share correctly", async () => {
-              const share = await paymentsBook.getGuardianShare(periodId, guardian, token.address)
+              const share = await paymentsBook.getGuardianShare(periodId, guardian, [token.address])
 
-              assertBn(share, 0, 'guardian share does not match')
+              assertBn(share[0], 0, 'guardian share does not match')
             })
 
             it('is not owed any share of the payments', async () => {
               const previousBalance = await token.balanceOf(paymentsBook.address)
 
-              await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
+              await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: guardian })
 
               const currentBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentBalance, previousBalance, 'payments book balance does not match')
@@ -363,15 +363,15 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             beforeEach('execute payments', executePayments)
 
             it("estimates guardian's share correctly", async () => {
-              const share = await paymentsBook.getGuardianShare(periodId, guardian, token.address)
+              const share = await paymentsBook.getGuardianShare(periodId, guardian, [token.address])
 
-              assertBn(share, 0, 'guardian share does not match')
+              assertBn(share[0], 0, 'guardian share does not match')
             })
 
             it('is not owed any share of the payments', async () => {
               const previousBalance = await token.balanceOf(paymentsBook.address)
 
-              await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardian })
+              await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: guardian })
 
               const currentBalance = await token.balanceOf(paymentsBook.address)
               assertBn(currentBalance, previousBalance, 'payments book balance does not match')
@@ -386,9 +386,9 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
         beforeEach('execute payments', executePayments)
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term1, [token.address], { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term3, [token.address], { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianMidPeriod1, [token.address], { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
 
@@ -398,9 +398,9 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
         beforeEach('execute payments', executePayments)
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term1, [token.address], { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term3, [token.address], { from: guardianPeriod0Term3 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianMidPeriod1, [token.address], { from: guardianMidPeriod1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
     })
@@ -412,10 +412,12 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
         it('ignores the request', async () => {
           const previousBalance = await token.balanceOf(paymentsBook.address)
 
-          await paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term1 })
+          const receipt = await paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term1, [token.address], { from: guardianPeriod0Term1 })
 
           const currentBalance = await token.balanceOf(paymentsBook.address)
           assertBn(currentBalance, previousBalance, 'payments book balance does not match')
+
+          assertAmountOfEvents(receipt, PAYMENTS_BOOK_EVENTS.GUARDIAN_SHARE_CLAIMED, { expectedAmount: 0 })
         })
       })
 
@@ -423,7 +425,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
         const periodId = 1
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term1, [token.address], { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
 
@@ -431,7 +433,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
         const periodId = 2
 
         it('reverts', async () => {
-          await assertRevert(paymentsBook.claimGuardianShare(periodId, token.address, { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
+          await assertRevert(paymentsBook.claimGuardianShare(periodId, guardianPeriod0Term1, [token.address], { from: guardianPeriod0Term1 }), PAYMENTS_BOOK_ERRORS.NON_PAST_PERIOD)
         })
       })
     })

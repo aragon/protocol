@@ -27,7 +27,6 @@ The following events are emitted by the `GuardiansRegistry`:
     - **Guardian:** Address of the guardian activated
     - **Amount:** Amount of guardian tokens activated
     - **From term ID:** Identification number of the term in which the guardian tokens will be activated
-    - **Sender:** Address of the account requesting the activation
 
 #### 6.4.1.4. Guardian deactivation requested
 

@@ -2,6 +2,7 @@
   "extends": "solium:all",
   "plugins": ["security"],
   "rules": {
+    "security/no-send": "off",
     "security/no-low-level-calls": "off",
     "security/no-inline-assembly": "off",
     "imports-on-top": "error",

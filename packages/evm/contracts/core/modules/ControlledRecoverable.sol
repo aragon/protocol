@@ -33,7 +33,6 @@ contract ControlledRecoverable is Controlled {
 
         if (_token == address(0)) {
             balance = address(this).balance;
-            // solium-disable-next-line security/no-send
             require(_to.send(balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
         } else {
             balance = IERC20(_token).balanceOf(address(this));

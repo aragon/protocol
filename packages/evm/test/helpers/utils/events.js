@@ -57,7 +57,7 @@ const TREASURY_EVENTS = {
 const PAYMENTS_BOOK_EVENTS = {
   PAYMENT_RECEIVED: 'PaymentReceived',
   GUARDIAN_SHARE_CLAIMED: 'GuardianShareClaimed',
-  GOVERNOR_SHARE_TRANSFERRED: 'GovernorShareTransferred',
+  GOVERNOR_SHARE_CLAIMED: 'GovernorShareClaimed',
   GOVERNOR_SHARE_PCT_CHANGED: 'GovernorSharePctChanged'
 }
 

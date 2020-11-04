@@ -1,7 +1,6 @@
 pragma solidity ^0.5.17;
 
 import "../lib/standards/IERC20.sol";
-import "../payments/IPaymentsBook.sol";
 
 
 interface IArbitrator {
