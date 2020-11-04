@@ -37,6 +37,7 @@ contract ControlledRecoverable is Controlled {
         } else {
             balance = IERC20(_token).balanceOf(address(this));
             require(balance > 0, ERROR_INSUFFICIENT_RECOVER_FUNDS);
+            // No need to verify _token to be a contract as we have already checked the balance
             require(IERC20(_token).safeTransfer(_to, balance), ERROR_RECOVER_TOKEN_FUNDS_FAILED);
         }
 

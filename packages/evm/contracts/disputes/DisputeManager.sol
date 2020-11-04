@@ -932,6 +932,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     function _depositAmount(address _from, IERC20 _token, uint256 _amount) internal {
         if (_amount > 0) {
             ITreasury treasury = _treasury();
+            // No need to verify _token to be a contract as it's permissioned as the fee token
             require(_token.safeTransferFrom(_from, address(treasury), _amount), ERROR_DEPOSIT_FAILED);
         }
     }

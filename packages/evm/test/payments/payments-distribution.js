@@ -143,7 +143,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
           })
 
-          it("cannot claim a guardian's share twice", async () => {
+          it("cannot claim a guardian's share from another account that is not a whitelisted relayer", async () => {
             await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
           })
 
