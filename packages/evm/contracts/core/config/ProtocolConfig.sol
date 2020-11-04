@@ -37,11 +37,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     // List of configs indexed by id
     mapping (uint64 => uint256) private configIdByTerm;
 
-    // Holders opt-in config for automatic withdrawals
-    mapping (address => bool) private withdrawalsAllowed;
-
     event NewConfig(uint64 fromTermId, uint64 protocolConfigId);
-    event AutomaticWithdrawalsAllowedChanged(address indexed holder, bool allowed);
 
     /**
     * @dev Constructor function
@@ -96,15 +92,6 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     }
 
     /**
-    * @notice Set the automatic withdrawals config for the sender to `_allowed`
-    * @param _allowed Whether or not the automatic withdrawals are allowed by the sender
-    */
-    function setAutomaticWithdrawals(bool _allowed) external {
-        withdrawalsAllowed[msg.sender] = _allowed;
-        emit AutomaticWithdrawalsAllowedChanged(msg.sender, _allowed);
-    }
-
-    /**
     * @dev Tell the full Protocol configuration parameters at a certain term
     * @param _termId Identification number of the term querying the Protocol config of
     * @return token Address of the token used to pay for fees
@@ -156,15 +143,6 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
-
-    /**
-    * @dev Tell whether a certain holder accepts automatic withdrawals of tokens or not
-    * @param _holder Address of the token holder querying if withdrawals are allowed for
-    * @return True if the given holder accepts automatic withdrawals of their tokens, false otherwise
-    */
-    function areWithdrawalsAllowedFor(address _holder) external view returns (bool) {
-        return withdrawalsAllowed[_holder];
-    }
 
     /**
     * @dev Tell the term identification number of the next scheduled config change

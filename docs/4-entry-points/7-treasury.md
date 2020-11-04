@@ -33,13 +33,17 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
 - **Actor:** External entity owning a certain amount of tokens of the `Treasury` module
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token to be withdrawn
+    - **From:** Address withdrawing the tokens from
     - **Recipient:** Address that will receive the funds being withdrawn
     - **Amount:** Amount of tokens to be transferred to the recipient
+    - **Authorization:** Optional authorization granted by the voter in case of a third party sender
 - **Authentication:** Open. Implicitly, only addresses that have some balance assigned in the `Treasury` module
 - **Pre-flight checks:**
+    - Validate signature if given
     - Ensure that the token balance of the caller is greater than zero
     - Ensure that the token balance of the caller is greater than or equal to the requested amount
 - **State transitions:**
+    - Update next nonce of the voter if a signature was given
     - Reduce the token balance of the caller based on the requested amount
     - Transfer the requested token amount to the recipient address, revert if the ERC20-transfer wasn't successful
 
@@ -48,11 +52,14 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
 - **Actor:** External entity incentivized in transfer the funds of a certain address
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token to be withdrawn
-    - **Recipient:** Address whose funds will be transferred
+    - **From:** Address whose funds will be transferred
+    - **Authorization:** Optional authorization granted by the voter in case of a third party sender
 - **Authentication:** Open
 - **Pre-flight checks:**
+    - Validate signature if given
     - Ensure that the token balance of the recipient address is greater than zero
 - **State transitions:**
+    - Update next nonce of the voter if a signature was given
     - Set the token balance of the recipient to zero
     - Transfer the whole balance of the recipient address to it, revert if the ERC20-transfer wasn't successful
 

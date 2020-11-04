@@ -57,10 +57,4 @@ interface IConfig {
     * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
-
-    /**
-    * @dev Tell whether a certain holder accepts automatic withdrawals of tokens or not
-    * @return True if the given holder accepts automatic withdrawals of their tokens, false otherwise
-    */
-    function areWithdrawalsAllowedFor(address _holder) external view returns (bool);
 }
