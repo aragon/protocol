@@ -11,7 +11,6 @@ The following events are emitted by the `DisputeManager`:
     - **Dispute ID:** Identification number of the dispute that has been created
     - **Subject:** Address of the `Arbitrable` subject associated to the dispute
     - **Draft term ID:** Identification number of the term when the dispute will be able to be drafted
-    - **Guardians number:** First round guardians number
     - **Metadata:** Optional metadata that can be used to provide additional information on the created dispute
 
 #### 6.3.1.2. Evidence period closed
@@ -51,7 +50,6 @@ The following events are emitted by the `DisputeManager`:
     - **Dispute ID:** Identification number of the dispute whose last round's appeal was confirmed
     - **Round ID:** Identification number of the adjudication round whose appeal was confirmed
     - **Draft term ID:** Identification number of the term when the next round will be able to be drafted
-    - **Guardians number:** Next round guardians number
 
 #### 6.3.1.7. Ruling computed
 

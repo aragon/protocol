@@ -129,10 +129,10 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
     event DisputeStateChanged(uint256 indexed disputeId, DisputeState indexed state);
     event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence);
     event EvidencePeriodClosed(uint256 indexed disputeId, uint64 indexed termId);
-    event NewDispute(uint256 indexed disputeId, IArbitrable indexed subject, uint64 indexed draftTermId, uint64 guardiansNumber, bytes metadata);
+    event NewDispute(uint256 indexed disputeId, IArbitrable indexed subject, uint64 indexed draftTermId, bytes metadata);
     event GuardianDrafted(uint256 indexed disputeId, uint256 indexed roundId, address indexed guardian);
     event RulingAppealed(uint256 indexed disputeId, uint256 indexed roundId, uint8 ruling);
-    event RulingAppealConfirmed(uint256 indexed disputeId, uint256 indexed roundId, uint64 indexed draftTermId, uint256 guardiansNumber);
+    event RulingAppealConfirmed(uint256 indexed disputeId, uint256 indexed roundId, uint64 indexed draftTermId);
     event RulingComputed(uint256 indexed disputeId, uint8 indexed ruling);
     event PenaltiesSettled(uint256 indexed disputeId, uint256 indexed roundId, uint256 collectedTokens);
     event RewardSettled(uint256 indexed disputeId, uint256 indexed roundId, address guardian, uint256 tokens, uint256 fees);
@@ -169,11 +169,11 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
         dispute.createTermId = termId;
 
         Config memory config = _getConfigAt(termId);
-        uint64 guardiansNumber = config.disputes.firstRoundGuardiansNumber;
         uint64 draftTermId = termId.add(config.disputes.evidenceTerms);
-        emit NewDispute(disputeId, _subject, draftTermId, guardiansNumber, _metadata);
+        emit NewDispute(disputeId, _subject, draftTermId, _metadata);
 
         // Create first adjudication round of the dispute
+        uint64 guardiansNumber = config.disputes.firstRoundGuardiansNumber;
         (IERC20 feeToken, uint256 guardianFees, uint256 totalFees) = _getRegularRoundFees(config.fees, guardiansNumber);
         _createRound(disputeId, DisputeState.PreDraft, draftTermId, guardiansNumber, guardianFees);
 
@@ -307,7 +307,7 @@ contract DisputeManager is IDisputeManager, ICRVotingOwner, ControlledRecoverabl
         // Update previous round appeal state
         appeal.taker = msg.sender;
         appeal.opposedRuling = _ruling;
-        emit RulingAppealConfirmed(_disputeId, newRoundId, nextRound.startTerm, nextRound.guardiansNumber);
+        emit RulingAppealConfirmed(_disputeId, newRoundId, nextRound.startTerm);
 
         // Pay appeal confirm deposit
         _depositAmount(msg.sender, nextRound.feeToken, nextRound.confirmAppealDeposit);
