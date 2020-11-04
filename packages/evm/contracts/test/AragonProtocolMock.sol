@@ -68,9 +68,9 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
     function _linkNewModule(bytes32 _id, address _addr) private {
         (bytes32[] memory knownIds, address[] memory knownAddresses) = _knownModules();
         // Update the new module's link with the already known modules
-        _linkModules(_toArray(_addr), knownIds);
+        _syncModuleLinks(_toArray(_addr), knownIds);
         // Update the already known modules' links with the new module
-        _linkModules(knownAddresses, _toArray(_id));
+        _syncModuleLinks(knownAddresses, _toArray(_id));
     }
 
     function mockIncreaseTerm() external {

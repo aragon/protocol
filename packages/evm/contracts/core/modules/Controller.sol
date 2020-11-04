@@ -307,22 +307,24 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
             _setModule(_newModuleIds[i], _newModuleAddresses[i]);
         }
 
-        // Then update the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
-        _linkModules(_newModuleAddresses, _newModuleLinks);
+        // Then sync the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
+        _syncModuleLinks(_newModuleAddresses, _newModuleLinks);
 
-        // Finally update the links of the existing modules to be synced to the new modules being set
-        _linkModules(_currentModulesToBeSynced, _newModuleIds);
+        // Finally sync the links of the existing modules to be synced to the new modules being set
+        _syncModuleLinks(_currentModulesToBeSynced, _newModuleIds);
     }
 
     /**
-    * @notice Sync modules for a list of modules IDs based on their current address
-    * @param _modulesToBeSynced List of modules addresses to be synced
-    * @param _idsToBeSet List of IDs of the modules to be linked
+    * @notice Sync modules for a list of modules IDs based on their current implementation address
+    * @param _modulesToBeSynced List of addresses of connected modules to be synced
+    * @param _idsToBeSet List of IDs of the modules included in the sync
     */
-   // Wonder if we can rename this, to avoid confusion. Maybe something like "syncModulesWithCurrentIds()"?
-    function linkModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
+    function syncModuleLinks(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet)
+        external
+        onlyModulesGovernor
+    {
         require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
-        _linkModules(_modulesToBeSynced, _idsToBeSet);
+        _syncModuleLinks(_modulesToBeSynced, _idsToBeSet);
     }
 
     /**
@@ -587,14 +589,14 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Internal function to sync the modules for a list of modules IDs based on their current address
-    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @dev Internal function to sync the modules for a list of modules IDs based on their current implementation address
+    * @param _modulesToBeSynced List of addresses of connected modules to be synced
     * @param _idsToBeSet List of IDs of the modules to be linked
     */
-    function _linkModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
+    function _syncModuleLinks(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
         address[] memory addressesToBeSet = new address[](_idsToBeSet.length);
 
-        // Load the addresses of all the modules to be updated
+        // Load the addresses associated with the requested module ids
         for (uint256 i = 0; i < _idsToBeSet.length; i++) {
             address moduleAddress = currentModules[_idsToBeSet[i]];
             Module storage module = allModules[moduleAddress];

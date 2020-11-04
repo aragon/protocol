@@ -250,12 +250,12 @@ To read more information about its responsibilities and structure, go to [sectio
     - Link the implementations of the requested module IDs in the new modules set
     - Link the implementations of the new modules set in the requested current modules
 
-### 4.2.17. Link modules
+### 4.2.17. Sync module links
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
-    - **Current modules to be synced:** List of addresses of current modules to be linked based on the implementations of the modules being set
-    - **IDs to be set:** List of IDs of the modules whose references will be linked in the requested list of modules
+    - **Modules to be synced:** List of addresses of connected modules whose implementation links should be synced for the requested module ids
+    - **IDs to be set:** List of IDs of the modules to be included in the sync
 - **Authentication:** Only modules governor
 - **Pre-flight checks:**
     - Ensure both input lists have at least one item
