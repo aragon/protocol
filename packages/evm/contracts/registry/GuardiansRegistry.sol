@@ -2,7 +2,6 @@ pragma solidity ^0.5.17;
 
 import "../lib/math/SafeMath.sol";
 import "../lib/utils/SafeERC20.sol";
-import "../lib/utils/BytesHelpers.sol";
 import "../lib/utils/PctHelpers.sol";
 import "../lib/tree/HexSumTree.sol";
 import "../lib/tree/GuardiansTreeSortition.sol";
@@ -20,7 +19,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PctHelpers for uint256;
-    using BytesHelpers for bytes;
     using HexSumTree for HexSumTree.Tree;
     using GuardiansTreeSortition for HexSumTree.Tree;
 
