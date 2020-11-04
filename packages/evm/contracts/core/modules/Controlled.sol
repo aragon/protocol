@@ -25,6 +25,7 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     string private constant ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER = "CTD_SEND_NOT_ACTIVE_DISPUTE_MGR";
     string private constant ERROR_SENDER_NOT_CURRENT_DISPUTE_MANAGER = "CTD_SEND_NOT_CURRENT_DISPUTE_MGR";
 
+    // Note: I noticed that we usually don't leave storage public, but add different getters with a `get*` prefix?
     // Address of the controller
     Controller public controller;
 

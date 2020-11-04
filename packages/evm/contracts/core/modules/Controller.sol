@@ -319,6 +319,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @param _modulesToBeSynced List of modules addresses to be synced
     * @param _idsToBeSet List of IDs of the modules to be linked
     */
+   // Wonder if we can rename this, to avoid confusion. Maybe something like "syncModulesWithCurrentIds()"?
     function linkModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
         require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
         _linkModules(_modulesToBeSynced, _idsToBeSet);
