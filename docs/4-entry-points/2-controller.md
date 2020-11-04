@@ -218,7 +218,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **Authentication:** Only modules governor
 - **Pre-flight checks:** None
 - **State transitions:**
-    - Set the target address for the given siganture
+    - Set the target address for the given signature
 
 ### 4.2.15. Set module
 
