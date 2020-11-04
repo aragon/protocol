@@ -113,10 +113,10 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     // Maximum amount of total active balance that can be held in the registry
-    uint256 internal totalActiveBalanceLimit;
+    uint256 public totalActiveBalanceLimit;
 
     // Guardian ERC20 token
-    IERC20 internal guardiansToken;
+    IERC20 public guardiansToken;
 
     // Mapping of guardian data indexed by address
     mapping (address => Guardian) internal guardiansByAddress;
@@ -479,14 +479,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev ERC900 - Tell the address of the token used for staking
-    * @return Address of the token used for staking
-    */
-    function token() external view returns (address) {
-        return address(guardiansToken);
-    }
-
-    /**
     * @dev Tell the total amount of guardian tokens staked into this registry
     * @return Amount of guardian tokens held by this registry
     */
@@ -651,14 +643,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     */
     function isLockManagerWhitelisted(address _lockManager) external view returns (bool) {
         return _isLockManagerWhitelisted(_lockManager);
-    }
-
-    /**
-    * @dev Tell the maximum amount of total active balance that can be held in the registry
-    * @return Maximum amount of total active balance that can be held in the registry
-    */
-    function totalGuardiansActiveBalanceLimit() external view returns (uint256) {
-        return totalActiveBalanceLimit;
     }
 
     /**

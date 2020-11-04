@@ -33,12 +33,12 @@ contract('GuardiansRegistry', ([_, governor, someone]) => {
           it('updates the current total active balance limit', async () => {
             await registry.setTotalActiveBalanceLimit(newTotalActiveBalanceLimit, { from })
 
-            const currentTotalActiveBalanceLimit = await registry.totalGuardiansActiveBalanceLimit()
+            const currentTotalActiveBalanceLimit = await registry.totalActiveBalanceLimit()
             assertBn(currentTotalActiveBalanceLimit, newTotalActiveBalanceLimit, 'total active balance limit does not match')
           })
 
           it('emits an event', async () => {
-            const previousTotalActiveBalanceLimit = await registry.totalGuardiansActiveBalanceLimit()
+            const previousTotalActiveBalanceLimit = await registry.totalActiveBalanceLimit()
 
             const receipt = await registry.setTotalActiveBalanceLimit(newTotalActiveBalanceLimit, { from })
 

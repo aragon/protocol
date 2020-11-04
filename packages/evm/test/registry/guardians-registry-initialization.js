@@ -26,8 +26,8 @@ contract('GuardiansRegistry', ([_, something]) => {
         assert.equal(await registry.symbol(), 'sANT', 'registry "ERC20-lite" symbol does not match')
         assert.equal(await registry.decimals(), 18, 'registry "ERC20-lite" decimals does not match')
         assert.equal(await registry.controller(), controller.address, 'registry controller does not match')
-        assert.equal(await registry.token(), ANT.address, 'token address does not match')
-        assertBn((await registry.totalGuardiansActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
+        assert.equal(await registry.guardiansToken(), ANT.address, 'guardian token address does not match')
+        assertBn((await registry.totalActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
       })
     })
 
