@@ -173,18 +173,7 @@ The following functions are state getters provided by the `GuardiansRegistry`:
     - **Locked:** Amount of active tokens that are locked due to ongoing disputes
     - **Pending deactivation:** Amount of active tokens that were requested for deactivation
 
-#### 6.4.2.7. Detailed balance of at
-- **Inputs:**
-    - **Guardian:** Address of the guardian querying the detailed balance information of
-    - **Term ID:** Identification number of the term to query on
-- **Pre-flight checks:** None
-- **Outputs:**
-    - **Active:** Amount of active tokens of a guardian
-    - **Available:** Amount of available tokens of a guardian
-    - **Locked:** Amount of active tokens that are locked due to ongoing disputes
-    - **Pending deactivation:** Amount of active tokens that were requested for deactivation
-
-#### 6.4.2.8. Active balance of at
+#### 6.4.2.7. Active balance of at
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the active balance of
     - **Term ID:** Identification number of the term to query on
@@ -192,14 +181,14 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 - **Outputs:**
     - **Amount:** Amount of active tokens for guardian
 
-#### 6.4.2.9. Unlocked active balance of
+#### 6.4.2.8. Unlocked active balance of
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the unlocked active balance of
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Amount:** Amount of active tokens of a guardian that are not locked due to ongoing disputes
 
-#### 6.4.2.10. Deactivation request
+#### 6.4.2.9. Deactivation request
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the deactivation request of
 - **Pre-flight checks:** None
@@ -207,7 +196,7 @@ The following functions are state getters provided by the `GuardiansRegistry`:
     - **Amount:** Amount of tokens to be deactivated
     - **Available term ID:** Term in which the deactivated amount will be available
 
-#### 6.4.2.11. Activation lock
+#### 6.4.2.10. Activation lock
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the activation lock of
     - **Lock manager:** Address of the lock manager querying the activation lock of
@@ -216,34 +205,34 @@ The following functions are state getters provided by the `GuardiansRegistry`:
     - **Amount:** Lock activation amount controlled by the given lock manager
     - **Total:** Total activation lock for the given guardian
 
-#### 6.4.2.12. Withdrawals lock term ID
+#### 6.4.2.11. Withdrawals lock term ID
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the lock term ID of
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Term ID:** Term ID in which the guardian's withdrawals will be unlocked (due to final rounds)
 
-#### 6.4.2.13. Is activator whitelisted
+#### 6.4.2.12. Is activator whitelisted
 - **Inputs:**
     - **Activator:** Address of the activator being queried
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Allowed:** Whether the activator is whitelisted
 
-#### 6.4.2.14. Is lock manager whitelisted
+#### 6.4.2.13. Is lock manager whitelisted
 - **Inputs:**
     - **Lock manager:** Address of the lock manager being queried
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Allowed:** Whether the lock manager is whitelisted
 
-#### 6.4.2.15. Total active balance limit
+#### 6.4.2.14. Total active balance limit
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Total active balance limit:** Maximum amount of total active balance that can be held in the registry
 
-#### 6.4.2.16. Guardian ID
+#### 6.4.2.15. Guardian ID
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the ID of
 - **Pre-flight checks:** None

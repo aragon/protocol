@@ -530,24 +530,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev Tell the detailed balance information of a guardian, fecthing for a given term id
-    * @param _guardian Address of the guardian querying the detailed balance information of
-    * @param _termId Term ID to query on
-    * @return active Amount of active tokens of a guardian
-    * @return available Amount of available tokens of a guardian
-    * @return locked Amount of active tokens that are locked due to ongoing disputes
-    * @return pendingDeactivation Amount of active tokens that were requested for deactivation
-    */
-    function detailedBalanceOfAt(address _guardian, uint64 _termId) external view
-        returns (uint256 active, uint256 available, uint256 locked, uint256 pendingDeactivation)
-    {
-        Guardian storage guardian = guardiansByAddress[_guardian];
-
-        active = _existsGuardian(guardian) ? tree.getItemAt(guardian.id, _termId) : 0;
-        (available, locked, pendingDeactivation) = _getBalances(guardian);
-    }
-
-    /**
     * @dev Tell the active balance of a guardian for a given term id
     * @param _guardian Address of the guardian querying the active balance of
     * @param _termId Term ID to query on
