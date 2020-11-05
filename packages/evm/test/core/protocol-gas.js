@@ -296,7 +296,7 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
-        itCostsAtMost('settlePenalties', 336e3, () => disputeManager.settlePenalties(disputeId, roundId, 0))
+        itCostsAtMost('settlePenalties', 337e3, () => disputeManager.settlePenalties(disputeId, roundId, 0))
       })
     })
 
