@@ -83,8 +83,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
     }) => {
       for (const guardian of guardians) {
         guardian.unlockedActiveBalance = await registry.unlockedActiveBalanceOf(guardian.address)
-        const { active } = await registry.detailedBalanceOfAt(guardian.address, TERM_ID)
-        guardian.activeBalance = active
+        guardian.activeBalance = await registry.activeBalanceOfAt(guardian.address, TERM_ID)
       }
 
       const activeGuardians = guardians.filter(guardian => guardian.activeBalance.gte(MIN_ACTIVE_AMOUNT))
@@ -131,7 +130,7 @@ contract('GuardiansRegistry', ([_, guardian500, guardian1000, guardian1500, guar
     const lockFirstExpectedGuardian = async ({ disputeId, batchRequestedGuardians, roundRequestedGuardians, leftUnlockedAmount = bn(0) }) => {
       const guardian = await getFirstExpectedGuardianAddress({ disputeId, batchRequestedGuardians, roundRequestedGuardians })
       await registry.mockLock(guardian, leftUnlockedAmount)
-      const { active, locked } = await registry.detailedBalanceOfAt(guardian, TERM_ID)
+      const { active, locked } = await registry.detailedBalanceOf(guardian)
       assertBn(locked, active.sub(leftUnlockedAmount), 'guardian locked balance does not match')
     }
 
