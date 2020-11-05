@@ -209,6 +209,10 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       context('when the sender does not have permission', () => {
+        beforeEach('revoke role', async () => {
+          await controller.revoke(roleId(registry, 'stakeAndActivate'), sender, { from: governor })
+        })
+
         it('reverts', async () => {
           await assertRevert(registry.stakeAndActivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
@@ -623,6 +627,10 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       context('when the sender does not have permission', () => {
+        beforeEach('revoke role', async () => {
+          await controller.revoke(roleId(registry, 'activate'), sender, { from: governor })
+        })
+
         it('reverts', async () => {
           await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
@@ -978,6 +986,10 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       })
 
       context('when the sender does not have permission', () => {
+        beforeEach('revoke role', async () => {
+          await controller.revoke(roleId(registry, 'deactivate'), sender, { from: governor })
+        })
+
         it('reverts', async () => {
           await assertRevert(registry.deactivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })

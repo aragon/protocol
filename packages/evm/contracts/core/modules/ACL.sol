@@ -3,8 +3,6 @@ pragma solidity ^0.5.17;
 
 contract ACL {
     string private constant ERROR_BAD_FREEZE = "ACL_BAD_FREEZE";
-    string private constant ERROR_ROLE_GRANTED = "ACL_ROLE_GRANTED";
-    string private constant ERROR_ROLE_NOT_GRANTED = "ACL_ROLE_NOT_GRANTED";
     string private constant ERROR_ROLE_ALREADY_FROZEN = "ACL_ROLE_ALREADY_FROZEN";
     string private constant ERROR_INVALID_BULK_INPUT = "ACL_INVALID_BULK_INPUT";
 
@@ -19,11 +17,6 @@ contract ACL {
     event Granted(bytes32 indexed id, address indexed who);
     event Revoked(bytes32 indexed id, address indexed who);
     event Frozen(bytes32 indexed id);
-
-    modifier notFrozen(bytes32 _id) {
-        require(!isRoleFrozen(_id), ERROR_ROLE_ALREADY_FROZEN);
-        _;
-    }
 
     /**
     * @dev Tell whether an address has a role assigned
@@ -49,11 +42,14 @@ contract ACL {
     * @param _id ID of the role to be granted
     * @param _who Address to grant the role to
     */
-    function _grant(bytes32 _id, address _who) internal notFrozen(_id) {
+    function _grant(bytes32 _id, address _who) internal {
+        require(!isRoleFrozen(_id), ERROR_ROLE_ALREADY_FROZEN);
         require(_who != FREEZE_FLAG, ERROR_BAD_FREEZE);
-        require(!hasRole(_who, _id), ERROR_ROLE_GRANTED);
-        roles[_id][_who] = true;
-        emit Granted(_id, _who);
+
+        if (!hasRole(_who, _id)) {
+            roles[_id][_who] = true;
+            emit Granted(_id, _who);
+        }
     }
 
     /**
@@ -61,17 +57,21 @@ contract ACL {
     * @param _id ID of the role to be revoked
     * @param _who Address to revoke the role from
     */
-    function _revoke(bytes32 _id, address _who) internal notFrozen(_id) {
-        require(hasRole(_who, _id), ERROR_ROLE_NOT_GRANTED);
-        roles[_id][_who] = false;
-        emit Revoked(_id, _who);
+    function _revoke(bytes32 _id, address _who) internal {
+        require(!isRoleFrozen(_id), ERROR_ROLE_ALREADY_FROZEN);
+
+        if (hasRole(_who, _id)) {
+            roles[_id][_who] = false;
+            emit Revoked(_id, _who);
+        }
     }
 
     /**
     * @dev Internal function to freeze a role
     * @param _id ID of the role to be frozen
     */
-    function _freeze(bytes32 _id) internal notFrozen(_id) {
+    function _freeze(bytes32 _id) internal {
+        require(!isRoleFrozen(_id), ERROR_ROLE_ALREADY_FROZEN);
         roles[_id][FREEZE_FLAG] = true;
         emit Frozen(_id);
     }

@@ -33,8 +33,10 @@ contract('Controller', ([_, governor, someone]) => {
         })
 
         context('when the role was not frozen', () => {
-          it('reverts', async () => {
-            await assertRevert(controller.grant(ROLE, someone, { from }), ACL_ERRORS.ROLE_GRANTED)
+          it('ignores the request', async () => {
+            const receipt = await controller.grant(ROLE, someone, { from })
+
+            assertAmountOfEvents(receipt, ACL_EVENTS.GRANTED, { expectedAmount: 0 })
           })
         })
       })
@@ -111,8 +113,10 @@ contract('Controller', ([_, governor, someone]) => {
         })
 
         context('when the role was not frozen', () => {
-          it('reverts', async () => {
-            await assertRevert(controller.revoke(ROLE, someone, { from }), ACL_ERRORS.ROLE_NOT_GRANTED)
+          it('ignores the request', async () => {
+            const receipt = await controller.revoke(ROLE, someone, { from })
+
+            assertAmountOfEvents(receipt, ACL_EVENTS.REVOKED, { expectedAmount: 0 })
           })
         })
       })

@@ -117,6 +117,10 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
       })
 
       context('when the sender does not have permission', () => {
+        beforeEach('revoke role', async () => {
+          await controller.revoke(roleId(voting, 'delegate'), sender, { from: governor })
+        })
+
         it('reverts', async () => {
           await assertRevert(voting.delegate(voter, delegate, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
@@ -298,6 +302,10 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
           })
 
           context('when the sender does not have permission', () => {
+            beforeEach('revoke role', async () => {
+              await controller.grant(roleId(delegate, 'commit'), sender, { from: governor })
+            })
+
             it('reverts', async () => {
               await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_DELEGATE)
             })
