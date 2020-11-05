@@ -2,6 +2,7 @@ const { padLeft, toHex } = require('web3-utils')
 const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 const { PAYMENTS_BOOK_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
@@ -130,11 +131,11 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
           })
 
-          it('can be claimed by a whitelisted relayer', async () => {
+          it('can be claimed by another authorized address', async () => {
             assert.isFalse((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
             const previousBalance = await token.balanceOf(guardian)
 
-            await controller.updateRelayerWhitelist(someone, true, { from: governor })
+            await controller.grant(roleId(paymentsBook, 'claimGuardianShare'), someone, { from: governor })
             await paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone })
 
             assert.isTrue((await paymentsBook.hasGuardianClaimed(periodId, guardian, [token.address])).every(Boolean))
@@ -143,7 +144,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(currentBalance, previousBalance.add(expectedGuardianTokenShare), 'guardian token balance does not match')
           })
 
-          it("cannot claim a guardian's share from another account that is not a whitelisted relayer", async () => {
+          it("cannot claim a guardian's share from another account that is not authorized", async () => {
             await assertRevert(paymentsBook.claimGuardianShare(periodId, guardian, [token.address], { from: someone }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
           })
 

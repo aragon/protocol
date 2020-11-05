@@ -1,12 +1,13 @@
 const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
-const { assertRevert, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
+const { assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Controlled = artifacts.require('ControlledMock')
 
-contract('Controlled', ([_, fundsGovernor, configGovernor, modulesGovernor, someone]) => {
+contract('Controlled', ([_, user, fundsGovernor, configGovernor, modulesGovernor, someone]) => {
   let controller, controlled
 
   beforeEach('create controlled', async () => {
@@ -58,6 +59,41 @@ contract('Controlled', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
       it('reverts', async () => {
         await assertRevert(controlled.onlyConfigGovernorFn({ from }), CONTROLLED_ERRORS.SENDER_NOT_CONFIG_GOVERNOR)
+      })
+    })
+  })
+
+  describe('authenticateSender', () => {
+    const itAllowsTheCall = from => {
+      it('allows the call', async () => {
+        const receipt = await controlled.authenticateCall(user, { from })
+
+        assertAmountOfEvents(receipt, 'Authenticated')
+        assertEvent(receipt, 'Authenticated', { expectedArgs: { user, sender: from } })
+      })
+    }
+
+    context('when the sender is the user', () => {
+      const from = user
+
+      itAllowsTheCall(from)
+    })
+
+    context('when the sender is not the user', () => {
+      const from = someone
+
+      context('when the sender is authorized', () => {
+        beforeEach('grant permission', async () => {
+          await controller.grant(roleId(controlled, 'authenticateCall'), from, { from: configGovernor })
+        })
+
+        itAllowsTheCall(from)
+      })
+
+      context('when the sender is not authorized', () => {
+        it('reverts', async () => {
+          await assertRevert(controlled.authenticateCall(user, { from }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
+        })
       })
     })
   })

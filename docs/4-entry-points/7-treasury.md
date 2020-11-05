@@ -30,7 +30,7 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
 
 ### 4.7.3. Withdraw
 
-- **Actor:** External entity owning a certain amount of tokens of the `Treasury` module
+- **Actor:** External entity owning a certain amount of tokens of the `Treasury` module or an authorized role holder.
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token to be withdrawn
     - **From:** Address withdrawing the tokens from
@@ -46,22 +46,6 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
     - Update next nonce of the voter if a signature was given
     - Reduce the token balance of the caller based on the requested amount
     - Transfer the requested token amount to the recipient address, revert if the ERC20-transfer wasn't successful
-
-### 4.7.4. Withdraw all
-
-- **Actor:** External entity incentivized in transfer the funds of a certain address
-- **Inputs:**
-    - **Token:** Address of the ERC20-compatible token to be withdrawn
-    - **From:** Address whose funds will be transferred
-    - **Authorization:** Optional authorization granted by the voter in case of a third party sender
-- **Authentication:** Open
-- **Pre-flight checks:**
-    - Validate signature if given
-    - Ensure that the token balance of the recipient address is greater than zero
-- **State transitions:**
-    - Update next nonce of the voter if a signature was given
-    - Set the token balance of the recipient to zero
-    - Transfer the whole balance of the recipient address to it, revert if the ERC20-transfer wasn't successful
 
 ### 4.7.5. Recover funds
 

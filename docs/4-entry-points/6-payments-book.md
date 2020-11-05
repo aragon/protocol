@@ -44,7 +44,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
     - **Period ID:** Period identification number
     - **Guardian:** Address of the guardian claiming the shares for
     - **Tokens:** List of addresses of the tokens being claimed
-- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function or whitelisted relayers
+- **Authentication:** Open. Implicitly, only guardians that have certain amount of ANT tokens activated during the requested period can call this function or an authorized role holder
 - **Pre-flight checks:**
     - Ensure that the requested period has already ended
     - Ensure that the sender has not already claimed their share for the requested token and period

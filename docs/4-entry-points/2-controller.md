@@ -209,18 +209,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Unset the modules governor address
 
-### 4.2.14. Set custom function
-
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
-- **Inputs:**
-    - **Signature:** Signature of the function to be customized
-    - **Address:** Address of the target that will be forwarded with the function call
-- **Authentication:** Only modules governor
-- **Pre-flight checks:** None
-- **State transitions:**
-    - Set the target address for the given signature
-
-### 4.2.15. Set module
+### 4.2.14. Set module
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
@@ -232,7 +221,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Set the module address for the corresponding module ID
 
-### 4.2.16. Set modules
+### 4.2.15. Set modules
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
@@ -250,7 +239,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - Link the implementations of the requested module IDs in the new modules set
     - Link the implementations of the new modules set in the requested current modules
 
-### 4.2.17. Sync module links
+### 4.2.16. Sync module links
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
@@ -263,7 +252,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Link the implementations of the requested module IDs in each of the requested modules
 
-### 4.2.18. Disable module
+### 4.2.17. Disable module
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
@@ -275,7 +264,7 @@ To read more information about its responsibilities and structure, go to [sectio
 - **State transitions:**
     - Mark the given module as disabled
 
-### 4.2.19. Enable module
+### 4.2.18. Enable module
 
 - **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
 - **Inputs:**
@@ -286,3 +275,64 @@ To read more information about its responsibilities and structure, go to [sectio
     - Ensure that the given module is not enabled
 - **State transitions:**
     - Mark the given module as enabled
+
+### 4.2.19. Set custom function
+
+- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Inputs:**
+    - **Signature:** Signature of the function to be customized
+    - **Address:** Address of the target that will be forwarded with the function call
+- **Authentication:** Only modules governor
+- **Pre-flight checks:** None
+- **State transitions:**
+    - Set the target address for the given signature
+
+### 4.2.20. Grant
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Role:** ID of the role to be granted
+    - **Address:** Address of the entity to grant the role to
+- **Authentication:** Only config governor
+- **Pre-flight checks:**
+    - Ensure the role is not frozen
+    - Ensure the entity does not have the role
+- **State transitions:**
+    - Add the role from the requested entity
+
+### 4.2.21. Revoke
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Role:** ID of the role to be revoked
+    - **Address:** Address of the entity to revoke the role from
+- **Authentication:** Only config governor
+- **Pre-flight checks:**
+    - Ensure the role is not frozen
+    - Ensure the entity has the role
+- **State transitions:**
+    - Remove the role from the requested entity
+
+### 4.2.22. Freeze
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Role:** ID of the role to be frozen
+- **Authentication:** Only config governor
+- **Pre-flight checks:**
+    - Ensure the given role is not frozen
+- **State transitions:**
+    - Mark the requested role as frozen
+
+### 4.2.23. Bulk
+
+- **Actor:** External entity in charge of maintaining the protocol
+- **Inputs:**
+    - **Ops:** List of requested operations
+    - **Roles:** List of roles for the requested operations
+    - **Whos:** List of addresses for the requested operations
+- **Authentication:** Only config governor
+- **Pre-flight checks:**
+    - Ensure the lists size match
+- **State transitions:**
+    - Execute all the requested ACL operations

@@ -1,6 +1,7 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
@@ -51,11 +52,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     const allowLockManager = (address, allowed) => {
       beforeEach('update lock manager', async () => {
         const manager = address || lockManager.address
-        const receipt = await registry.updateLockManagerWhitelist(manager, allowed, { from: governor })
-
-        assert.equal(await registry.isLockManagerWhitelisted(manager), allowed)
-        assertAmountOfEvents(receipt, REGISTRY_EVENTS.LOCK_MANAGER_CHANGED)
-        assertEvent(receipt, REGISTRY_EVENTS.LOCK_MANAGER_CHANGED, { expectedArgs: { lockManager: manager, allowed } })
+        const id = roleId(registry, 'lockActivation')
+        const fn = allowed ? 'grant' : 'revoke'
+        await controller[fn](id, manager, { from: governor })
       })
     }
 
@@ -80,7 +79,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
         await lockActivation(lockManager, lockAmount, sender)
         await lockActivation(lockManager, lockAmount, sender)
 
-        await registry.updateLockManagerWhitelist(anotherLockManager.address, true, { from: governor })
+        await controller.grant(roleId(registry, 'lockActivation'), anotherLockManager.address, { from: governor })
         await lockActivation(anotherLockManager, lockAmount, sender)
 
         const { amount, total } = await registry.getActivationLock(guardian, lockManager.address)
@@ -145,9 +144,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       context('when the sender is not a lock manager', () => {
         const sender = someone
 
-        context('when the sender is a whitelisted relayer', () => {
-          before('whitelist relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, true, { from: governor })
+        context('when the sender has permission', () => {
+          beforeEach('grant role', async () => {
+            await controller.grant(roleId(registry, 'lockActivation'), sender, { from: governor })
           })
 
           context('when the given lock manager is allowed', () => {
@@ -165,9 +164,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           })
         })
 
-        context('when the sender is not a whitelisted relayer', () => {
-          before('disallow relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, false, { from: governor })
+        context('when the sender does not have permission', () => {
+          beforeEach('revoke role', async () => {
+            await controller.revoke(roleId(registry, 'lockActivation'), sender, { from: governor })
           })
 
           it('reverts', async () => {
@@ -221,7 +220,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
 
           context('when there was a locked amount', () => {
             beforeEach('create lock', async () => {
-              await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+              await controller.grant(roleId(registry, 'lockActivation'), lockManager.address, { from: governor })
               await lockManager.lockActivation(guardian, lockAmount)
             })
 
@@ -248,15 +247,15 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
 
           context('when there was a locked amount', () => {
             beforeEach('create lock', async () => {
-              await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+              await controller.grant(roleId(registry, 'lockActivation'), lockManager.address, { from: governor })
               await lockManager.lockActivation(guardian, lockAmount)
             })
 
             itUnlocksTheActivation(sender)
 
-            context('when sender is a whitelisted relayer', () => {
-              before('whitelist relayer', async () => {
-                await controller.updateRelayerWhitelist(sender, true, { from: governor })
+            context('when the sender has permission', () => {
+              beforeEach('grant role', async () => {
+                await controller.grant(roleId(registry, 'unlockActivation'), sender, { from: governor })
               })
 
               it('can request a deactivation in the same call', async () => {
@@ -268,9 +267,9 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
               })
             })
 
-            context('when sender was not a whitelisted relayer', () => {
-              before('disallow relayer', async () => {
-                await controller.updateRelayerWhitelist(sender, false, { from: governor })
+            context('when the sender does not have permission', () => {
+              beforeEach('revoke role', async () => {
+                await controller.revoke(roleId(registry, 'unlockActivation'), sender, { from: governor })
               })
 
               it('cannot request a deactivation in the same call', async () => {
@@ -298,7 +297,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           const sender = guardian
 
           beforeEach('create lock', async () => {
-            await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+            await controller.grant(roleId(registry, 'lockActivation'), lockManager.address, { from: governor })
             await lockManager.lockActivation(guardian, lockAmount)
           })
 
@@ -311,7 +310,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           const sender = someone
 
           beforeEach('create lock', async () => {
-            await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+            await controller.grant(roleId(registry, 'lockActivation'), lockManager.address, { from: governor })
             await lockManager.lockActivation(guardian, lockAmount)
           })
 
@@ -325,7 +324,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     context('when the sender is the lock manager', () => {
       context('when there was a locked amount', () => {
         beforeEach('create lock', async () => {
-          await registry.updateLockManagerWhitelist(lockManager.address, true, { from: governor })
+          await controller.grant(roleId(registry, 'lockActivation'), lockManager.address, { from: governor })
           await lockManager.lockActivation(guardian, lockAmount)
         })
 

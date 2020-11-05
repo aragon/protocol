@@ -6,10 +6,9 @@ import "./ICRVoting.sol";
 import "./ICRVotingOwner.sol";
 import "../core/modules/Controlled.sol";
 import "../core/modules/Controller.sol";
-import "../core/modules/ControlledRelayable.sol";
 
 
-contract CRVoting is ICRVoting, Controlled, ControlledRelayable {
+contract CRVoting is ICRVoting, Controlled {
     using SafeMath for uint256;
 
     string private constant ERROR_VOTE_ALREADY_EXISTS = "CRV_VOTE_ALREADY_EXISTS";
