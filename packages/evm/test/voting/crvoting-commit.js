@@ -1,6 +1,7 @@
 const { bn, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
@@ -107,19 +108,15 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
     context('when the sender is not the voter', () => {
       const sender = someone
 
-      context('when the sender is a whitelisted relayer', () => {
-        beforeEach('whitelist relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(voting, 'delegate'), sender, { from: governor })
         })
 
         itHandlesDelegatesProperly(sender)
       })
 
-      context('when the sender is not a whitelisted relayer', () => {
-        beforeEach('disallow relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, false, { from: governor })
-        })
-
+      context('when the sender does not have permission', () => {
         it('reverts', async () => {
           await assertRevert(voting.delegate(voter, delegate, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
@@ -292,19 +289,15 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
         context('when the sender is not a delegate', () => {
           const sender = someone
 
-          context('when the sender is a whitelisted relayer', () => {
-            beforeEach('whitelist relayer', async () => {
-              await controller.updateRelayerWhitelist(sender, true, { from: governor })
+          context('when the sender has permission', () => {
+            beforeEach('grant role', async () => {
+              await controller.grant(roleId(voting, 'commit'), sender, { from: governor })
             })
 
             itHandlesCommitsProperly(sender)
           })
 
-          context('when the sender is not a whitelisted relayer', () => {
-            beforeEach('disallow relayer', async () => {
-              await controller.updateRelayerWhitelist(sender, false, { from: governor })
-            })
-
+          context('when the sender does not have permission', () => {
             it('reverts', async () => {
               await assertRevert(voting.commit(voteId, voter, '0x', { from: sender }), VOTING_ERRORS.SENDER_NOT_DELEGATE)
             })

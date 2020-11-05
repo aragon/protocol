@@ -1,6 +1,7 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
@@ -328,7 +329,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           const activeAmount = stakedBalance
 
           beforeEach('activate tokens', async () => {
-            await registry.activate(guardian, stakedBalance, { from: sender })
+            await registry.activate(guardian, stakedBalance, { from: guardian })
           })
 
           context('when the guardian tokens were not deactivated', () => {
@@ -339,7 +340,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
             const deactivationAmount = activeAmount
 
             beforeEach('deactivate tokens', async () => {
-              await registry.deactivate(guardian, deactivationAmount, { from: sender })
+              await registry.deactivate(guardian, deactivationAmount, { from: guardian })
             })
 
             context('when the guardian tokens are deactivated for the next term', () => {
@@ -387,17 +388,17 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     context('when the sender is not the guardian', () => {
       const sender = someone
 
-      context('when the sender is a whitelisted relayer', () => {
-        before('whitelist relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(registry, 'unstake'), sender, { from: governor })
         })
 
         itHandlesUnstakesProperly(sender)
       })
 
-      context('when the sender is not a whitelisted relayer', () => {
-        before('disallow relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, false, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.revoke(roleId(registry, 'unstake'), sender, { from: governor })
         })
 
         it('reverts', async () => {

@@ -1,6 +1,7 @@
 const { ZERO_ADDRESS, MAX_UINT256, bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { TREASURY_EVENTS } = require('../helpers/utils/events')
 const { TREASURY_ERRORS, CONTROLLED_ERRORS, MATH_ERRORS } = require('../helpers/utils/errors')
@@ -339,17 +340,17 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
     context('when the sender is not the holder', () => {
       const sender = someone
 
-      context('when the sender is a whitelisted relayer', () => {
-        beforeEach('whitelist relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(treasury, 'withdraw'), sender, { from: governor })
         })
 
         itHandlesWithdrawsProperly(sender)
       })
 
-      context('when the sender is not a whitelisted relayer', () => {
-        beforeEach('disallow relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, false, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.revoke(roleId(treasury, 'withdraw'), sender, { from: governor })
         })
 
         it('reverts', async () => {

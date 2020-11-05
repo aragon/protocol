@@ -1,6 +1,7 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
+const { roleId } = require('../helpers/utils/modules')
 const { buildHelper } = require('../helpers/wrappers/protocol')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
@@ -199,43 +200,17 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     context('when the sender is not the guardian', () => {
       const sender = someone
 
-      context('when the sender is allowed as activator', () => {
-        beforeEach('allow sender as activator', async () => {
-          const receipt = await registry.updateActivatorWhitelist(sender, true, { from: governor })
-
-          assert.equal(await registry.isActivatorWhitelisted(sender), true)
-          assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
-          assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: true } })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(registry, 'stakeAndActivate'), sender, { from: governor })
         })
 
         itHandlesStakeAndActivateProperly(sender)
       })
 
-      context('when the sender is not allowed as activator', () => {
-        beforeEach('disallow sender as activator', async () => {
-          const receipt = await registry.updateActivatorWhitelist(sender, false, { from: governor })
-
-          assert.equal(await registry.isActivatorWhitelisted(sender), false)
-          assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
-          assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: false } })
-        })
-
-        context('when the sender is a whitelisted relayer', () => {
-          before('whitelist relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, true, { from: governor })
-          })
-
-          itHandlesStakeAndActivateProperly(sender)
-        })
-
-        context('when the sender is not a whitelisted relayer', () => {
-          before('disallow relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, false, { from: governor })
-          })
-
-          it('reverts', async () => {
-            await assertRevert(registry.stakeAndActivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), REGISTRY_ERRORS.ACTIVATOR_NOT_ALLOWED)
-          })
+      context('when the sender does not have permission', () => {
+        it('reverts', async () => {
+          await assertRevert(registry.stakeAndActivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
     })
@@ -639,45 +614,17 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     context('when the sender is not the guardian', () => {
       const sender = someone
 
-      context('when the sender is allowed as activator', () => {
-        beforeEach('allow sender as activator', async () => {
-          const receipt = await registry.updateActivatorWhitelist(sender, true, { from: governor })
-
-          assert.equal(await registry.isActivatorWhitelisted(sender), true)
-          assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
-          assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: true } })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(registry, 'activate'), sender, { from: governor })
         })
 
-        it('reverts', async () => {
-          await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
-        })
+        itHandlesActivationsProperly(sender)
       })
 
-      context('when the sender is not allowed as activator', () => {
-        beforeEach('disallow sender as activator', async () => {
-          const receipt = await registry.updateActivatorWhitelist(sender, false, { from: governor })
-
-          assert.equal(await registry.isActivatorWhitelisted(sender), false)
-          assertAmountOfEvents(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED)
-          assertEvent(receipt, REGISTRY_EVENTS.ACTIVATOR_CHANGED, { expectedArgs: { activator: sender, allowed: false } })
-        })
-
-        context('when the sender is a whitelisted relayer', () => {
-          before('whitelist relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, true, { from: governor })
-          })
-
-          itHandlesActivationsProperly(sender)
-        })
-
-        context('when the sender is not a whitelisted relayer', () => {
-          before('disallow relayer', async () => {
-            await controller.updateRelayerWhitelist(sender, false, { from: governor })
-          })
-
-          it('reverts', async () => {
-            await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
-          })
+      context('when the sender does not have permission', () => {
+        it('reverts', async () => {
+          await assertRevert(registry.activate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
       })
     })
@@ -908,7 +855,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
-                  await registry.updateLockManagerWhitelist(sender, true, { from: governor })
+                  await controller.grant(roleId(registry, 'lockActivation'), sender, { from: governor })
                   await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
@@ -953,7 +900,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
-                  await registry.updateLockManagerWhitelist(sender, true, { from: governor })
+                  await controller.grant(roleId(registry, 'lockActivation'), sender, { from: governor })
                   await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
@@ -999,7 +946,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
                 const amount = currentActiveBalance
 
                 beforeEach('create activation lock', async () => {
-                  await registry.updateLockManagerWhitelist(sender, true, { from: governor })
+                  await controller.grant(roleId(registry, 'lockActivation'), sender, { from: governor })
                   await registry.lockActivation(guardian, sender, amount, { from: sender })
                 })
 
@@ -1022,19 +969,15 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
     context('when the sender is not the guardian', () => {
       const sender = someone
 
-      context('when the sender is a whitelisted relayer', () => {
-        before('whitelist relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, true, { from: governor })
+      context('when the sender has permission', () => {
+        beforeEach('grant role', async () => {
+          await controller.grant(roleId(registry, 'deactivate'), sender, { from: governor })
         })
 
         itHandlesDeactivationsProperly(sender)
       })
 
-      context('when the sender is not a whitelisted relayer', () => {
-        before('disallow relayer', async () => {
-          await controller.updateRelayerWhitelist(sender, false, { from: governor })
-        })
-
+      context('when the sender does not have permission', () => {
         it('reverts', async () => {
           await assertRevert(registry.deactivate(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })

@@ -35,11 +35,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.3. Unstake
 
-- **Actor:** Guardian or a whitelisted relayer
+- **Actor:** Guardian or someone authorized
 - **Inputs:**
     - **Guardian:** Address of the guardian unstaking the tokens from
     - **Amount:** Amount of tokens to be unstaked
-- **Authentication:** The guardian or a whitelisted relayer. Only for guardians that have some available balance in the registry.
+- **Authentication:** The guardian or someone authorized. Only for guardians that have some available balance in the registry.
 - **Pre-flight checks:**
     - Ensure that the requested amount is greater than zero
     - Ensure that there is enough available balance for the requested amount
@@ -50,11 +50,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.4. Activate
 
-- **Actor:** Guardian or a whitelisted relayer
+- **Actor:** Guardian or someone authorized
 - **Inputs:**
     - **Guardian:** Address of the guardian activating the tokens for
     - **Amount:** Amount of guardian tokens to be activated for the next term
-- **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some available balance.
+- **Authentication:** The guardian or someone authorized. Only for guardians with some available balance.
 - **Pre-flight checks:**
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the requested amount is greater than zero
@@ -69,11 +69,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.5. Deactivate
 
-- **Actor:** Guardian or a whitelisted relayer
+- **Actor:** Guardian or someone authorized
 - **Inputs:**
     - **Guardian:** Address of the guardian deactivating the tokens for
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
-- **Authentication:** The guardian or a whitelisted relayer. Only for guardians with some activated balance.
+- **Authentication:** The guardian or someone authorized. Only for guardians with some activated balance.
 - **Pre-flight checks:**
     - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the unlocked active balance of the guardians is enough for the requested amount
@@ -85,13 +85,13 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.6. Stake and activate
 
-- **Actor:** Guardian, a whitelisted relayer, or a whitelisted activator
+- **Actor:** Guardian or someone authorized
 - **Inputs:**
     - **Guardian:** Address of the guardian to stake and activate an amount of tokens to
     - **Amount:** Amount of tokens to be staked
-- **Authentication:** The guardian, a whitelisted relayer, or a whitelisted activator. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function.
+- **Authentication:** The guardian or someone authorized. Only if the sender has open an ERC20 allowance with the requested amount of tokens to stake can call this function.
 - **Pre-flight checks:**
-    - Validate that the sender is the guardian himself, a whitelisted relayer, or a whitelisted activator
+    - Validate that the sender is the guardian himself or someone authorized
     - Ensure that the given amount is greater than zero
 - **State transitions:**
     - Update the available balance of the guardian
@@ -100,14 +100,14 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.7. Lock activation
 
-- **Actor:** Guardian, whitelisted lock manager, or a whitelisted relayer
+- **Actor:** Guardian or someone authorized
 - **Inputs:**
     - **Guardian:** Address of the guardian lock the activation for
     - **Lock manager**: Address of the lock manager that will control the lock
     - **Amount**: Amount of active tokens to be locked
-- **Authentication:** Only the guardian, a whitelisted lock manager, or a whitelisted relayer
+- **Authentication:** Only the guardian or someone authorized
 - **Pre-flight checks:**
-    - Ensure that the given lock manager is whitelisted by the `GuardiansRegistry`
+    - Ensure that the given lock manager is authorized
 - **State transitions:**
     - Increase the total amount locked for the guardian
     - Increase the amount locked for the guardian by the given lock manager
@@ -120,7 +120,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Lock manager:** Address of the lock manager controlling the lock
     - **Amount:** Amount of active tokens to be unlocked
     - **Request deactivation:** Whether the unlocked amount must be requested for deactivation immediately
-- **Authentication:** Only the guardian, an external account allowed by signature, or a whitelisted lock manager. Only if the lock manager allowes to unlock the requested amount.
+- **Authentication:** Only the guardian or someone authorized. Only if the lock manager allows to unlock the requested amount.
 - **Pre-flight checks:**
     - Ensure that the requested amount can be unlocked
     - Ensure that the given amount is greater than zero
@@ -128,7 +128,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Decrease the total amount locked for the guardian
     - Decrease the amount locked for the guardian by the given lock manager
-    - If the sender is the guardian or a whitelisted relayer, schedule a deactivation if requested
+    - If the sender is the guardian or someone authorized, schedule a deactivation if requested
 
 ### 4.4.9. Process deactivation request
 
@@ -238,29 +238,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 - **State transitions:**
     - Update the total active balance limit
 
-### 4.4.17. Change activator whitelist
-
-- **Actor:** External entity in charge of maintaining the protocol
-- **Inputs:**
-    - **Activator:** Address of the activator to be changed
-    - **Allowed:** Whether the activator is allowed
-- **Authentication:** Only config governor
-- **Pre-flight checks:** None
-- **State transitions:**
-    - Update the activator status
-
-### 4.4.18. Change lock manager whitelist
-
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
-- **Inputs:**
-    - **Lock manager:** Address of the lock manager to be changed
-    - **Allowed:** Whether the lock manager is allowed
-- **Authentication:** Only config governor
-- **Pre-flight checks:** None
-- **State transitions:**
-    - Update the lock manager status
-
-### 4.4.19. Recover funds
+### 4.4.17. Recover funds
 
 - **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:**

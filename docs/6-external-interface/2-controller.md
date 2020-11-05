@@ -81,6 +81,26 @@ The following events are emitted by the `Controller`:
     - **Previous governor:** Address of the previous modules governor
     - **Current governor:** Address of the current modules governor
 
+#### 6.2.1.12. Granted
+
+- **Name:** `FundsGovernorChanged`
+- **Args:**
+    - **Role:** ID of the role that was granted 
+    - **Who:** Address of the entity that was granted
+
+#### 6.2.1.13. Revoked
+
+- **Name:** `Revoked`
+- **Args:**
+    - **Role:** ID of the role that was revoked 
+    - **Who:** Address of the entity that was revoked
+
+#### 6.2.1.14. Frozen
+
+- **Name:** `Frozen`
+- **Args:**
+    - **Role:** ID of the role that was frozen
+
 ### 6.2.2. Getters
 
 The following functions are state getters provided by the `Controller`:
@@ -284,3 +304,20 @@ The following functions are state getters provided by the `Controller`:
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Treasury address:** Address of the `Treasury` module set
+
+#### 6.2.2.26. Has role
+
+- **Inputs:**
+    - **Who**: Address of the entity being queried
+    - **Role**: ID of the role being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Has:** Whether the given entity has the requested role or not
+
+#### 6.2.2.27. Is role frozen
+
+- **Inputs:**
+    - **Role**: ID of the role being queried
+- **Pre-flight checks:** None
+- **Outputs:**
+    - **Frozen:** Whether the given role is frozen or not

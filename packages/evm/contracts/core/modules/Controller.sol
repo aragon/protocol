@@ -2,6 +2,7 @@ pragma solidity ^0.5.17;
 
 import "../../lib/utils/IsContract.sol";
 
+import "./ACL.sol";
 import "./ModuleIds.sol";
 import "./IModulesLinker.sol";
 import "../clock/ProtocolClock.sol";
@@ -9,7 +10,7 @@ import "../config/ProtocolConfig.sol";
 import "../../disputes/IDisputeManager.sol";
 
 
-contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
+contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
@@ -51,9 +52,6 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     // List of custom function targets indexed by signature
     mapping (bytes4 => address) internal customFunctions;
 
-    // List of whitelisted relayers indexed by address
-    mapping (address => bool) internal whitelistedRelayers;
-
     event ModuleSet(bytes32 id, address addr);
     event ModuleEnabled(bytes32 id, address addr);
     event ModuleDisabled(bytes32 id, address addr);
@@ -61,7 +59,6 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     event FundsGovernorChanged(address previousGovernor, address currentGovernor);
     event ConfigGovernorChanged(address previousGovernor, address currentGovernor);
     event ModulesGovernorChanged(address previousGovernor, address currentGovernor);
-    event RelayerWhitelistChanged(address indexed relayer, bool allowed);
 
     /**
     * @dev Ensure the msg.sender is the funds governor
@@ -275,13 +272,36 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice Set custom function `_sig` for `_target`
-    * @param _sig Signature of the function to be set
-    * @param _target Address of the target implementation to be registered for the given signature
+    * @notice Grant `_id` role to `_who`
+    * @param _id ID of the role to be granted
+    * @param _who Address to grant the role to
     */
-    function setCustomFunction(bytes4 _sig, address _target) external onlyModulesGovernor {
-        customFunctions[_sig] = _target;
-        emit CustomFunctionSet(_sig, _target);
+    function grant(bytes32 _id, address _who) external onlyConfigGovernor {
+        _grant(_id, _who);
+    }
+
+    /**
+    * @notice Revoke `_id` role from `_who`
+    * @param _id ID of the role to be revoked
+    * @param _who Address to revoke the role from
+    */
+    function revoke(bytes32 _id, address _who) external onlyConfigGovernor {
+        _revoke(_id, _who);
+    }
+
+    /**
+    * @notice Freeze `_id` role
+    * @param _id ID of the role to be frozen
+    */
+    function freeze(bytes32 _id) external onlyConfigGovernor {
+        _freeze(_id);
+    }
+
+    /**
+    * @notice Bulk a list of ACL operations
+    */
+    function bulk(BulkOp[] calldata _op, bytes32[] calldata _id, address[] calldata _who) external onlyConfigGovernor {
+        _bulk(_op, _id, _who);
     }
 
     /**
@@ -365,13 +385,13 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @notice `_allowed ? 'Allow' : 'Disallow'` `_relayer` as a relayer
-    * @param _relayer Address of the relayer to be changed
-    * @param _allowed Whether the relayer is whitelisted
+    * @notice Set custom function `_sig` for `_target`
+    * @param _sig Signature of the function to be set
+    * @param _target Address of the target implementation to be registered for the given signature
     */
-    function updateRelayerWhitelist(address _relayer, bool _allowed) external onlyConfigGovernor {
-        whitelistedRelayers[_relayer] = _allowed;
-        emit RelayerWhitelistChanged(_relayer, _allowed);
+    function setCustomFunction(bytes4 _sig, address _target) external onlyModulesGovernor {
+        customFunctions[_sig] = _target;
+        emit CustomFunctionSet(_sig, _target);
     }
 
     /**
@@ -546,15 +566,6 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     */
     function getCustomFunction(bytes4 _sig) external view returns (address) {
         return customFunctions[_sig];
-    }
-
-    /**
-    * @dev Tell whether a relayer is whitelisted
-    * @param _relayer Address of the relayer being queried
-    * @return True if the relayer is whitelisted
-    */
-    function isRelayerWhitelisted(address _relayer) external view returns (bool) {
-        return whitelistedRelayers[_relayer];
     }
 
     /**

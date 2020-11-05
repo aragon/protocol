@@ -44,8 +44,6 @@ const REGISTRY_EVENTS = {
   GUARDIAN_TOKENS_ASSIGNED: 'GuardianTokensAssigned',
   GUARDIAN_TOKENS_COLLECTED: 'GuardianTokensCollected',
   GUARDIAN_ACTIVATION_LOCK_CHANGED: 'GuardianActivationLockChanged',
-  ACTIVATOR_CHANGED: 'ActivatorWhitelistChanged',
-  LOCK_MANAGER_CHANGED: 'LockManagerWhitelistChanged',
   TOTAL_ACTIVE_BALANCE_LIMIT_CHANGED: 'TotalActiveBalanceLimitChanged'
 }
 
@@ -71,6 +69,12 @@ const CONTROLLER_EVENTS = {
   MODULES_GOVERNOR_CHANGED: 'ModulesGovernorChanged'
 }
 
+const ACL_EVENTS = {
+  GRANTED: 'Granted',
+  REVOKED: 'Revoked',
+  FROZEN: 'Frozen'
+}
+
 const CONTROLLED_EVENTS = {
   MODULE_LINKED: 'ModuleLinked',
   RECOVER_FUNDS: 'RecoverFunds'
@@ -92,6 +96,7 @@ module.exports = {
   TREASURY_EVENTS,
   PAYMENTS_BOOK_EVENTS,
   CONTROLLER_EVENTS,
+  ACL_EVENTS,
   CONTROLLED_EVENTS,
   CONFIG_EVENTS,
   CLOCK_EVENTS,

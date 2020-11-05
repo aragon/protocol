@@ -76,6 +76,15 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
+    * @dev This modifier will check that the sender is the user to act on behalf of or someone with the required permission
+    * @param _user Address of the user to act on behalf of
+    */
+    modifier authenticateSender(address _user) {
+        _authenticateSender(_user);
+        _;
+    }
+
+    /**
     * @dev Constructor function
     * @param _controller Address of the controller
     */
@@ -196,5 +205,32 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     */
     function _protocolConfig() internal view returns (IConfig) {
         return IConfig(controller);
+    }
+
+    /**
+    * @dev Ensure that the sender is the user to act on behalf of or someone with the required permission
+    * @param _user Address of the user to act on behalf of
+    */
+    function _authenticateSender(address _user) internal view {
+        require(_isSenderAllowed(_user), ERROR_SENDER_NOT_ALLOWED);
+    }
+
+    /**
+    * @dev Tell whether the sender is the user to act on behalf of or someone with the required permission
+    * @param _user Address of the user to act on behalf of
+    * @return True if the sender is the user to act on behalf of or someone with the required permission, false otherwise
+    */
+    function _isSenderAllowed(address _user) internal view returns (bool) {
+        return msg.sender == _user || _hasRole(msg.sender);
+    }
+
+    /**
+    * @dev Tell whether an address has assigned the role to access the requested functionality
+    * @param _addr Address being checked
+    * @return True if the given address has assigned assigned the role to access the requested functionality, false otherwise
+    */
+    function _hasRole(address _addr) internal view returns (bool) {
+        bytes32 roleId = keccak256(abi.encodePacked(address(this), msg.sig));
+        return controller.hasRole(_addr, roleId);
     }
 }
