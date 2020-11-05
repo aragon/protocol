@@ -104,11 +104,11 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
           beforeEach('load previous balances', async () => {
             previousBalances = {}
             for (const { address } of guardians) {
-              const { active, available, locked } = await protocolHelper.guardiansRegistry.balanceOf(address)
+              const { active, available, locked } = await protocolHelper.guardiansRegistry.detailedBalanceOf(address)
               previousBalances[address] = { active, available, locked }
             }
 
-            const { active, available, locked } = await protocolHelper.guardiansRegistry.balanceOf(BURN_ADDRESS)
+            const { active, available, locked } = await protocolHelper.guardiansRegistry.detailedBalanceOf(BURN_ADDRESS)
             previousBalances[BURN_ADDRESS] = { active, available, locked }
 
             const { feeToken, treasury } = protocolHelper
@@ -153,7 +153,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                   const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
 
                   const { locked: previousLockedBalance, active: previousActiveBalance } = previousBalances[address]
-                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.balanceOf(address)
+                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(address)
                   assertBn(currentActiveBalance, previousActiveBalance, 'current active balance does not match')
 
                   // for the final round tokens are slashed before hand, thus they are not considered as locked tokens
@@ -165,7 +165,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                   const roundLockedBalance = await protocolHelper.getRoundLockBalance(disputeId, roundId, address)
 
                   const { locked: previousLockedBalance, active: previousActiveBalance } = previousBalances[address]
-                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.balanceOf(address)
+                  const { active: currentActiveBalance, locked: currentLockedBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(address)
 
                   // for the final round tokens are slashed before hand, thus the active tokens for slashed guardians stays equal
                   const expectedActiveBalance = roundId < protocolHelper.maxRegularAppealRounds
@@ -181,7 +181,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
 
               it('burns the collected tokens if necessary', async () => {
                 const { available: previousAvailableBalance } = previousBalances[BURN_ADDRESS]
-                const { available: currentAvailableBalance } = await protocolHelper.guardiansRegistry.balanceOf(BURN_ADDRESS)
+                const { available: currentAvailableBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(BURN_ADDRESS)
 
                 if (expectedCoherentGuardians === 0) {
                   assertBn(currentAvailableBalance, previousAvailableBalance.add(expectedCollectedTokens), 'burned balance does not match')
@@ -293,7 +293,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     assert.isTrue(rewarded, 'guardian should have been rewarded')
                     assertBn(actualWeight, weight, 'guardian weight should not have changed')
 
-                    const { available } = await protocolHelper.guardiansRegistry.balanceOf(address)
+                    const { available } = await protocolHelper.guardiansRegistry.detailedBalanceOf(address)
                     const expectedTokenReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
                     const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedTokenReward)
                     assertBn(expectedCurrentAvailableBalance, available, 'current available balance does not match')

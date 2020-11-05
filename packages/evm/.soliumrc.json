@@ -16,7 +16,7 @@
     "lbrace": "error",
     "mixedcase": "error",
     "camelcase": "error",
-    "uppercase": "error",
+    "uppercase": "off",
     "no-empty-blocks": "error",
     "no-unused-vars": "error",
     "quotes": ["error", "double"],
