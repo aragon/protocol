@@ -479,8 +479,8 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev Tell the total amount of guardian tokens staked into this registry
-    * @return Amount of guardian tokens held by this registry
+    * @dev Tell the total supply of guardian tokens staked
+    * @return Supply of guardian tokens staked
     */
     function totalSupply() external view returns (uint256) {
         return guardiansToken.balanceOf(address(this));
