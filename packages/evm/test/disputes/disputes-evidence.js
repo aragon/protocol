@@ -65,7 +65,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itCanBeDrafted()
         }
 
-        context('when the current term is the dispute creation term', async () => {
+        context('when the current term is the dispute creation term', () => {
           beforeEach('assert creation term', async () => {
             const currentTermId = await protocol.getCurrentTermId()
             const { createTermId } = await protocolHelper.getDispute(disputeId)
@@ -75,7 +75,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itClosesEvidencePeriod()
         })
 
-        context('when the current term is after the dispute creation but within the evidence period', async () => {
+        context('when the current term is after the dispute creation but within the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms.div(bn(2)))
             const currentTermId = await protocol.getCurrentTermId()
@@ -88,7 +88,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itClosesEvidencePeriod()
         })
 
-        context('when the current term is at the end of the evidence period', async () => {
+        context('when the current term is at the end of the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms)
             const currentTermId = await protocol.getCurrentTermId()
@@ -103,7 +103,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itCanBeDrafted()
         })
 
-        context('when the current term is after the evidence period', async () => {
+        context('when the current term is after the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms.add(bn(1)))
             const currentTermId = await protocol.getCurrentTermId()

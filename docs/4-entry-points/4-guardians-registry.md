@@ -100,7 +100,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.7. Lock activation
 
-- **Actor:** Guardian, whitelsited lock manager, or a whitelisted relayer
+- **Actor:** Guardian, whitelisted lock manager, or a whitelisted relayer
 - **Inputs:**
     - **Guardian:** Address of the guardian lock the activation for
     - **Lock manager**: Address of the lock manager that will control the lock
@@ -229,7 +229,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.16. Set total active balance limit
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **New total active balance limit:** New limit of total active balance of guardian tokens
 - **Authentication:** Only config governor
@@ -251,7 +251,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.18. Change lock manager whitelist
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
     - **Lock manager:** Address of the lock manager to be changed
     - **Allowed:** Whether the lock manager is allowed
@@ -262,7 +262,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.19. Recover funds
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `GuardiansRegistry` module
     - **Recipient:** Address that will receive the funds of the `GuardiansRegistry` module

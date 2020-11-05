@@ -2,7 +2,6 @@ pragma solidity ^0.5.17;
 
 import "../lib/math/SafeMath.sol";
 import "../lib/utils/SafeERC20.sol";
-import "../lib/utils/BytesHelpers.sol";
 import "../lib/utils/PctHelpers.sol";
 import "../lib/tree/HexSumTree.sol";
 import "../lib/tree/GuardiansTreeSortition.sol";
@@ -20,7 +19,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PctHelpers for uint256;
-    using BytesHelpers for bytes;
     using HexSumTree for HexSumTree.Tree;
     using GuardiansTreeSortition for HexSumTree.Tree;
 
@@ -29,7 +27,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     string private constant ERROR_INVALID_ACTIVATION_AMOUNT = "GR_INVALID_ACTIVATION_AMOUNT";
     string private constant ERROR_INVALID_DEACTIVATION_AMOUNT = "GR_INVALID_DEACTIVATION_AMOUNT";
     string private constant ERROR_INVALID_LOCKED_AMOUNTS_LENGTH = "GR_INVALID_LOCKED_AMOUNTS_LEN";
-    string private constant ERROR_INVALID_REWARDED_GUARDIANS_LENGTH = "GR_INVALID_REWARDED_GUARDIANS_LEN";
+    string private constant ERROR_INVALID_REWARDED_GUARDIANS_LENGTH = "GR_INVALID_REWARD_GUARDIANS_LEN";
     string private constant ERROR_ACTIVE_BALANCE_BELOW_MIN = "GR_ACTIVE_BALANCE_BELOW_MIN";
     string private constant ERROR_NOT_ENOUGH_AVAILABLE_BALANCE = "GR_NOT_ENOUGH_AVAILABLE_BALANCE";
     string private constant ERROR_CANNOT_REDUCE_DEACTIVATION_REQUEST = "GR_CANT_REDUCE_DEACTIVATION_REQ";
@@ -240,9 +238,11 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         require(lockedAmount > 0, ERROR_ZERO_LOCK_ACTIVATION);
 
         uint256 amountToUnlock = _amount == 0 ? lockedAmount : _amount;
+        require(amountToUnlock <= lockedAmount, ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT);
+
+        // Always allow the lock manager to unlock
         bool canUnlock = _lockManager == msg.sender || ILockManager(_lockManager).canUnlock(_guardian, amountToUnlock);
         require(canUnlock, ERROR_CANNOT_UNLOCK_ACTIVATION);
-        require(amountToUnlock <= lockedAmount, ERROR_INVALID_UNLOCK_ACTIVATION_AMOUNT);
 
         uint256 newLockedAmount = lockedAmount.sub(amountToUnlock);
         uint256 newTotalLocked = activationLocks.total.sub(amountToUnlock);
@@ -251,7 +251,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         activationLocks.lockedBy[_lockManager] = newLockedAmount;
         emit GuardianActivationLockChanged(_guardian, _lockManager, newLockedAmount, newTotalLocked);
 
-        // In order to deactivate the unlocked tokens, the request must have been originated from the sender or a whitelisted relayer
+        // In order to request a deactivation, the request must have been originally authorized from the guardian
         if (_requestDeactivation) {
             _authenticateSender(_guardian);
             _deactivate(_guardian, _amount);

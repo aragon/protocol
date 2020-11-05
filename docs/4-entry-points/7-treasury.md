@@ -65,7 +65,7 @@ Except from those, the `Treasury` stores the rest of the fees, deposits, and col
 
 ### 4.7.5. Recover funds
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `Treasury` module
     - **Recipient:** Address that will receive the funds of the `Treasury` module

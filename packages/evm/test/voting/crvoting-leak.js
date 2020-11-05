@@ -147,23 +147,23 @@ contract('CRVoting leak', ([_, voter, someone]) => {
           })
         }
 
-        context('when the given voter committed a missing outcome', async () => {
+        context('when the given voter committed a missing outcome', () => {
           itHandlesLeakedVotesFor(OUTCOMES.MISSING)
         })
 
-        context('when the given voter committed a leaked outcome', async () => {
+        context('when the given voter committed a leaked outcome', () => {
           itHandlesLeakedVotesFor(OUTCOMES.LEAKED)
         })
 
-        context('when the given voter committed a refused outcome', async () => {
+        context('when the given voter committed a refused outcome', () => {
           itHandlesLeakedVotesFor(OUTCOMES.REFUSED)
         })
 
-        context('when the given voter committed a valid outcome', async () => {
+        context('when the given voter committed a valid outcome', () => {
           itHandlesLeakedVotesFor(OUTCOMES.LOW)
         })
 
-        context('when the given voter committed an out-of-bounds outcome', async () => {
+        context('when the given voter committed an out-of-bounds outcome', () => {
           itHandlesLeakedVotesFor(OUTCOMES.HIGH.add(bn(1)))
         })
       })

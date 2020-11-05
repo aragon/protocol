@@ -269,7 +269,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(totalActiveBalance, expectedTotalActiveBalance, 'total active balance does not match')
           })
 
-          context('when the claiming guardian was active at that term', async () => {
+          context('when the claiming guardian was active at that term', () => {
             const guardian = guardianPeriod0Term1
 
             context("when the governor's share is zero", async () => {
@@ -285,7 +285,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             })
           })
 
-          context('when the claiming guardian was not active yet', async () => {
+          context('when the claiming guardian was not active yet', () => {
             const guardian = guardianPeriod0Term3
 
             beforeEach('execute payments', executePayments)
@@ -323,7 +323,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             assertBn(totalActiveBalance, expectedTotalActiveBalance, 'total active balance does not match')
           })
 
-          context('when the claiming guardian was active before that term', async () => {
+          context('when the claiming guardian was active before that term', () => {
             const guardian = guardianPeriod0Term1
             const guardianShareMultiplier = x => x.mul(guardianPeriod0Term0Balance).div(expectedTotalActiveBalance)
 
@@ -340,7 +340,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             })
           })
 
-          context('when the claiming guardian was active at that term', async () => {
+          context('when the claiming guardian was active at that term', () => {
             const guardian = guardianPeriod0Term3
             const guardianShareMultiplier = x => x.mul(guardianPeriod0Term3Balance).div(expectedTotalActiveBalance)
 
@@ -357,7 +357,7 @@ contract('PaymentsBook', ([_, payer, someone, guardianPeriod0Term1, guardianPeri
             })
           })
 
-          context('when the claiming guardian was not active yet', async () => {
+          context('when the claiming guardian was not active yet', () => {
             const guardian = guardianMidPeriod1
 
             beforeEach('execute payments', executePayments)

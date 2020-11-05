@@ -191,7 +191,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
   })
 
   describe('getDispute', () => {
-    context('when the dispute exists', async () => {
+    context('when the dispute exists', () => {
       let currentTermId
       const possibleRulings = 2
       const metadata = '0xabcdef'
@@ -220,7 +220,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
   })
 
   describe('getRound', () => {
-    context('when the dispute exists', async () => {
+    context('when the dispute exists', () => {
       let draftTermId
       const possibleRulings = 2
       const metadata = '0xabcdef'
@@ -231,7 +231,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         await arbitrable.createDispute(possibleRulings, metadata)
       })
 
-      context('when the given round is valid', async () => {
+      context('when the given round is valid', () => {
         it('returns the requested round', async () => {
           const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, settledPenalties, collectedTokens } = await protocolHelper.getRound(0, 0)
 
@@ -245,7 +245,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         })
       })
 
-      context('when the given round is not valid', async () => {
+      context('when the given round is not valid', () => {
         it('reverts', async () => {
           await assertRevert(disputeManager.getRound(0, 1), DISPUTE_MANAGER_ERRORS.ROUND_DOES_NOT_EXIST)
         })

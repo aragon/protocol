@@ -4,7 +4,7 @@ The following documents complement the technical specification:
 
 - Aragon v2 [blog post](https://aragon.org/blog/2)
 
-The following documents describe Aragon Court, a pre-cursor to Aragon Protcol, and may also be useful for historical understanding:
+The following documents describe Aragon Court, a pre-cursor to Aragon Protocol, and may also be useful for historical understanding:
 
 - Aragon Network [white paper](https://github.com/aragon/whitepaper)
 - Aragon Network [launch phases](https://forum.aragon.org/t/aragon-network-launch-phases-and-target-dates)

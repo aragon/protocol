@@ -527,7 +527,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
     })
   })
 
-  describe('linkModules', () => {
+  describe('syncModuleLinks', () => {
     let firstModule, secondModule, thirdModule
     const firstID = '0x0000000000000000000000000000000000000000000000000000000000000001'
     const secondID = '0x0000000000000000000000000000000000000000000000000000000000000002'
@@ -552,7 +552,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
           it('links the requested modules in the requested targets', async () => {
             const targets = [secondModule.address, thirdModule.address]
-            const receipt = await controller.linkModules(targets, IDs, { from })
+            const receipt = await controller.syncModuleLinks(targets, IDs, { from })
 
             assertAmountOfEvents(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { expectedAmount: 6, decodeForAbi: Controlled.abi })
             assertEvent(receipt, CONTROLLED_EVENTS.MODULE_LINKED, { index: 0, expectedArgs: { id: IDs[0], addr: firstModule.address }, decodeForAbi: Controlled.abi })
@@ -562,7 +562,7 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
 
           it('it does not affect when the modules are updated', async () => {
             const targets = [secondModule.address, thirdModule.address]
-            await controller.linkModules(targets, IDs, { from })
+            await controller.syncModuleLinks(targets, IDs, { from })
 
             const newFirstModule = await Controlled.new(controller.address)
             await controller.setModule(firstID, newFirstModule.address, { from })
@@ -587,15 +587,15 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
           })
 
           it('reverts', async () => {
-            await assertRevert(controller.linkModules([firstModule.address], IDs, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
+            await assertRevert(controller.syncModuleLinks([firstModule.address], IDs, { from }), CONTROLLER_ERRORS.MODULE_NOT_SET)
           })
         })
       })
 
       context('when the given input length is not valid', () => {
         it('reverts', async () => {
-          await assertRevert(controller.linkModules([ZERO_ADDRESS], [], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
-          await assertRevert(controller.linkModules([], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
+          await assertRevert(controller.syncModuleLinks([ZERO_ADDRESS], [], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
+          await assertRevert(controller.syncModuleLinks([], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.INVALID_IMPLS_INPUT_LENGTH)
         })
       })
     })
@@ -604,11 +604,11 @@ contract('Controller', ([_, fundsGovernor, configGovernor, modulesGovernor, some
       const from = someone
 
       it('reverts', async () => {
-        await assertRevert(controller.linkModules([ZERO_ADDRESS], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
+        await assertRevert(controller.syncModuleLinks([ZERO_ADDRESS], [ZERO_BYTES32], { from }), CONTROLLER_ERRORS.SENDER_NOT_GOVERNOR)
       })
     })
 
-    context('when trying to call it directly', () => {
+    context('when trying to call linkModules directly', () => {
       const from = someone
 
       it('reverts', async () => {

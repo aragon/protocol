@@ -385,13 +385,13 @@ contract('DisputeManager', ([_, drafter, guardian500, guardian1000, guardian1500
               await protocolHelper.increaseTimeInTerms(1)
             })
 
-            context('when the heartbeat was not executed', async () => {
+            context('when the heartbeat was not executed', () => {
               it('reverts', async () => {
                 await assertRevert(disputeManager.draft(disputeId, { from: drafter }), DISPUTE_MANAGER_ERRORS.TERM_OUTDATED)
               })
             })
 
-            context('when the heartbeat was executed', async () => {
+            context('when the heartbeat was executed', () => {
               let lastEnsuredTermId, receipt
 
               beforeEach('call heartbeat', async () => {

@@ -294,8 +294,8 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     assertBn(actualWeight, weight, 'guardian weight should not have changed')
 
                     const { available } = await protocolHelper.guardiansRegistry.balanceOf(address)
-                    const expectedANJReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
-                    const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedANJReward)
+                    const expectedTokenReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
+                    const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedTokenReward)
                     assertBn(expectedCurrentAvailableBalance, available, 'current available balance does not match')
 
                     const expectedFeeReward = guardianFees.mul(bn(weight)).div(bn(expectedCoherentGuardians))
@@ -608,7 +608,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     })
                   }
 
-                  context('when the ruling is sustained', async () => {
+                  context('when the ruling is sustained', () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
@@ -621,7 +621,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is flipped', async () => {
+                  context('when the ruling is flipped', () => {
                     const expectedFinalRuling = appealedRuling
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
@@ -634,7 +634,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is refused', async () => {
+                  context('when the ruling is refused', () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.REFUSED },
@@ -647,7 +647,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(newRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when no one voted', async () => {
+                  context('when no one voted', () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const [firstRoundWinners, firstRoundLosers] = filterWinningGuardians(voters, expectedFinalRuling)
                     const newRoundDraftedGuardians = [
@@ -748,7 +748,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itSettlesPenaltiesAndRewardsProperly(finalRoundId, expectedWinners, expectedLosers)
                   }
 
-                  context('when the ruling is sustained', async () => {
+                  context('when the ruling is sustained', () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.HIGH },
@@ -761,7 +761,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is flipped', async () => {
+                  context('when the ruling is flipped', () => {
                     const expectedFinalRuling = appealedRuling
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.HIGH },
@@ -774,7 +774,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is refused', async () => {
+                  context('when the ruling is refused', () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.REFUSED },
