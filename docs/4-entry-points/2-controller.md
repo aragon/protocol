@@ -294,7 +294,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - **Role:** ID of the role to be granted
     - **Address:** Address of the entity to grant the role to
 - **Authentication:** Only config governor
-- **Pre-flight checks:** 
+- **Pre-flight checks:**
     - Ensure the role is not frozen
     - Ensure the entity does not have the role
 - **State transitions:**
@@ -307,7 +307,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - **Role:** ID of the role to be revoked
     - **Address:** Address of the entity to revoke the role from
 - **Authentication:** Only config governor
-- **Pre-flight checks:** 
+- **Pre-flight checks:**
     - Ensure the role is not frozen
     - Ensure the entity has the role
 - **State transitions:**

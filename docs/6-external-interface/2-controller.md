@@ -58,7 +58,7 @@ The following events are emitted by the `Controller`:
 - **Name:** `CustomFunctionSet`
 - **Args:**
     - **Signature:** Signature of the function being set
-    - **Target:** Address set as the target for the custom function  
+    - **Target:** Address set as the target for the custom function
 
 #### 6.2.1.9. Funds governor changed
 
@@ -83,16 +83,16 @@ The following events are emitted by the `Controller`:
 
 #### 6.2.1.12. Granted
 
-- **Name:** `FundsGovernorChanged`
+- **Name:** `Granted`
 - **Args:**
-    - **Role:** ID of the role that was granted 
+    - **Role:** ID of the role that was granted
     - **Who:** Address of the entity that was granted
 
 #### 6.2.1.13. Revoked
 
 - **Name:** `Revoked`
 - **Args:**
-    - **Role:** ID of the role that was revoked 
+    - **Role:** ID of the role that was revoked
     - **Who:** Address of the entity that was revoked
 
 #### 6.2.1.14. Frozen
@@ -247,7 +247,7 @@ The following functions are state getters provided by the `Controller`:
 
 #### 6.2.2.18. Module by address
 
-- **Inputs:** 
+- **Inputs:**
     - **Address:** Address of the module being queried
 - **Pre-flight checks:** None
 - **Outputs:**
@@ -264,7 +264,7 @@ The following functions are state getters provided by the `Controller`:
 
 #### 6.2.2.20. Custom function
 
-- **Inputs:** 
+- **Inputs:**
     - **Signature:** Signature of the function being queried
 - **Pre-flight checks:** None
 - **Outputs:**
