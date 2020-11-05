@@ -77,7 +77,7 @@ contract ACL {
     }
 
     /**
-    * @dev Internal function to bulk a set of ACL operations
+    * @dev Internal function to enact a bulk list of ACL operations
     */
     function _bulk(BulkOp[] memory _op, bytes32[] memory _id, address[] memory _who) internal {
         require(_op.length == _id.length && _op.length == _who.length, ERROR_INVALID_BULK_INPUT);

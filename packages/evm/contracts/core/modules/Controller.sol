@@ -298,7 +298,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     }
 
     /**
-    * @notice Bulk a list of ACL operations
+    * @notice Enact a bulk list of ACL operations
     */
     function bulk(BulkOp[] calldata _op, bytes32[] calldata _id, address[] calldata _who) external onlyConfigGovernor {
         _bulk(_op, _id, _who);
