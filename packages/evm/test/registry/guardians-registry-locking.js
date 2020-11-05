@@ -49,12 +49,11 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
   describe('lockActivation', () => {
     const lockAmount = bigExp(1000, 18)
 
-    const allowLockManager = (address, allowed) => {
+    const allowLockManager = address => {
       beforeEach('update lock manager', async () => {
         const manager = address || lockManager.address
         const id = roleId(registry, 'lockActivation')
-        const fn = allowed ? 'grant' : 'revoke'
-        await controller[fn](id, manager, { from: governor })
+        await controller.grant(id, manager, { from: governor })
       })
     }
 
@@ -108,14 +107,12 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
       const sender = guardian
 
       context('when the given lock manager is allowed', () => {
-        allowLockManager(lockManager, true)
+        allowLockManager(lockManager)
 
         itCreatesTheActivationLock(sender)
       })
 
       context('when the given lock manager is not allowed', () => {
-        allowLockManager(lockManager, false)
-
         it('reverts', async () => {
           await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
         })
@@ -127,14 +124,12 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
         const sender = undefined // will use the lock manager
 
         context('when the given lock manager is allowed', () => {
-          allowLockManager(lockManager, true)
+          allowLockManager(lockManager)
 
           itCreatesTheActivationLock(sender)
         })
 
         context('when the given lock manager is not allowed', () => {
-          allowLockManager(lockManager, false)
-
           it('reverts', async () => {
             await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
           })
@@ -150,14 +145,12 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           })
 
           context('when the given lock manager is allowed', () => {
-            allowLockManager(lockManager, true)
+            allowLockManager(lockManager)
 
             itCreatesTheActivationLock(sender)
           })
 
           context('when the given lock manager is not allowed', () => {
-            allowLockManager(lockManager, false)
-
             it('reverts', async () => {
               await assertRevert(lockActivation(lockManager, lockAmount, sender), REGISTRY_ERRORS.LOCK_MANAGER_NOT_ALLOWED)
             })

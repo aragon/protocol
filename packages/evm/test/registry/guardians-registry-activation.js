@@ -542,7 +542,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
               context('when the guardian was slashed and does not reach the minimum active amount of tokens', () => {
                 beforeEach('slash guardian', async () => {
                   await disputeManager.collect(guardian, activeBalance)
-                  await registry.unstake(guardian, maxPossibleBalance.sub(activeBalance).sub(bn(1)), { from: sender })
+                  await registry.unstake(guardian, maxPossibleBalance.sub(activeBalance).sub(bn(1)), { from: guardian })
                 })
 
                 it('reverts', async () => {
@@ -585,7 +585,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
 
           context('when the guardian has a full deactivation request', () => {
             beforeEach('deactivate tokens', async () => {
-              await registry.deactivate(guardian, activeBalance, { from: sender })
+              await registry.deactivate(guardian, activeBalance, { from: guardian })
             })
 
             itHandlesDeactivationRequests(activeBalance)
@@ -596,8 +596,8 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           const activeBalance = maxPossibleBalance
 
           beforeEach('activate tokens and deactivate', async () => {
-            await registry.activate(guardian, activeBalance, { from: sender })
-            await registry.deactivate(guardian, activeBalance, { from: sender })
+            await registry.activate(guardian, activeBalance, { from: guardian })
+            await registry.deactivate(guardian, activeBalance, { from: guardian })
           })
 
           itHandlesDeactivationRequests(activeBalance)
@@ -679,7 +679,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
           const activeBalance = MIN_ACTIVE_AMOUNT.mul(bn(4))
 
           beforeEach('activate some tokens', async () => {
-            await registry.activate(guardian, activeBalance, { from: sender })
+            await registry.activate(guardian, activeBalance, { from: guardian })
           })
 
           const itHandlesDeactivationRequestFor = (requestedAmount, expectedAmount = requestedAmount, previousDeactivationAmount = bn(0)) => {

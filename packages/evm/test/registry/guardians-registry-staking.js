@@ -396,11 +396,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
         itHandlesUnstakesProperly(sender)
       })
 
-      context('when the sender has permission', () => {
-        beforeEach('grant role', async () => {
-          await controller.revoke(roleId(registry, 'unstake'), sender, { from: governor })
-        })
-
+      context('when the sender does not have permission', () => {
         it('reverts', async () => {
           await assertRevert(registry.unstake(guardian, MIN_ACTIVE_AMOUNT, { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })

@@ -348,11 +348,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
         itHandlesWithdrawsProperly(sender)
       })
 
-      context('when the sender has permission', () => {
-        beforeEach('grant role', async () => {
-          await controller.revoke(roleId(treasury, 'withdraw'), sender, { from: governor })
-        })
-
+      context('when the sender does not have permission', () => {
         it('reverts', async () => {
           await assertRevert(treasury.withdraw(DAI.address, holder, holder, bigExp(1, 18), { from: sender }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })

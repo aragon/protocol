@@ -84,17 +84,13 @@ contract('Controlled', ([_, user, fundsGovernor, configGovernor, modulesGovernor
 
       context('when the sender is authorized', () => {
         beforeEach('grant permission', async () => {
-          await controller.grant(roleId(controlled.address), 'authenticateCall', from, { from: configGovernor })
+          await controller.grant(roleId(controlled, 'authenticateCall'), from, { from: configGovernor })
         })
 
         itAllowsTheCall(from)
       })
 
       context('when the sender is not authorized', () => {
-        beforeEach('revoke permission', async () => {
-          await controller.revoke(roleId(controlled.address, 'authenticateCall'), from, { from: configGovernor })
-        })
-
         it('reverts', async () => {
           await assertRevert(controlled.authenticateCall(user, { from }), CONTROLLED_ERRORS.SENDER_NOT_ALLOWED)
         })
