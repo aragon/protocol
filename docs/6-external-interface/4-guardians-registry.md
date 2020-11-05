@@ -163,14 +163,6 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 - **Outputs:**
     - **Amount:** Total balance of tokens held by a guardian
 
-#### 6.4.2.5. Balance of at
-- **Inputs:**
-    - **Guardian:** Address of the guardian querying the staked balance of
-    - **Term ID:** Identification number of the term to query on
-- **Pre-flight checks:** None
-- **Outputs:**
-    - **Amount:** Total balance of tokens held by a guardian
-
 #### 6.4.2.6. Detailed balance of
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the detailed balance information of

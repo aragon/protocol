@@ -516,24 +516,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev Tell the total balance of tokens held by a guardian for a given term id
-    *      This includes the active balance, the available balances, and the pending balance for deactivation.
-    *      Note that we don't have to include the locked balances since these represent the amount of active tokens
-    *      that are locked for drafts, i.e. these are already included in the active balance of the guardian.
-    * @param _guardian Address of the guardian querying the balance of
-    * @param _termId Term ID to query on
-    * @return Total amount of tokens of a guardian
-    */
-    function balanceOfAt(address _guardian, uint64 _termId) external view returns (uint256) {
-        Guardian storage guardian = guardiansByAddress[_guardian];
-
-        uint256 active = _existsGuardian(guardian) ? tree.getItemAt(guardian.id, _termId) : 0;
-        (uint256 available, , uint256 pendingDeactivation) = _getBalances(guardian);
-
-        return active.add(available).add(pendingDeactivation);
-    }
-
-    /**
     * @dev Tell the detailed balance information of a guardian
     * @param _guardian Address of the guardian querying the detailed balance information of
     * @return active Amount of active tokens of a guardian
@@ -870,7 +852,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
 
     /**
     * @dev Internal function to tell the total balance of tokens held by a guardian
-    * @param _guardian Address of the guardian querying the total amount of tokens staked of
+    * @param _guardian Address of the guardian querying the total balance of
     * @return Total amount of tokens of a guardian
     */
     function _balanceOf(address _guardian) internal view returns (uint256) {
