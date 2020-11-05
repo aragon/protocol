@@ -303,7 +303,7 @@ contract('CRVoting', ([_, voter, someone, delegate, governor]) => {
 
           context('when the sender does not have permission', () => {
             beforeEach('revoke role', async () => {
-              await controller.grant(roleId(delegate, 'commit'), sender, { from: governor })
+              await controller.revoke(roleId(voting, 'commit'), sender, { from: governor })
             })
 
             it('reverts', async () => {
