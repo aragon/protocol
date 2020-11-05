@@ -180,13 +180,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                         assertAmountOfEvents(receipt, DISPUTE_MANAGER_EVENTS.RULING_APPEAL_CONFIRMED)
 
                         const nextRoundStartTerm = await protocolHelper.getNextRoundStartTerm(disputeId, roundId)
-                        const nextRoundGuardiansNumber = await protocolHelper.getNextRoundGuardiansNumber(disputeId, roundId)
-                        assertEvent(receipt, DISPUTE_MANAGER_EVENTS.RULING_APPEAL_CONFIRMED, {
-                          disputeId,
-                          roundId: roundId + 1,
-                          draftTermId: nextRoundStartTerm,
-                          guardiansNumber: nextRoundGuardiansNumber
-                        })
+                        assertEvent(receipt, DISPUTE_MANAGER_EVENTS.RULING_APPEAL_CONFIRMED, { disputeId, roundId: roundId + 1, draftTermId: nextRoundStartTerm })
                       })
 
                       it('confirms the given appealed round', async () => {

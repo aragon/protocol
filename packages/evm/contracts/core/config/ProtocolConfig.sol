@@ -17,7 +17,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     string private constant ERROR_INVALID_FINAL_ROUND_REDUCTION_PCT = "CONF_INVALID_FINAL_ROUND_RED_PCT";
     string private constant ERROR_INVALID_MAX_APPEAL_ROUNDS = "CONF_INVALID_MAX_APPEAL_ROUNDS";
     string private constant ERROR_LARGE_ROUND_PHASE_DURATION = "CONF_LARGE_ROUND_PHASE_DURATION";
-    string private constant ERROR_BAD_INITIAL_GUARDIANS_NUMBER = "CONF_BAD_INITIAL_GUARDIANS_NUMBER";
+    string private constant ERROR_BAD_INITIAL_GUARDIANS_NUMBER = "CONF_BAD_INITIAL_GUARDIAN_NUMBER";
     string private constant ERROR_BAD_APPEAL_STEP_FACTOR = "CONF_BAD_APPEAL_STEP_FACTOR";
     string private constant ERROR_ZERO_COLLATERAL_FACTOR = "CONF_ZERO_COLLATERAL_FACTOR";
     string private constant ERROR_ZERO_MIN_ACTIVE_BALANCE = "CONF_ZERO_MIN_ACTIVE_BALANCE";
@@ -37,11 +37,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     // List of configs indexed by id
     mapping (uint64 => uint256) private configIdByTerm;
 
-    // Holders opt-in config for automatic withdrawals
-    mapping (address => bool) private withdrawalsAllowed;
-
     event NewConfig(uint64 fromTermId, uint64 protocolConfigId);
-    event AutomaticWithdrawalsAllowedChanged(address indexed holder, bool allowed);
 
     /**
     * @dev Constructor function
@@ -96,15 +92,6 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     }
 
     /**
-    * @notice Set the automatic withdrawals config for the sender to `_allowed`
-    * @param _allowed Whether or not the automatic withdrawals are allowed by the sender
-    */
-    function setAutomaticWithdrawals(bool _allowed) external {
-        withdrawalsAllowed[msg.sender] = _allowed;
-        emit AutomaticWithdrawalsAllowedChanged(msg.sender, _allowed);
-    }
-
-    /**
     * @dev Tell the full Protocol configuration parameters at a certain term
     * @param _termId Identification number of the term querying the Protocol config of
     * @return token Address of the token used to pay for fees
@@ -156,15 +143,6 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
-
-    /**
-    * @dev Tell whether a certain holder accepts automatic withdrawals of tokens or not
-    * @param _holder Address of the token holder querying if withdrawals are allowed for
-    * @return True if the given holder accepts automatic withdrawals of their tokens, false otherwise
-    */
-    function areWithdrawalsAllowedFor(address _holder) external view returns (bool) {
-        return withdrawalsAllowed[_holder];
-    }
 
     /**
     * @dev Tell the term identification number of the next scheduled config change

@@ -8,6 +8,8 @@
   "devDependencies": {},
   "scripts": {
     "start": "./scripts/start.sh",
+    "compile": "yarn workspace @aragon/protocol-evm compile",
+    "lint": "yarn workspace @aragon/protocol-evm lint",
     "test": "yarn workspace @aragon/protocol-evm test"
   },
   "workspaces": {

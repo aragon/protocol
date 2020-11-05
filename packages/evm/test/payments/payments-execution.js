@@ -7,7 +7,7 @@ const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('PaymentBook', ([_, someone, payer]) => {
+contract('PaymentBook', ([_, someone, payer, randomAddr]) => {
   let controller, paymentsBook, eth, token
 
   const PCT_BASE = bn(10000)
@@ -146,6 +146,12 @@ contract('PaymentBook', ([_, someone, payer]) => {
         context('when the sender does not have enough balance', () => {
           it('reverts', async () => {
             await assertRevert(paymentsBook.pay(token.address, amount, someone, data), PAYMENTS_BOOK_ERRORS.TOKEN_DEPOSIT_FAILED)
+          })
+        })
+
+        context('when the token is not a real token', () => {
+          it('reverts', async () => {
+            await assertRevert(paymentsBook.pay(randomAddr, amount, someone, data), PAYMENTS_BOOK_ERRORS.TOKEN_NOT_CONTRACT)
           })
         })
       })

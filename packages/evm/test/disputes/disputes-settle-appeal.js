@@ -384,7 +384,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     })
                   }
 
-                  context('when the ruling is sustained', async () => {
+                  context('when the ruling is sustained', () => {
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
                       { address: guardian2000, weight: 4, outcome: OUTCOMES.LOW },
@@ -397,7 +397,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itSettlesAppealDepositsToMaker(roundId)
                   })
 
-                  context('when the ruling is flipped', async () => {
+                  context('when the ruling is flipped', () => {
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.HIGH },
                       { address: guardian2000, weight: 4, outcome: OUTCOMES.HIGH },
@@ -410,7 +410,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itSettlesAppealDepositsToTaker(roundId)
                   })
 
-                  context('when the ruling is refused', async () => {
+                  context('when the ruling is refused', () => {
                     const newRoundVoters = [
                       { address: guardian500,  weight: 1, outcome: OUTCOMES.REFUSED },
                       { address: guardian2000, weight: 4, outcome: OUTCOMES.REFUSED },
@@ -423,7 +423,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itReturnsAppealDepositsToBoth(roundId)
                   })
 
-                  context('when no one voted', async () => {
+                  context('when no one voted', () => {
                     const newRoundDraftedGuardians = [
                       { address: guardian500,  weight: 1 },
                       { address: guardian2000, weight: 4 },
@@ -484,7 +484,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itCannotSettleAppealDeposits(finalRoundId)
                   }
 
-                  context('when the ruling is sustained', async () => {
+                  context('when the ruling is sustained', () => {
                     const expectedFinalRuling = OUTCOMES.LOW
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.HIGH },
@@ -497,7 +497,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is flipped', async () => {
+                  context('when the ruling is flipped', () => {
                     const expectedFinalRuling = appealedRuling
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.HIGH },
@@ -510,7 +510,7 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     itHandlesRoundsSettlesProperly(finalRoundVoters, expectedFinalRuling)
                   })
 
-                  context('when the ruling is refused', async () => {
+                  context('when the ruling is refused', () => {
                     const expectedFinalRuling = OUTCOMES.REFUSED
                     const finalRoundVoters = [
                       { address: guardian500,  outcome: OUTCOMES.REFUSED },

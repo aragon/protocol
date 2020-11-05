@@ -7,9 +7,10 @@ import "../lib/standards/IERC20.sol";
 import "./ITreasury.sol";
 import "../core/modules/Controller.sol";
 import "../core/modules/ControlledRecoverable.sol";
+import "../core/modules/ControlledRelayable.sol";
 
 
-contract ProtocolTreasury is ControlledRecoverable, ITreasury {
+contract ProtocolTreasury is ITreasury, ControlledRecoverable, ControlledRelayable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -39,7 +40,7 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     * @param _to Address of the recipient that will be assigned the tokens to
     * @param _amount Amount of tokens to be assigned to the recipient
     */
-    function assign(IERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManagers {
+    function assign(IERC20 _token, address _to, uint256 _amount) external onlyActiveDisputeManager {
         require(_amount > 0, ERROR_DEPOSIT_AMOUNT_ZERO);
 
         address tokenAddress = address(_token);
@@ -48,26 +49,14 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
     }
 
     /**
-    * @notice Withdraw `@tokenAmount(_token, _amount)` from sender to `_to`
+    * @notice Withdraw `@tokenAmount(_token, _amount)` from `_from` to `_to`
     * @param _token ERC20 token to be withdrawn
+    * @param _from Address withdrawing the tokens from
     * @param _to Address of the recipient that will receive the tokens
     * @param _amount Amount of tokens to be withdrawn from the sender
     */
-    function withdraw(IERC20 _token, address _to, uint256 _amount) external {
-        _withdraw(_token, msg.sender, _to, _amount);
-    }
-
-    /**
-    * @notice Withdraw all the tokens from `_to` to themself
-    * @param _token ERC20 token to be withdrawn
-    * @param _to Address of the recipient that will receive their tokens
-    */
-    function withdrawAll(IERC20 _token, address _to) external {
-        IConfig config = _protocolConfig();
-        require(config.areWithdrawalsAllowedFor(_to), ERROR_WITHDRAWS_DISALLOWED);
-
-        uint256 amount = _balanceOf(_token, _to);
-        _withdraw(_token, _to, _to, amount);
+    function withdraw(IERC20 _token, address _from, address _to, uint256 _amount) external authenticateSender(_from) {
+        _withdraw(_token, _from, _to, _amount);
     }
 
     /**
@@ -97,6 +86,8 @@ contract ProtocolTreasury is ControlledRecoverable, ITreasury {
         balances[tokenAddress][_from] = balance - _amount;
         emit Withdraw(_token, _from, _to, _amount);
 
+        // No need to verify _token to be a contract as we are already requiring a positive balance
+        // on a token that is permissioned under the active DisputeManager
         require(_token.safeTransfer(_to, _amount), ERROR_WITHDRAW_FAILED);
     }
 

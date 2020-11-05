@@ -3,7 +3,7 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { buildHelper, DEFAULTS } = require('../helpers/wrappers/protocol')
 const { DISPUTE_MANAGER_EVENTS } = require('../helpers/utils/events')
-const { ARAGON_PROTOCOL_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
+const { DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const Arbitrable = artifacts.require('ArbitrableMock')
 const DisputeManager = artifacts.require('DisputeManager')
@@ -65,7 +65,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itCanBeDrafted()
         }
 
-        context('when the current term is the dispute creation term', async () => {
+        context('when the current term is the dispute creation term', () => {
           beforeEach('assert creation term', async () => {
             const currentTermId = await protocol.getCurrentTermId()
             const { createTermId } = await protocolHelper.getDispute(disputeId)
@@ -75,7 +75,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itClosesEvidencePeriod()
         })
 
-        context('when the current term is after the dispute creation but within the evidence period', async () => {
+        context('when the current term is after the dispute creation but within the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms.div(bn(2)))
             const currentTermId = await protocol.getCurrentTermId()
@@ -88,7 +88,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itClosesEvidencePeriod()
         })
 
-        context('when the current term is at the end of the evidence period', async () => {
+        context('when the current term is at the end of the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms)
             const currentTermId = await protocol.getCurrentTermId()
@@ -103,7 +103,7 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
           itCanBeDrafted()
         })
 
-        context('when the current term is after the evidence period', async () => {
+        context('when the current term is after the evidence period', () => {
           beforeEach('advance a few terms', async () => {
             await protocolHelper.passTerms(DEFAULTS.evidenceTerms.add(bn(1)))
             const currentTermId = await protocol.getCurrentTermId()
@@ -130,12 +130,13 @@ contract('DisputeManager', ([_, guardian500, guardian1000, guardian1500, fakeArb
 
     context('when the sender is not the arbitrable of the dispute', () => {
       it('reverts', async () => {
-        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), ARAGON_PROTOCOL_ERRORS.SENDER_NOT_DISPUTE_SUBJECT)
+        await assertRevert(protocol.submitEvidence(disputeId, guardian500, '0x', { from: fakeArbitrable }), DISPUTE_MANAGER_ERRORS.SUBJECT_NOT_DISPUTE_SUBJECT)
       })
     })
 
     context('when trying to call the disputes manager directly', () => {
       it('reverts', async () => {
+        await assertRevert(disputeManager.submitEvidence(arbitrable.address, disputeId, guardian500, '0x'), CONTROLLED_ERRORS.SENDER_NOT_CONTROLLER)
         await assertRevert(disputeManager.closeEvidencePeriod(arbitrable.address, disputeId), CONTROLLED_ERRORS.SENDER_NOT_CONTROLLER)
       })
     })

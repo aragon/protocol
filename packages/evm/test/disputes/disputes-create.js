@@ -57,7 +57,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
 
               const logs = decodeEvents(receipt, DisputeManager.abi, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
               assertAmountOfEvents({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE)
-              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, guardiansNumber: firstRoundGuardiansNumber, metadata } })
+              assertEvent({ logs }, DISPUTE_MANAGER_EVENTS.NEW_DISPUTE, { expectedArgs: { disputeId: 0, subject: arbitrable.address, draftTermId, metadata } })
 
               const { subject, possibleRulings: rulings, state, finalRuling, createTermId } = await protocolHelper.getDispute(0)
               assert.equal(subject, arbitrable.address, 'dispute subject does not match')
@@ -161,7 +161,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
     })
 
     context('when the sender is not an arbitrable', () => {
-      beforeEach('create dispute', async () => {
+      beforeEach('approve dispute fees', async () => {
         const { disputeFees } = await protocolHelper.getDisputeFees()
         await protocolHelper.mintFeeTokens(fakeArbitrable, disputeFees)
         await feeToken.approve(disputeManager.address, disputeFees, { from: fakeArbitrable })
@@ -178,8 +178,8 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         await protocol.createDispute(2, '0xabcd', { from: fakeArbitrable })
         const receipt = await protocol.submitEvidence(0, fakeArbitrable, '0x1234', { from: fakeArbitrable })
 
-        assertAmountOfEvents(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED)
-        assertEvent(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { expectedArgs: { disputeId: 0, submitter: fakeArbitrable, evidence: '0x1234' } })
+        assertAmountOfEvents(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { decodeForAbi: DisputeManager.abi })
+        assertEvent(receipt, ARBITRATOR_EVENTS.EVIDENCE_SUBMITTED, { decodeForAbi: DisputeManager.abi, expectedArgs: { disputeId: 0, submitter: fakeArbitrable, evidence: '0x1234' } })
       })
     })
 
@@ -191,7 +191,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
   })
 
   describe('getDispute', () => {
-    context('when the dispute exists', async () => {
+    context('when the dispute exists', () => {
       let currentTermId
       const possibleRulings = 2
       const metadata = '0xabcdef'
@@ -220,7 +220,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
   })
 
   describe('getRound', () => {
-    context('when the dispute exists', async () => {
+    context('when the dispute exists', () => {
       let draftTermId
       const possibleRulings = 2
       const metadata = '0xabcdef'
@@ -231,7 +231,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         await arbitrable.createDispute(possibleRulings, metadata)
       })
 
-      context('when the given round is valid', async () => {
+      context('when the given round is valid', () => {
         it('returns the requested round', async () => {
           const { draftTerm, delayedTerms, roundGuardiansNumber, selectedGuardians, guardianFees, settledPenalties, collectedTokens } = await protocolHelper.getRound(0, 0)
 
@@ -245,7 +245,7 @@ contract('DisputeManager', ([_, fakeArbitrable]) => {
         })
       })
 
-      context('when the given round is not valid', async () => {
+      context('when the given round is not valid', () => {
         it('reverts', async () => {
           await assertRevert(disputeManager.getRound(0, 1), DISPUTE_MANAGER_ERRORS.ROUND_DOES_NOT_EXIST)
         })

@@ -23,11 +23,12 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     string private constant ERROR_PROTOCOL_HAS_NOT_STARTED = "PB_PROTOCOL_HAS_NOT_STARTED";
     string private constant ERROR_NON_PAST_PERIOD = "PB_NON_PAST_PERIOD";
     string private constant ERROR_PERIOD_DURATION_ZERO = "PB_PERIOD_DURATION_ZERO";
-    string private constant ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED = "PB_PERIOD_BALANCE_DETAILS_NOT_COMPUTED";
+    string private constant ERROR_PERIOD_BALANCE_DETAILS_NOT_COMPUTED = "PB_PER_BAL_DETAILS_NOT_COMPUTED";
     string private constant ERROR_PAYMENT_AMOUNT_ZERO = "PB_PAYMENT_AMOUNT_ZERO";
     string private constant ERROR_ETH_DEPOSIT_TOKEN_MISMATCH = "PB_ETH_DEPOSIT_TOKEN_MISMATCH";
     string private constant ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH = "PB_ETH_DEPOSIT_AMOUNT_MISMATCH";
     string private constant ERROR_ETH_TRANSFER_FAILED = "PB_ETH_TRANSFER_FAILED";
+    string private constant ERROR_TOKEN_NOT_CONTRACT = "PB_TOKEN_NOT_CONTRACT";
     string private constant ERROR_TOKEN_DEPOSIT_FAILED = "PB_TOKEN_DEPOSIT_FAILED";
     string private constant ERROR_TOKEN_TRANSFER_FAILED = "PB_TOKEN_TRANSFER_FAILED";
     string private constant ERROR_GUARDIAN_SHARE_ALREADY_CLAIMED = "PB_GUARDIAN_SHARE_ALREADY_CLAIMED";
@@ -240,7 +241,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     * @param _periodId Identification number of the period being queried
     * @param _guardian Address of the guardian being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the guardian
+    * @return List of claimed status for each requested token
     */
     function hasGuardianClaimed(uint256 _periodId, address _guardian, address[] calldata _tokens)
         external
@@ -274,7 +275,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
     * @dev Tell if the governor has already claimed the owed share for a certain period
     * @param _periodId Identification number of the period being queried
     * @param _tokens List of token addresses to be queried
-    * @return List of status to tell whether the corresponding token was claimed by the governor
+    * @return List of claimed status for each requested token
     */
     function hasGovernorClaimed(uint256 _periodId, address[] calldata _tokens)
         external
@@ -339,6 +340,7 @@ contract PaymentsBook is IPaymentsBook, ControlledRecoverable, ControlledRelayab
             require(_token == address(0), ERROR_ETH_DEPOSIT_TOKEN_MISMATCH);
             require(msg.value == _amount, ERROR_ETH_DEPOSIT_AMOUNT_MISMATCH);
         } else {
+            require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
             require(IERC20(_token).safeTransferFrom(_from, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
         }
     }

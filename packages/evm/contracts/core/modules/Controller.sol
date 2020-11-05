@@ -6,6 +6,7 @@ import "./ModuleIds.sol";
 import "./IModulesLinker.sol";
 import "../clock/ProtocolClock.sol";
 import "../config/ProtocolConfig.sol";
+import "../../disputes/IDisputeManager.sol";
 
 
 contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
@@ -14,6 +15,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
     string private constant ERROR_MODULE_ALREADY_ENABLED = "CTR_MODULE_ALREADY_ENABLED";
     string private constant ERROR_MODULE_ALREADY_DISABLED = "CTR_MODULE_ALREADY_DISABLED";
+    string private constant ERROR_DISPUTE_MANAGER_NOT_ACTIVE = "CTR_DISPUTE_MANAGER_NOT_ACTIVE";
     string private constant ERROR_CUSTOM_FUNCTION_NOT_SET = "CTR_CUSTOM_FUNCTION_NOT_SET";
     string private constant ERROR_IMPLEMENTATION_NOT_CONTRACT = "CTR_IMPLEMENTATION_NOT_CONTRACT";
     string private constant ERROR_INVALID_IMPLS_INPUT_LENGTH = "CTR_INVALID_IMPLS_INPUT_LENGTH";
@@ -82,6 +84,14 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     */
     modifier onlyModulesGovernor {
         require(msg.sender == governor.modules, ERROR_SENDER_NOT_GOVERNOR);
+        _;
+    }
+
+    /**
+    * @dev Ensure the given dispute manager is active
+    */
+    modifier onlyActiveDisputeManager(IDisputeManager _disputeManager) {
+        require(!_isModuleDisabled(address(_disputeManager)), ERROR_DISPUTE_MANAGER_NOT_ACTIVE);
         _;
     }
 
@@ -287,19 +297,19 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @notice Set and link many modules at once
     * @param _newModuleIds List of IDs of the new modules to be set
     * @param _newModuleAddresses List of addresses of the new modules to be set
-    * @param _newModuleIdsToBeLinked List of IDs of the modules that will be linked in the new modules to be set
-    * @param _currentModulesToBeSynced List of the current modules to update their links based on the new modules set
+    * @param _newModuleLinks List of IDs of the modules that will be linked in the new modules being set
+    * @param _currentModulesToBeSynced List of addresses of current modules to be re-linked to the new modules being set
     */
     function setModules(
         bytes32[] calldata _newModuleIds,
         address[] calldata _newModuleAddresses,
-        bytes32[] calldata _newModuleIdsToBeLinked,
+        bytes32[] calldata _newModuleLinks,
         address[] calldata _currentModulesToBeSynced
     )
         external
         onlyModulesGovernor
     {
-        // We only care there about the modules to be set, links are optional
+        // We only care about the modules being set, links are optional
         require(_newModuleIds.length == _newModuleAddresses.length, ERROR_INVALID_IMPLS_INPUT_LENGTH);
 
         // First set the addresses of the new modules or the modules to be updated
@@ -307,21 +317,24 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
             _setModule(_newModuleIds[i], _newModuleAddresses[i]);
         }
 
-        // Then update the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
-        _linkModules(_newModuleAddresses, _newModuleIdsToBeLinked);
+        // Then sync the links of the new modules based on the list of IDs specified (ideally the IDs of their dependencies)
+        _syncModuleLinks(_newModuleAddresses, _newModuleLinks);
 
-        // Finally update the links of the already existing modules based on the list of IDs that have been set
-        _linkModules(_currentModulesToBeSynced, _newModuleIds);
+        // Finally sync the links of the existing modules to be synced to the new modules being set
+        _syncModuleLinks(_currentModulesToBeSynced, _newModuleIds);
     }
 
     /**
-    * @notice Sync modules for a list of modules IDs based on their current address
-    * @param _modulesToBeSynced List of modules addresses to be synced
-    * @param _idsToBeSet List of IDs of the modules to be linked
+    * @notice Sync modules for a list of modules IDs based on their current implementation address
+    * @param _modulesToBeSynced List of addresses of connected modules to be synced
+    * @param _idsToBeSet List of IDs of the modules included in the sync
     */
-    function linkModules(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet) external onlyModulesGovernor {
+    function syncModuleLinks(address[] calldata _modulesToBeSynced, bytes32[] calldata _idsToBeSet)
+        external
+        onlyModulesGovernor
+    {
         require(_idsToBeSet.length > 0 && _modulesToBeSynced.length > 0, ERROR_INVALID_IMPLS_INPUT_LENGTH);
-        _linkModules(_modulesToBeSynced, _idsToBeSet);
+        _syncModuleLinks(_modulesToBeSynced, _idsToBeSet);
     }
 
     /**
@@ -474,7 +487,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     /**
     * @dev Tell the current address and disable status of a module based on a given ID
     * @param _id ID of the module being queried
-    * @return addr information for the requested module
+    * @return addr Current address of the requested module
     * @return disabled Whether the module has been disabled
     */
     function getModule(bytes32 _id) external view returns (address addr, bool disabled) {
@@ -510,7 +523,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
 
     /**
     * @dev Tell the information for the current PaymentsBook module
-    * @return addr Current a of the PaymentsBook module
+    * @return addr Current address of the PaymentsBook module
     * @return disabled Whether the module has been disabled
     */
     function getPaymentsBook() external view returns (address addr, bool disabled) {
@@ -586,16 +599,16 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     }
 
     /**
-    * @dev Internal function to sync the modules for a list of modules IDs based on their current address
-    * @param _modulesToBeSynced List of modules addresses to be synced
+    * @dev Internal function to sync the modules for a list of modules IDs based on their current implementation address
+    * @param _modulesToBeSynced List of addresses of connected modules to be synced
     * @param _idsToBeSet List of IDs of the modules to be linked
     */
-    function _linkModules(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
+    function _syncModuleLinks(address[] memory _modulesToBeSynced, bytes32[] memory _idsToBeSet) internal {
         address[] memory addressesToBeSet = new address[](_idsToBeSet.length);
 
-        // Load the addresses of all the modules to be updated
+        // Load the addresses associated with the requested module ids
         for (uint256 i = 0; i < _idsToBeSet.length; i++) {
-            address moduleAddress = currentModules[_idsToBeSet[i]];
+            address moduleAddress = _getModuleAddress(_idsToBeSet[i]);
             Module storage module = allModules[moduleAddress];
             _ensureModuleExists(module);
             addressesToBeSet[i] = moduleAddress;
@@ -630,7 +643,25 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig {
     * @return disabled Whether the module has been disabled
     */
     function _getModule(bytes32 _id) internal view returns (address addr, bool disabled) {
-        addr = currentModules[_id];
-        disabled = allModules[addr].disabled;
+        addr = _getModuleAddress(_id);
+        disabled = _isModuleDisabled(addr);
+    }
+
+    /**
+    * @dev Tell the current address for a module by ID
+    * @param _id ID of the module being queried
+    * @return Current address of the requested module
+    */
+    function _getModuleAddress(bytes32 _id) internal view returns (address) {
+        return currentModules[_id];
+    }
+
+    /**
+    * @dev Tell whether a module is disabled
+    * @param _addr Address of the module being queried
+    * @return True if the module is disabled, false otherwise
+    */
+    function _isModuleDisabled(address _addr) internal view returns (bool) {
+        return allModules[_addr].disabled;
     }
 }

@@ -644,23 +644,23 @@ contract('HexSumTree', () => {
       await tree.init()
     })
 
-    context('when searching one value', async () => {
+    context('when searching one value', () => {
       const value = 15
       const searchValues = [value - 1]
 
-      context('when there was no value inserted in the tree', async () => {
+      context('when there was no value inserted in the tree', () => {
         it('reverts', async () => {
           await assertRevert(tree.search(searchValues, insertTime), TREE_ERRORS.SEARCH_OUT_OF_BOUNDS)
         })
       })
 
-      context('when there was one value inserted in the tree', async () => {
-        context('when there was a lower value', async () => {
+      context('when there was one value inserted in the tree', () => {
+        context('when there was a lower value', () => {
           beforeEach('insert value', async () => {
             await tree.insert(insertTime, value - 1)
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -668,7 +668,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('reverts', async () => {
@@ -677,12 +677,12 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when there was the same value', async () => {
+        context('when there was the same value', () => {
           beforeEach('insert value', async () => {
             await tree.insert(insertTime, value)
           })
 
-          context('when there is a value registered for a future time', async () => {
+          context('when there is a value registered for a future time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -690,7 +690,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('returns the first item', async () => {
@@ -704,7 +704,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for a past time', async () => {
+          context('when there is a value registered for a past time', () => {
             const searchTime = insertTime + 1
 
             it('returns the first item', async () => {
@@ -718,7 +718,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there past, current, and future registered values', async () => {
+          context('when there past, current, and future registered values', () => {
             const searchTime = insertTime + 1
 
             beforeEach('update item twice', async () => {
@@ -738,12 +738,12 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when there was a higher value', async () => {
+        context('when there was a higher value', () => {
           beforeEach('insert value', async () => {
             await tree.insert(insertTime, value + 1)
           })
 
-          context('when there is a value registered for a future time', async () => {
+          context('when there is a value registered for a future time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -751,7 +751,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('returns the first item', async () => {
@@ -765,7 +765,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for a past time', async () => {
+          context('when there is a value registered for a past time', () => {
             const searchTime = insertTime + 1
 
             it('returns the first item', async () => {
@@ -781,8 +781,8 @@ contract('HexSumTree', () => {
         })
       })
 
-      context('when there were many values inserted in the tree', async () => {
-        context('when the total does not reach the searched value', async () => {
+      context('when there were many values inserted in the tree', () => {
+        context('when the total does not reach the searched value', () => {
           const insertedItems = [3, 4, 2, 1, 2]
 
           beforeEach('insert values', async () => {
@@ -793,7 +793,7 @@ contract('HexSumTree', () => {
             assert.isAbove(value, (await tree.totalAt(insertTime)).toNumber(), 'tree total does not match')
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -801,7 +801,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('reverts', async () => {
@@ -810,7 +810,7 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when the total is equal to the searched value', async () => {
+        context('when the total is equal to the searched value', () => {
           const insertedItems = [3, 4, 2, 1, 2, 3]
 
           beforeEach('insert values', async () => {
@@ -821,7 +821,7 @@ contract('HexSumTree', () => {
             assertBn((await tree.totalAt(insertTime)), value, 'tree total does not match')
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -829,7 +829,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('returns the last item', async () => {
@@ -844,7 +844,7 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when the total is greater than the searched value', async () => {
+        context('when the total is greater than the searched value', () => {
           const insertedItems = [3, 4, 2, 1, 2, 4, 5, 8, 1]
 
           beforeEach('insert values', async () => {
@@ -855,7 +855,7 @@ contract('HexSumTree', () => {
             assert.isAtMost(value, (await tree.totalAt(insertTime)).toNumber(), 'tree total does not match')
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -863,7 +863,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('returns the last item', async () => {
@@ -881,7 +881,7 @@ contract('HexSumTree', () => {
     })
 
     context('when searching many values', () => {
-      context('without checkpointing', async () => {
+      context('without checkpointing', () => {
         context('when all values are included in the tree', () => {
           const searchValues = [0, 4, 7, 17, 21]
           const insertedItems = [2, 1, 4, 1, 8, 6, 7, 1] // total 30
@@ -894,7 +894,7 @@ contract('HexSumTree', () => {
             assert.isAtMost(searchValues[searchValues.length - 1], (await tree.totalAt(insertTime)).toNumber(), 'tree total does not match')
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -902,7 +902,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('returns the expected items', async () => {
@@ -939,7 +939,7 @@ contract('HexSumTree', () => {
             }
           })
 
-          context('when there is no value registered for the given time', async () => {
+          context('when there is no value registered for the given time', () => {
             const searchTime = insertTime - 1
 
             it('reverts', async () => {
@@ -947,7 +947,7 @@ contract('HexSumTree', () => {
             })
           })
 
-          context('when there is a value registered for the given time', async () => {
+          context('when there is a value registered for the given time', () => {
             const searchTime = insertTime
 
             it('reverts', async () => {
@@ -957,7 +957,7 @@ contract('HexSumTree', () => {
         })
       })
 
-      context('with checkpointing', async () => {
+      context('with checkpointing', () => {
         const initialValue = 10
         const updateTimes = 100
 
@@ -990,7 +990,7 @@ contract('HexSumTree', () => {
           }
         }
 
-        context('when updating the first node many times', async () => {
+        context('when updating the first node many times', () => {
           const key = 0
 
           it('handles historic searches properly', async () => {
@@ -999,7 +999,7 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when updating a middle node many times', async () => {
+        context('when updating a middle node many times', () => {
           const key = 50
 
           it('handles historic searches properly', async () => {
@@ -1008,7 +1008,7 @@ contract('HexSumTree', () => {
           })
         })
 
-        context('when updating the last node many times', async () => {
+        context('when updating the last node many times', () => {
           const key = 199
 
           it('handles historic searches properly', async () => {

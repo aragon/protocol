@@ -5,14 +5,6 @@ import "../lib/standards/IERC20.sol";
 
 interface IArbitrator {
     /**
-    * @dev Emitted when new evidence is submitted for a dispute
-    * @param disputeId Identification number of the dispute receiving new evidence
-    * @param submitter Address of the account submitting the evidence
-    * @param evidence Data submitted for the evidence of the dispute
-    */
-    event EvidenceSubmitted(uint256 indexed disputeId, address indexed submitter, bytes evidence);
-
-    /**
     * @dev Create a dispute over the Arbitrable sender with a number of possible rulings
     * @param _possibleRulings Number of possible rulings allowed for the dispute
     * @param _metadata Optional metadata that can be used to provide additional information on the dispute to be created

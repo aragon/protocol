@@ -52,7 +52,7 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     /**
     * @dev Ensure the msg.sender is an active DisputeManager module
     */
-    modifier onlyActiveDisputeManagers() {
+    modifier onlyActiveDisputeManager() {
         require(controller.isActive(MODULE_ID_DISPUTE_MANAGER, msg.sender), ERROR_SENDER_NOT_ACTIVE_DISPUTE_MANAGER);
         _;
     }
@@ -86,6 +86,7 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
 
     /**
     * @notice Update the implementation links of a list of modules
+    * @dev The controller is expected to ensure the given addresses are correct modules
     * @param _ids List of IDs of the modules to be updated
     * @param _addresses List of module addresses to be updated
     */

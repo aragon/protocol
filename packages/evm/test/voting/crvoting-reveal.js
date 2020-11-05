@@ -167,23 +167,23 @@ contract('CRVoting reveal', ([_, voter, someone]) => {
           })
         }
 
-        context('when the given voter committed a valid outcome', async () => {
+        context('when the given voter committed a valid outcome', () => {
           itHandlesValidRevealedVotesFor(OUTCOMES.LOW)
         })
 
-        context('when the given voter committed a refused outcome', async () => {
+        context('when the given voter committed a refused outcome', () => {
           itHandlesValidRevealedVotesFor(OUTCOMES.REFUSED)
         })
 
-        context('when the given voter committed a missing outcome', async () => {
+        context('when the given voter committed a missing outcome', () => {
           itHandlesInvalidOutcomeRevealedVotesFor(OUTCOMES.MISSING)
         })
 
-        context('when the given voter committed a leaked outcome', async () => {
+        context('when the given voter committed a leaked outcome', () => {
           itHandlesInvalidOutcomeRevealedVotesFor(OUTCOMES.LEAKED)
         })
 
-        context('when the given voter committed an out-of-bounds outcome', async () => {
+        context('when the given voter committed an out-of-bounds outcome', () => {
           itHandlesInvalidOutcomeRevealedVotesFor(OUTCOMES.HIGH.add(bn(1)))
         })
       })
