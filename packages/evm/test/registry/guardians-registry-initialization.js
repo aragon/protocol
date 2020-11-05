@@ -22,9 +22,12 @@ contract('GuardiansRegistry', ([_, something]) => {
       it('sets initial config correctly', async () => {
         const registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
 
+        assert.equal(await registry.name(), 'Protocol Staked Aragon Network Token', 'registry "ERC20-lite" name does not match')
+        assert.equal(await registry.symbol(), 'sANT', 'registry "ERC20-lite" symbol does not match')
+        assert.equal(await registry.decimals(), 18, 'registry "ERC20-lite" decimals does not match')
         assert.equal(await registry.controller(), controller.address, 'registry controller does not match')
-        assert.equal(await registry.token(), ANT.address, 'token address does not match')
-        assertBn((await registry.totalGuardiansActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
+        assert.equal(await registry.guardiansToken(), ANT.address, 'guardian token address does not match')
+        assertBn((await registry.totalActiveBalanceLimit()), TOTAL_ACTIVE_BALANCE_LIMIT, 'total active balance limit does not match')
       })
     })
 

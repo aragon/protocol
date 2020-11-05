@@ -49,6 +49,11 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     // Maximum number of sortition iterations allowed per draft call
     uint256 internal constant MAX_DRAFT_ITERATIONS = 10;
 
+    // "ERC20-lite" interface to provide help for tooling
+    string public constant name = "Protocol Staked Aragon Network Token";
+    string public constant symbol = "sANT";
+    uint8 public constant decimals = 18;
+
     /**
     * @dev Guardians have three kind of balances, these are:
     *      - active: tokens activated for the Protocol that can be locked in case the guardian is drafted
@@ -106,10 +111,10 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     // Maximum amount of total active balance that can be held in the registry
-    uint256 internal totalActiveBalanceLimit;
+    uint256 public totalActiveBalanceLimit;
 
     // Guardian ERC20 token
-    IERC20 internal guardiansToken;
+    IERC20 public guardiansToken;
 
     // Mapping of guardian data indexed by address
     mapping (address => Guardian) internal guardiansByAddress;
@@ -474,18 +479,10 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev ERC900 - Tell the address of the token used for staking
-    * @return Address of the token used for staking
+    * @dev Tell the total supply of guardian tokens staked
+    * @return Supply of guardian tokens staked
     */
-    function token() external view returns (address) {
-        return address(guardiansToken);
-    }
-
-    /**
-    * @dev ERC900 - Tell the total amount of guardian tokens held by the registry contract
-    * @return Amount of guardian tokens held by the registry contract
-    */
-    function totalStaked() external view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return guardiansToken.balanceOf(address(this));
     }
 
@@ -498,8 +495,8 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev Tell the total amount of active guardian tokens at the given term id
-    * @param _termId Term ID querying the total active balance for
+    * @dev Tell the total amount of active guardian tokens for a given term id
+    * @param _termId Term ID to query on
     * @return Total amount of active guardian tokens at the given term id
     */
     function totalActiveBalanceAt(uint64 _termId) external view returns (uint256) {
@@ -507,41 +504,41 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev ERC900 - Tell the total amount of tokens of guardian. This includes the active balance, the available
-    *      balances, and the pending balance for deactivation. Note that we don't have to include the locked
-    *      balances since these represent the amount of active tokens that are locked for drafts, i.e. these
-    *      are included in the active balance of the guardian.
-    * @param _guardian Address of the guardian querying the total amount of tokens staked of
+    * @dev Tell the total balance of tokens held by a guardian
+    *      This includes the active balance, the available balances, and the pending balance for deactivation.
+    *      Note that we don't have to include the locked balances since these represent the amount of active tokens
+    *      that are locked for drafts, i.e. these are already included in the active balance of the guardian.
+    * @param _guardian Address of the guardian querying the balance of
     * @return Total amount of tokens of a guardian
     */
-    function totalStakedFor(address _guardian) external view returns (uint256) {
-        return _totalStakedFor(_guardian);
-    }
-
-    /**
-    * @dev Tell the balance information of a guardian
-    * @param _guardian Address of the guardian querying the balance information of
-    * @return active Amount of active tokens of a guardian
-    * @return available Amount of available tokens of a guardian
-    * @return locked Amount of active tokens that are locked due to ongoing disputes
-    * @return pendingDeactivation Amount of active tokens that were requested for deactivation
-    */
-    function balanceOf(address _guardian) external view
-        returns (uint256 active, uint256 available, uint256 locked, uint256 pendingDeactivation)
-    {
+    function balanceOf(address _guardian) external view returns (uint256) {
         return _balanceOf(_guardian);
     }
 
     /**
-    * @dev Tell the balance information of a guardian, fecthing tree one at a given term
-    * @param _guardian Address of the guardian querying the balance information of
-    * @param _termId Term ID querying the active balance for
+    * @dev Tell the detailed balance information of a guardian
+    * @param _guardian Address of the guardian querying the detailed balance information of
     * @return active Amount of active tokens of a guardian
     * @return available Amount of available tokens of a guardian
     * @return locked Amount of active tokens that are locked due to ongoing disputes
     * @return pendingDeactivation Amount of active tokens that were requested for deactivation
     */
-    function balanceOfAt(address _guardian, uint64 _termId) external view
+    function detailedBalanceOf(address _guardian) external view
+        returns (uint256 active, uint256 available, uint256 locked, uint256 pendingDeactivation)
+    {
+        return _detailedBalanceOf(_guardian);
+    }
+
+    /**
+    * @dev Tell the detailed balance information of a guardian, fecthing for a given term id
+    * @param _guardian Address of the guardian querying the detailed balance information of
+    * @param _termId Term ID to query on
+    * @return active Amount of active tokens of a guardian
+    * @return available Amount of available tokens of a guardian
+    * @return locked Amount of active tokens that are locked due to ongoing disputes
+    * @return pendingDeactivation Amount of active tokens that were requested for deactivation
+    */
+    function detailedBalanceOfAt(address _guardian, uint64 _termId) external view
         returns (uint256 active, uint256 available, uint256 locked, uint256 pendingDeactivation)
     {
         Guardian storage guardian = guardiansByAddress[_guardian];
@@ -553,7 +550,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     /**
     * @dev Tell the active balance of a guardian for a given term id
     * @param _guardian Address of the guardian querying the active balance of
-    * @param _termId Term ID querying the active balance for
+    * @param _termId Term ID to query on
     * @return Amount of active tokens for guardian in the requested past term id
     */
     function activeBalanceOfAt(address _guardian, uint64 _termId) external view returns (uint256) {
@@ -628,14 +625,6 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     */
     function isLockManagerWhitelisted(address _lockManager) external view returns (bool) {
         return _isLockManagerWhitelisted(_lockManager);
-    }
-
-    /**
-    * @dev Tell the maximum amount of total active balance that can be held in the registry
-    * @return Maximum amount of total active balance that can be held in the registry
-    */
-    function totalGuardiansActiveBalanceLimit() external view returns (uint256) {
-        return totalActiveBalanceLimit;
     }
 
     /**
@@ -798,7 +787,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         require(_amount > 0, ERROR_INVALID_ZERO_AMOUNT);
         _updateAvailableBalanceOf(_guardian, _amount, true);
 
-        emit Staked(_guardian, _amount, _totalStakedFor(_guardian));
+        emit Staked(_guardian, _amount, _balanceOf(_guardian));
         require(guardiansToken.safeTransferFrom(msg.sender, address(this), _amount), ERROR_TOKEN_TRANSFER_FAILED);
     }
 
@@ -823,7 +812,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
         _processDeactivationRequest(_guardian, lastEnsuredTermId);
 
         _updateAvailableBalanceOf(_guardian, _amount, false);
-        emit Unstaked(_guardian, _amount, _totalStakedFor(_guardian));
+        emit Unstaked(_guardian, _amount, _balanceOf(_guardian));
         require(guardiansToken.safeTransfer(_guardian, _amount), ERROR_TOKEN_TRANSFER_FAILED);
     }
 
@@ -862,24 +851,24 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable, Control
     }
 
     /**
-    * @dev Internal function to tell the total amount of tokens of guardian
-    * @param _guardian Address of the guardian querying the total amount of tokens staked of
+    * @dev Internal function to tell the total balance of tokens held by a guardian
+    * @param _guardian Address of the guardian querying the total balance of
     * @return Total amount of tokens of a guardian
     */
-    function _totalStakedFor(address _guardian) internal view returns (uint256) {
-        (uint256 active, uint256 available, , uint256 pendingDeactivation) = _balanceOf(_guardian);
+    function _balanceOf(address _guardian) internal view returns (uint256) {
+        (uint256 active, uint256 available, , uint256 pendingDeactivation) = _detailedBalanceOf(_guardian);
         return available.add(active).add(pendingDeactivation);
     }
 
     /**
-    * @dev Internal function to tell the balance information of a guardian
+    * @dev Internal function to tell the detailed balance information of a guardian
     * @param _guardian Address of the guardian querying the balance information of
     * @return active Amount of active tokens of a guardian
     * @return available Amount of available tokens of a guardian
     * @return locked Amount of active tokens that are locked due to ongoing disputes
     * @return pendingDeactivation Amount of active tokens that were requested for deactivation
     */
-    function _balanceOf(address _guardian) internal view
+    function _detailedBalanceOf(address _guardian) internal view
         returns (uint256 active, uint256 available, uint256 locked, uint256 pendingDeactivation)
     {
         Guardian storage guardian = guardiansByAddress[_guardian];

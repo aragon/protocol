@@ -26,10 +26,10 @@ contract LockManagerMock is ILockManager {
 
     function activateAndLock(address _guardian, uint256 _amount) external {
         GuardiansRegistry registry = guardiansRegistry;
-        address token = registry.token();
+        IERC20 token = registry.guardiansToken();
 
-        require(IERC20(token).transferFrom(_guardian, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
-        require(IERC20(token).approve(address(registry), _amount), ERROR_TOKEN_APPROVAL_FAILED);
+        require(token.transferFrom(_guardian, address(this), _amount), ERROR_TOKEN_DEPOSIT_FAILED);
+        require(token.approve(address(registry), _amount), ERROR_TOKEN_APPROVAL_FAILED);
 
         registry.stakeAndActivate(_guardian, _amount);
         registry.lockActivation(_guardian, address(this), _amount);

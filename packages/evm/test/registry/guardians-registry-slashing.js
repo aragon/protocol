@@ -86,15 +86,15 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
           })
 
           it('does not affect the balances of the guardians', async () => {
-            const previousFirstGuardianBalances = await registry.balanceOf(guardian)
-            const previousSecondGuardianBalances = await registry.balanceOf(secondGuardian)
-            const previousThirdGuardianBalances = await registry.balanceOf(thirdGuardian)
+            const previousFirstGuardianBalances = await registry.detailedBalanceOf(guardian)
+            const previousSecondGuardianBalances = await registry.detailedBalanceOf(secondGuardian)
+            const previousThirdGuardianBalances = await registry.detailedBalanceOf(thirdGuardian)
 
             await disputeManager.slashOrUnlock(guardians, lockedAmounts, rewardedGuardians)
 
-            const currentGuardianBalances = await registry.balanceOf(guardian)
-            const currentSecondGuardianBalances = await registry.balanceOf(secondGuardian)
-            const currentThirdGuardianBalances = await registry.balanceOf(thirdGuardian)
+            const currentGuardianBalances = await registry.detailedBalanceOf(guardian)
+            const currentSecondGuardianBalances = await registry.detailedBalanceOf(secondGuardian)
+            const currentThirdGuardianBalances = await registry.detailedBalanceOf(thirdGuardian)
 
             for (let i = 0; i < currentGuardianBalances.length; i++) {
               assertBn(previousFirstGuardianBalances[i], currentGuardianBalances[i], `first guardian balance #${i} does not match`)
@@ -132,11 +132,22 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
             })
 
             it('unlocks balances of the rewarded guardians', async () => {
-              const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(secondGuardian)
+              const {
+                active: previousActiveBalance,
+                available: previousAvailableBalance,
+                locked: previousLockedBalance,
+                pendingDeactivation: previousDeactivationBalance
+              } = await registry.detailedBalanceOf(secondGuardian)
 
               await disputeManager.slashOrUnlock(guardians, lockedAmounts, rewardedGuardians)
 
-              const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(secondGuardian)
+              const {
+                active: currentActiveBalance,
+                available: currentAvailableBalance,
+                locked: currentLockedBalance,
+                pendingDeactivation: currentDeactivationBalance
+              } = await registry.detailedBalanceOf(secondGuardian)
+
               assertBn(previousLockedBalance.sub(DRAFT_LOCK_AMOUNT), currentLockedBalance, 'rewarded guardian locked balance does not match')
               assertBn(previousActiveBalance, currentActiveBalance, 'rewarded guardian active balance does not match')
               assertBn(previousAvailableBalance, currentAvailableBalance, 'rewarded guardian available balance does not match')
@@ -144,18 +155,40 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
             })
 
             it('slashes the active balances of the not rewarded guardians', async () => {
-              const { active: firstGuardianPreviousActiveBalance, available: firstGuardianPreviousAvailableBalance, locked: firstGuardianPreviousLockedBalance, pendingDeactivation: firstGuardianPreviousDeactivationBalance } = await registry.balanceOf(guardian)
-              const { active: thirdGuardianPreviousActiveBalance, available: thirdGuardianPreviousAvailableBalance, locked: thirdGuardianPreviousLockedBalance, pendingDeactivation: thirdGuardianPreviousDeactivationBalance } = await registry.balanceOf(thirdGuardian)
+              const {
+                active: firstGuardianPreviousActiveBalance,
+                available: firstGuardianPreviousAvailableBalance,
+                locked: firstGuardianPreviousLockedBalance,
+                pendingDeactivation: firstGuardianPreviousDeactivationBalance
+              } = await registry.detailedBalanceOf(guardian)
+
+              const {
+                active: thirdGuardianPreviousActiveBalance,
+                available: thirdGuardianPreviousAvailableBalance,
+                locked: thirdGuardianPreviousLockedBalance,
+                pendingDeactivation:
+                thirdGuardianPreviousDeactivationBalance
+              } = await registry.detailedBalanceOf(thirdGuardian)
 
               await disputeManager.slashOrUnlock(guardians, lockedAmounts, rewardedGuardians)
 
-              const { active: firstGuardianCurrentActiveBalance, available: firstGuardianCurrentAvailableBalance, locked: firstGuardianCurrentLockedBalance, pendingDeactivation: firstGuardianCurrentDeactivationBalance } = await registry.balanceOf(guardian)
+              const {
+                active: firstGuardianCurrentActiveBalance,
+                available: firstGuardianCurrentAvailableBalance,
+                locked: firstGuardianCurrentLockedBalance,
+                pendingDeactivation: firstGuardianCurrentDeactivationBalance
+              } = await registry.detailedBalanceOf(guardian)
               assertBn(firstGuardianPreviousLockedBalance.sub(DRAFT_LOCK_AMOUNT.mul(bn(3))), firstGuardianCurrentLockedBalance, 'first slashed guardian locked balance does not match')
               assertBn(firstGuardianPreviousActiveBalance.sub(DRAFT_LOCK_AMOUNT.mul(bn(3))), firstGuardianCurrentActiveBalance, 'first slashed guardian active balance does not match')
               assertBn(firstGuardianPreviousAvailableBalance, firstGuardianCurrentAvailableBalance, 'first slashed guardian available balance does not match')
               assertBn(firstGuardianPreviousDeactivationBalance, firstGuardianCurrentDeactivationBalance, 'first slashed guardian deactivation balance does not match')
 
-              const { active: thirdGuardianCurrentActiveBalance, available: thirdGuardianCurrentAvailableBalance, locked: thirdGuardianCurrentLockedBalance, pendingDeactivation: thirdGuardianCurrentDeactivationBalance } = await registry.balanceOf(thirdGuardian)
+              const {
+                active: thirdGuardianCurrentActiveBalance,
+                available: thirdGuardianCurrentAvailableBalance,
+                locked: thirdGuardianCurrentLockedBalance,
+                pendingDeactivation: thirdGuardianCurrentDeactivationBalance
+              } = await registry.detailedBalanceOf(thirdGuardian)
               assertBn(thirdGuardianPreviousLockedBalance.sub(DRAFT_LOCK_AMOUNT.mul(bn(6))), thirdGuardianCurrentLockedBalance, 'second slashed guardian locked balance does not match')
               assertBn(thirdGuardianPreviousActiveBalance.sub(DRAFT_LOCK_AMOUNT.mul(bn(6))), thirdGuardianCurrentActiveBalance, 'second slashed guardian active balance does not match')
               assertBn(thirdGuardianPreviousAvailableBalance, thirdGuardianCurrentAvailableBalance, 'second slashed guardian available balance does not match')
@@ -230,14 +263,24 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         })
 
         it('decreases the active balance of the guardian', async () => {
-          const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(guardian)
+          const {
+            active: previousActiveBalance,
+            available: previousAvailableBalance,
+            locked: previousLockedBalance,
+            pendingDeactivation: previousDeactivationBalance
+          } = await registry.detailedBalanceOf(guardian)
 
           await disputeManager.collect(guardian, amount)
 
-          const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(guardian)
+          const {
+            active: currentActiveBalance,
+            available: currentAvailableBalance,
+            locked: currentLockedBalance,
+            pendingDeactivation: currentDeactivationBalance
+          } = await registry.detailedBalanceOf(guardian)
+
           assertBn(previousDeactivationBalance.sub(deactivationReduced), currentDeactivationBalance, 'deactivation balances do not match')
           assertBn(previousActiveBalance.sub(amount).add(deactivationReduced), currentActiveBalance, 'active balances do not match')
-
           assertBn(previousLockedBalance, currentLockedBalance, 'locked balances do not match')
           assertBn(previousAvailableBalance, currentAvailableBalance, 'available balances do not match')
         })
@@ -271,27 +314,27 @@ contract('GuardiansRegistry', ([_, guardian, secondGuardian, thirdGuardian, anyo
         })
 
         it('decreases the staked balance of the guardian', async () => {
-          const previousTotalStake = await registry.totalStaked()
-          const previousGuardianStake = await registry.totalStakedFor(guardian)
+          const previousTotalSupplyStaked = await registry.totalSupply()
+          const previousGuardianBalance = await registry.balanceOf(guardian)
 
           await disputeManager.collect(guardian, amount)
 
-          const currentTotalStake = await registry.totalStaked()
-          assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
+          const currentTotalSupplyStaked = await registry.totalSupply()
+          assertBn(previousTotalSupplyStaked, currentTotalSupplyStaked, 'total staked supplies do not match')
 
-          const currentGuardianStake = await registry.totalStakedFor(guardian)
-          assertBn(previousGuardianStake.sub(amount), currentGuardianStake, 'guardian stake amounts do not match')
+          const currentGuardianBalance = await registry.balanceOf(guardian)
+          assertBn(previousGuardianBalance.sub(amount), currentGuardianBalance, 'staked guardian balances do not match')
         })
 
         const addBalances  = (balances) => balances.available.add(balances.active).add(balances.locked).add(balances.pendingDeactivation)
 
         it('keeps total balances consistent', async () => {
-          const previousBalances = await registry.balanceOf(guardian)
+          const previousBalances = await registry.detailedBalanceOf(guardian)
           const previousTotalBalance = addBalances(previousBalances)
 
           await disputeManager.collect(guardian, amount)
 
-          const currentBalances = await registry.balanceOf(guardian)
+          const currentBalances = await registry.detailedBalanceOf(guardian)
           const currentTotalBalance = addBalances(currentBalances)
           assertBn(previousTotalBalance, currentTotalBalance.add(amount), 'total balances do not match')
         })

@@ -30,7 +30,12 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
   const itHandlesZeroTokenAssignmentsProperly = (assignmentCall, recipient) => {
     it('does not affect any of the balances', async () => {
       const previousUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
-      const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+      const {
+        active: previousActiveBalance,
+        available: previousAvailableBalance,
+        locked: previousLockedBalance,
+        pendingDeactivation: previousDeactivationBalance
+      } = await registry.detailedBalanceOf(recipient)
 
       await assignmentCall()
 
@@ -38,24 +43,30 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
       const currentUnlockedActiveBalance = await registry.unlockedActiveBalanceOf(recipient)
       assertBn(previousUnlockedActiveBalance, currentUnlockedActiveBalance, 'unlocked balances do not match')
 
-      const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
+      const {
+        active: currentActiveBalance,
+        available: currentAvailableBalance,
+        locked: currentLockedBalance,
+        pendingDeactivation: currentDeactivationBalance
+      } = await registry.detailedBalanceOf(recipient)
+
       assertBn(previousLockedBalance, currentLockedBalance, 'locked balances do not match')
       assertBn(previousActiveBalance, currentActiveBalance, 'active balances do not match')
       assertBn(previousAvailableBalance, currentAvailableBalance, 'available balances do not match')
       assertBn(previousDeactivationBalance, currentDeactivationBalance, 'deactivation balances do not match')
     })
 
-    it('does not affect the staked balance', async () => {
-      const previousTotalStake = await registry.totalStaked()
-      const previousGuardianStake = await registry.totalStakedFor(recipient)
+    it('does not affect the staked registry balances', async () => {
+      const previousTotalSupplyStaked = await registry.totalSupply()
+      const previousGuardianBalance = await registry.balanceOf(recipient)
 
       await assignmentCall()
 
-      const currentTotalStake = await registry.totalStaked()
-      assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
+      const currentTotalSupplyStaked = await registry.totalSupply()
+      assertBn(previousTotalSupplyStaked, currentTotalSupplyStaked, 'total staked supplies do not match')
 
-      const currentGuardianStake = await registry.totalStakedFor(recipient)
-      assertBn(previousGuardianStake, currentGuardianStake, 'recipient stake amounts do not match')
+      const currentGuardianBalance = await registry.balanceOf(recipient)
+      assertBn(previousGuardianBalance, currentGuardianBalance, 'recipient staked balances do not match')
     })
 
     it('does not affect the token balances', async () => {
@@ -81,13 +92,23 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
 
   const itHandlesTokenAssignmentsProperly = (assignmentCall, recipient, amount) => {
     it('adds the given amount to the available balance', async () => {
-      const { active: previousActiveBalance, available: previousAvailableBalance, locked: previousLockedBalance, pendingDeactivation: previousDeactivationBalance } = await registry.balanceOf(recipient)
+      const {
+        active: previousActiveBalance,
+        available: previousAvailableBalance,
+        locked: previousLockedBalance,
+        pendingDeactivation: previousDeactivationBalance
+      } = await registry.detailedBalanceOf(recipient)
 
       await assignmentCall()
 
-      const { active: currentActiveBalance, available: currentAvailableBalance, locked: currentLockedBalance, pendingDeactivation: currentDeactivationBalance } = await registry.balanceOf(recipient)
-      assertBn(previousAvailableBalance.add(amount), currentAvailableBalance, 'available balances do not match')
+      const {
+        active: currentActiveBalance,
+        available: currentAvailableBalance,
+        locked: currentLockedBalance,
+        pendingDeactivation: currentDeactivationBalance
+      } = await registry.detailedBalanceOf(recipient)
 
+      assertBn(previousAvailableBalance.add(amount), currentAvailableBalance, 'available balances do not match')
       assertBn(previousLockedBalance, currentLockedBalance, 'locked balances do not match')
       assertBn(previousActiveBalance, currentActiveBalance, 'active balances do not match')
       assertBn(previousDeactivationBalance, currentDeactivationBalance, 'deactivation balances do not match')
@@ -103,17 +124,17 @@ contract('GuardiansRegistry', ([_, guardian, someone]) => {
       assertBn(previousUnlockedActiveBalance, currentUnlockedActiveBalance, 'unlocked balances do not match')
     })
 
-    it('increments the staked balance for the recipient', async () => {
-      const previousTotalStake = await registry.totalStaked()
-      const previousGuardianStake = await registry.totalStakedFor(recipient)
+    it('increments the staked registry balance for the recipient', async () => {
+      const previousTotalSupplyStaked = await registry.totalSupply()
+      const previousGuardianBalance = await registry.balanceOf(recipient)
 
       await assignmentCall()
 
-      const currentTotalStake = await registry.totalStaked()
-      assertBn(previousTotalStake, currentTotalStake, 'total stake amounts do not match')
+      const currentTotalSupplyStaked = await registry.totalSupply()
+      assertBn(previousTotalSupplyStaked, currentTotalSupplyStaked, 'total staked supplies do not match')
 
-      const currentGuardianStake = await registry.totalStakedFor(recipient)
-      assertBn(previousGuardianStake.add(amount), currentGuardianStake, 'recipient stake amounts do not match')
+      const currentGuardianBalance = await registry.balanceOf(recipient)
+      assertBn(previousGuardianBalance.add(amount), currentGuardianBalance, 'recipient staked balances do not match')
     })
 
     it('does not affect the token balances', async () => {

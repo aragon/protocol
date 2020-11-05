@@ -131,17 +131,17 @@ The following events are emitted by the `GuardiansRegistry`:
 
 The following functions are state getters provided by the `GuardiansRegistry`:
 
-#### 6.4.2.1. Token
+#### 6.4.2.1. Guardian token
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Guardian token:** Address of the guardian token
 
-#### 6.4.2.2. Total staked
+#### 6.4.2.2. Total supply
 - **Inputs:** None
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Total amount of guardian tokens held by the registry contract
+    - **Amount:** Total supply of guardian tokens staked
 
 #### 6.4.2.3. Total active balance
 - **Inputs:** None
@@ -151,21 +151,21 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 
 #### 6.4.2.4. Total active balance at
 - **Inputs:**
-    - **Term ID:** Identification number of the term querying the total active balance of
+    - **Term ID:** Identification number of the term to query on
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Amount:** Total amount of active guardian tokens at the given term ID
 
-#### 6.4.2.5. Total staked for
+#### 6.4.2.5. Balance of
 - **Inputs:**
-    - **Guardian:** Address of the guardian querying the total amount staked of
+    - **Guardian:** Address of the guardian querying the staked balance of
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Total amount of tokens of a guardian
+    - **Amount:** Total balance of tokens held by a guardian
 
-#### 6.4.2.6. Balance of
+#### 6.4.2.6. Detailed balance of
 - **Inputs:**
-    - **Guardian:** Address of the guardian querying the balance information of
+    - **Guardian:** Address of the guardian querying the detailed balance information of
 - **Pre-flight checks:** None
 - **Outputs:**
     - **Active:** Amount of active tokens of a guardian
@@ -173,13 +173,13 @@ The following functions are state getters provided by the `GuardiansRegistry`:
     - **Locked:** Amount of active tokens that are locked due to ongoing disputes
     - **Pending deactivation:** Amount of active tokens that were requested for deactivation
 
-#### 6.4.2.7. Balance of at
+#### 6.4.2.7. Detailed balance of at
 - **Inputs:**
-    - **Guardian:** Address of the guardian querying the balance information of
-    - **Term ID:** Identification number of the term querying the balance information of the given guardian
+    - **Guardian:** Address of the guardian querying the detailed balance information of
+    - **Term ID:** Identification number of the term to query on
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Active:** Amount of active tokens of a guardian at the requested term
+    - **Active:** Amount of active tokens of a guardian
     - **Available:** Amount of available tokens of a guardian
     - **Locked:** Amount of active tokens that are locked due to ongoing disputes
     - **Pending deactivation:** Amount of active tokens that were requested for deactivation
@@ -187,10 +187,10 @@ The following functions are state getters provided by the `GuardiansRegistry`:
 #### 6.4.2.8. Active balance of at
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the active balance of
-    - **Term ID:** Identification number of the term querying the total active balance of the given guardian
+    - **Term ID:** Identification number of the term to query on
 - **Pre-flight checks:** None
 - **Outputs:**
-    - **Amount:** Amount of active tokens for guardian in the requested term ID
+    - **Amount:** Amount of active tokens for guardian
 
 #### 6.4.2.9. Unlocked active balance of
 - **Inputs:**
