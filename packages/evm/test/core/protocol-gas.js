@@ -78,7 +78,7 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
         await protocol.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
       })
 
-      itCostsAtMost('draft', 388e3, () => disputeManager.draft(disputeId))
+      itCostsAtMost('draft', 389e3, () => disputeManager.draft(disputeId))
     })
 
     describe('commit', () => {
