@@ -294,8 +294,8 @@ contract('DisputeManager', ([_, drafter, appealMaker, appealTaker, guardian500, 
                     assertBn(actualWeight, weight, 'guardian weight should not have changed')
 
                     const { available } = await protocolHelper.guardiansRegistry.detailedBalanceOf(address)
-                    const expectedANJReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
-                    const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedANJReward)
+                    const expectedTokenReward = expectedCollectedTokens.mul(bn(weight)).div(bn(expectedCoherentGuardians))
+                    const expectedCurrentAvailableBalance = previousBalances[address].available.add(expectedTokenReward)
                     assertBn(expectedCurrentAvailableBalance, available, 'current available balance does not match')
 
                     const expectedFeeReward = guardianFees.mul(bn(weight)).div(bn(expectedCoherentGuardians))
