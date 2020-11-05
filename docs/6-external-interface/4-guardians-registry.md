@@ -173,17 +173,6 @@ The following functions are state getters provided by the `GuardiansRegistry`:
     - **Locked:** Amount of active tokens that are locked due to ongoing disputes
     - **Pending deactivation:** Amount of active tokens that were requested for deactivation
 
-#### 6.4.2.7. Detailed balance of at
-- **Inputs:**
-    - **Guardian:** Address of the guardian querying the detailed balance information of
-    - **Term ID:** Identification number of the term to query on
-- **Pre-flight checks:** None
-- **Outputs:**
-    - **Active:** Amount of active tokens of a guardian
-    - **Available:** Amount of available tokens of a guardian
-    - **Locked:** Amount of active tokens that are locked due to ongoing disputes
-    - **Pending deactivation:** Amount of active tokens that were requested for deactivation
-
 #### 6.4.2.8. Active balance of at
 - **Inputs:**
     - **Guardian:** Address of the guardian querying the active balance of
