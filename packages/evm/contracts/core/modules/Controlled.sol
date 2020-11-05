@@ -225,9 +225,9 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
-    * @dev Tell whether an address has assigned the role to access the requested functionality
+    * @dev Tell whether an address holds the required role to access the requested functionality
     * @param _addr Address being checked
-    * @return True if the given address has assigned assigned the role to access the requested functionality, false otherwise
+    * @return True if the given address has assigned the role to access the requested functionality, false otherwise
     */
     function _hasRole(address _addr) internal view returns (bool) {
         bytes32 roleId = keccak256(abi.encodePacked(address(this), msg.sig));
