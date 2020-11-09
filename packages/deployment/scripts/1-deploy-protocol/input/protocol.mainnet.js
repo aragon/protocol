@@ -2,12 +2,12 @@ const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { mainnet: governor } = require('./governor')
 
 const TERM_DURATION = 60 * 60 * 8                                           // 8 hours
-const START_DATE = Math.floor(new Date('2020-11-05T16:00:00.000Z') / 1000)  // 2020, Nov 5th 16.00 UTC
+const START_DATE = 0                                                        // TODO
 
 const ANT = {
   symbol: 'ANT',
   decimals: 18,
-  address: '0x960b236a07cf122663c4303350609a66a7b288c0' // ANT v1 # TODO: update to v2
+  address: '0xa117000000f279D81A1D3cc75430fAA017FA5A2e' // ANT v2
 }
 
 const DAI = {
