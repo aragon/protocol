@@ -4,8 +4,8 @@ import { buildId, concat } from '../helpers/utils'
 import { createFeeMovement } from './Treasury'
 import { tryDecodingAgreementMetadata } from '../helpers/disputable'
 
-import { AdjudicationRound, Dispute, Appeal, GuardianDispute, GuardianDraft } from '../types/schema'
-import { DisputeManager, NewDispute, EvidencePeriodClosed, GuardianDrafted, DisputeStateChanged, PenaltiesSettled, RewardSettled, AppealDepositSettled, RulingAppealed, RulingAppealConfirmed, RulingComputed } from '../types/templates/DisputeManager/DisputeManager'
+import { AdjudicationRound, Dispute, Evidence, Appeal, GuardianDispute, GuardianDraft } from '../types/schema'
+import { DisputeManager, NewDispute, EvidenceSubmitted, EvidencePeriodClosed, GuardianDrafted, DisputeStateChanged, PenaltiesSettled, RewardSettled, AppealDepositSettled, RulingAppealed, RulingAppealConfirmed, RulingComputed } from '../types/templates/DisputeManager/DisputeManager'
 
 const APPEAL_MOVEMENT = 'Appeal'
 const GUARDIAN_MOVEMENT = 'Guardian'
@@ -30,6 +30,16 @@ export function handleNewDispute(event: NewDispute): void {
 
   updateRound(event.params.disputeId, dispute.lastRoundId, event)
   tryDecodingAgreementMetadata(dispute)
+}
+
+export function handleEvidenceSubmitted(event: EvidenceSubmitted): void {
+  let id = buildId(event)
+  let evidence = new Evidence(id)
+  evidence.dispute = event.params.disputeId.toString()
+  evidence.data = event.params.evidence
+  evidence.submitter = event.params.submitter
+  evidence.createdAt = event.block.timestamp
+  evidence.save()
 }
 
 export function handleEvidencePeriodClosed(event: EvidencePeriodClosed): void {
