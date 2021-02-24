@@ -29,14 +29,14 @@ const REWARD = 'Reward'
 const SLASH = 'Slash'
 
 export function handleStaked(event: Staked): void {
-  updateGuardian(event.params.user, event)
-  createStakingMovementForEvent(event.params.user, STAKE, event.params.amount, event)
+  updateGuardian(event.params.guardian, event)
+  createStakingMovementForEvent(event.params.guardian, STAKE, event.params.amount, event)
   increaseTotalStaked(event.address, event.params.amount)
 }
 
 export function handleUnstaked(event: Unstaked): void {
-  updateGuardian(event.params.user, event)
-  createStakingMovementForEvent(event.params.user, UNSTAKE, event.params.amount, event)
+  updateGuardian(event.params.guardian, event)
+  createStakingMovementForEvent(event.params.guardian, UNSTAKE, event.params.amount, event)
   decreaseTotalStaked(event.address, event.params.amount)
 }
 
@@ -104,7 +104,7 @@ export function handleGuardianSlashed(event: GuardianSlashed): void {
 function updateGuardian(guardianAddress: Address, event: ethereum.Event): void {
   const guardian = loadOrCreateGuardian(guardianAddress, event)
   const registry = GuardiansRegistry.bind(event.address)
-  const balances = registry.balanceOf(guardianAddress)
+  const balances = registry.detailedBalanceOf(guardianAddress)
   guardian.withdrawalsLockTermId = registry.getWithdrawalsLockTermId(guardianAddress)
   guardian.activeBalance = balances.value0
   guardian.availableBalance = balances.value1
@@ -198,7 +198,7 @@ export function loadOrCreateGuardiansRegistryModule(address: Address): Guardians
     module.save()
 
     const protocol = Protocol.load(module.protocol)
-    protocol.token = loadOrCreateERC20(registry.token()).id
+    protocol.token = loadOrCreateERC20(registry.guardiansToken()).id
     protocol.save()
   }
 

@@ -41,8 +41,6 @@ dataSources:
           handler: handleModulesGovernorChanged
         - event: ModuleSet(bytes32,address)
           handler: handleModuleSet
-        - event: EvidenceSubmitted(indexed uint256,indexed address,bytes)
-          handler: handleEvidenceSubmitted
       file: ./src/AragonProtocol.ts
 templates:
   - kind: ethereum/contract
@@ -69,8 +67,10 @@ templates:
         - name: DisputeManager
           file: ./node_modules/@aragon/protocol-evm/abi/DisputeManager.json
       eventHandlers:
-        - event: NewDispute(indexed uint256,indexed address,indexed uint64,uint64,bytes)
+        - event: NewDispute(indexed uint256,indexed address,indexed uint64,bytes)
           handler: handleNewDispute
+        - event: EvidenceSubmitted(indexed uint256,indexed address,bytes)
+          handler: handleEvidenceSubmitted
         - event: EvidencePeriodClosed(indexed uint256,indexed uint64)
           handler: handleEvidencePeriodClosed
         - event: GuardianDrafted(indexed uint256,indexed uint256,indexed address)
@@ -79,7 +79,7 @@ templates:
           handler: handleDisputeStateChanged
         - event: RulingAppealed(indexed uint256,indexed uint256,uint8)
           handler: handleRulingAppealed
-        - event: RulingAppealConfirmed(indexed uint256,indexed uint256,indexed uint64,uint256)
+        - event: RulingAppealConfirmed(indexed uint256,indexed uint256,indexed uint64)
           handler: handleRulingAppealConfirmed
         - event: PenaltiesSettled(indexed uint256,indexed uint256,uint256)
           handler: handlePenaltiesSettled
@@ -112,11 +112,11 @@ templates:
         - name: GuardiansRegistry
           file: ./node_modules/@aragon/protocol-evm/abi/GuardiansRegistry.json
       eventHandlers:
-        - event: Staked(indexed address,uint256,uint256,bytes)
+        - event: Staked(indexed address,uint256,uint256)
           handler: handleStaked
-        - event: Unstaked(indexed address,uint256,uint256,bytes)
+        - event: Unstaked(indexed address,uint256,uint256)
           handler: handleUnstaked
-        - event: GuardianActivated(indexed address,uint64,uint256,address)
+        - event: GuardianActivated(indexed address,uint64,uint256)
           handler: handleGuardianActivated
         - event: GuardianBalanceLocked(indexed address,uint256)
           handler: handleGuardianBalanceLocked
@@ -155,11 +155,11 @@ templates:
         - name: Controller
           file: ./node_modules/@aragon/protocol-evm/abi/Controller.json
       eventHandlers:
-        - event: VoteCommitted(indexed uint256,indexed address,bytes32,address)
+        - event: VoteCommitted(indexed uint256,indexed address,bytes32)
           handler: handleVoteCommitted
-        - event: VoteLeaked(indexed uint256,indexed address,uint8,address)
+        - event: VoteLeaked(indexed uint256,indexed address,uint8)
           handler: handleVoteLeaked
-        - event: VoteRevealed(indexed uint256,indexed address,uint8,address)
+        - event: VoteRevealed(indexed uint256,indexed address,uint8)
           handler: handleVoteRevealed
       file: ./src/Voting.ts
   - kind: ethereum/contract
@@ -203,7 +203,7 @@ templates:
         - name: PaymentsBook
           file: ./node_modules/@aragon/protocol-evm/abi/PaymentsBook.json
       eventHandlers:
-        - event: PaymentReceived(indexed uint256,indexed address,indexed address,uint256,address,bytes)
+        - event: PaymentReceived(indexed uint256,indexed address,indexed address,uint256,bytes)
           handler: handleGuardianShareClaimedWithoutToken
         - event: GuardianShareClaimed(indexed uint256,indexed address,indexed address,uint256)
           handler: handleGuardianShareClaimedWithToken

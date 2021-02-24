@@ -1,15 +1,14 @@
 import { BigInt, Address, ethereum, log } from '@graphprotocol/graph-ts'
 
 import { BLACKLISTED_MODULES } from '../helpers/blacklisted-modules'
-import { buildId } from '../helpers/utils'
 import { loadOrCreateERC20 } from './ERC20'
 import { loadOrCreateGuardiansRegistryModule } from './GuardiansRegistry'
 import { loadOrCreatePaymentsBookModule, updateCurrentPaymentPeriod } from './PaymentsBook'
 
 import { AragonProtocol } from '../types/AragonProtocol/AragonProtocol'
-import { ProtocolModule, Protocol, ProtocolTerm, Evidence } from '../types/schema'
+import { ProtocolModule, Protocol, ProtocolTerm } from '../types/schema'
 import { DisputeManager, GuardiansRegistry, Treasury, Voting, PaymentsBook } from '../types/templates'
-import { Heartbeat, ModuleSet, FundsGovernorChanged, ConfigGovernorChanged, ModulesGovernorChanged, EvidenceSubmitted } from '../types/AragonProtocol/AragonProtocol'
+import { Heartbeat, ModuleSet, FundsGovernorChanged, ConfigGovernorChanged, ModulesGovernorChanged } from '../types/AragonProtocol/AragonProtocol'
 
 const DISPUTE_MANAGER_TYPE = 'DisputeManager'
 const GUARDIANS_REGISTRY_TYPE = 'GuardiansRegistry'
@@ -118,16 +117,6 @@ export function handleModuleSet(event: ModuleSet): void {
 
   protocol.save()
   module.save()
-}
-
-export function handleEvidenceSubmitted(event: EvidenceSubmitted): void {
-  let id = buildId(event)
-  let evidence = new Evidence(id)
-  evidence.dispute = event.params.disputeId.toString()
-  evidence.data = event.params.evidence
-  evidence.submitter = event.params.submitter
-  evidence.createdAt = event.block.timestamp
-  evidence.save()
 }
 
 function loadOrCreateProtocol(address: Address, event: ethereum.Event): Protocol {

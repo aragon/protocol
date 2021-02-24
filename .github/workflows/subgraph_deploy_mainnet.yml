@@ -2,6 +2,8 @@ name: Subgraph mainnet deployment
 
 on:
   push:
+    paths:
+    - 'packages/subgraph/**'
     tags:
     - v*
 

@@ -1,26 +1,26 @@
 {
   "protocol": {
-    "address": "0x2057Fa53c5c85bB2cff125f9DB2D0cA7E4eeBE02",
-    "transactionHash": "0x8425476d48d3d3e74ceb3a668dba0095b102694d7e064623564633a47808a3dc"
+    "address": "0x3E5D4a431f955C1eaB2BF919e174426572c4714F",
+    "transactionHash": "0xd60dc6263b01f7ed122cf60a91a7a0f12f7368d72d0663aeb9f0fda6dd4e21ba"
   },
   "disputes": {
-    "address": "0x79dE3e27e5967d688CcBB8476C218Fe26975C66F",
-    "transactionHash": "0xc12e8a57b3dc45d1fc886848b925bd2b99da1cd82d434a7fbb5e193e8a6704b2"
+    "address": "0xf1B87573ECa2430CF04a8b28b6601Abf3832A5c7",
+    "transactionHash": "0x664da1f1005f3561374e40aed8ff27e526732fbe3a2d92793142b37d1e87b7c9"
   },
   "registry": {
-    "address": "0x22A17B928b855148DCc3ea20D781fbdC32dad42C",
-    "transactionHash": "0xa837eaffdccb6b2bad4b40fd242eb74178d3e2886efd18919c1cf90e18959886"
+    "address": "0x077D5236Eb18b7E729186311538f6d1d6c39016C",
+    "transactionHash": "0x801f852578f63ca54c96b0e7521d79a3590a07de7b50b51c64895a6cf660ca68"
   },
   "voting": {
-    "address": "0xCc19970A82A50014E6a2cb39BA911937B33104DE",
-    "transactionHash": "0xcaf8b7558d13caf2d2a5aba9f67947ad3de1b2e3e784863cfb024a282be0c063"
+    "address": "0x40093aF7A49669346aD19468316faF98700d62c5",
+    "transactionHash": "0x28ffcc5f9c95f697a8ad201908d7aa9d8a62eeb5353c5995b575abb5420fb2c7"
   },
   "treasury": {
-    "address": "0x08fe5547F48D130e7d55A864132B3A344727E2f8",
-    "transactionHash": "0x512d46559450026f3b2691c4b13c66a48bd6fd8a87e5d55c3a258b1d83dc8366"
+    "address": "0x3844536c889a31965328c3Bc4B144Cd3f5d601aa",
+    "transactionHash": "0x12a60629399079de2cbfd72f7085587706d81d2395a79fd590c0b5d3481f17ed"
   },
   "paymentsBook": {
-    "address": "0x3376ba6E5A2B9548a6BF507261ee8345A24a1491",
-    "transactionHash": "0xdc55742a8b959010939355301bf0675ffc569f79ffe902456f378d88757d32e8"
+    "address": "0xe7F860dAbFa31B61f0A402FdE21D1C2A58d98a3B",
+    "transactionHash": "0x59850c6b8b1e6cd4c77f4127a6a5a1800ed792209ed8b6396415995d2759767a"
   }
 }

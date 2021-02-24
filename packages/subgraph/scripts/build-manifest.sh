@@ -4,15 +4,15 @@
 set -o errexit
 
 # Protocol known addresses
-protocol_ropsten=0x7639480251C12f8168eeEc5e815Ab96072E5fe62
-protocol_staging=0x2057Fa53c5c85bB2cff125f9DB2D0cA7E4eeBE02
-protocol_rinkeby=0xDB56c4d44ba23133805A38d837aBeC811D6c28b9
+protocol_ropsten=0xc236205f7f1c4a4B0A857c350BF64bB0FF385702
+protocol_staging=0x3E5D4a431f955C1eaB2BF919e174426572c4714F
+protocol_rinkeby=0x3F5E248BB5cd3c1275304e692d6cacC708E004d0
 protocol_mainnet=
 
 # Known block numbers
-start_block_ropsten=8916212
-start_block_staging=7404103
-start_block_rinkeby=7404061
+start_block_ropsten=9038827
+start_block_staging=7519974
+start_block_rinkeby=7519991
 start_block_mainnet=
 
 # Validate network
