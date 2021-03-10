@@ -1,18 +1,18 @@
-## 4.1. AragonProtocol
+## 4.1. AragonCourt
 
-`AragonProtocol` is the main entry point of the whole protocol and is only responsible for providing a few entry points to the users of the protocol while orchestrating the rest of the modules to fulfill these request.
-Additionally, as shown in [section 2](../2-architecture), `AragonProtocol` inherits from `Controller`. The inherited functionality is core to architecture of the protocol and can be found in the [next section](./2-controller.md).
+`AragonCourt` is the main entry point of the whole protocol and is only responsible for providing a few entry points to the users of the protocol while orchestrating the rest of the modules to fulfill these request.
+Additionally, as shown in [section 2](../2-architecture), `AragonCourt` inherits from `Controller`. The inherited functionality is core to architecture of the protocol and can be found in the [next section](./2-controller.md).
 To read more information about its responsibilities and how the whole architecture structure looks like, go to [section 2](../2-architecture).
 
 ### 4.1.1. Constructor
 
 - **Actor:** Deployer account
 - **Inputs:**
-    - **Term duration:** Duration in seconds per Protocol term
-    - **First-term start time:** Timestamp in seconds when the Protocol will start
+    - **Term duration:** Duration in seconds per Court term
+    - **First-term start time:** Timestamp in seconds when the Court will start
     - **Governor:** Object containing
         - **Funds governor:** Address of the governor allowed to manipulate module's funds
-        - **Config governor:** Address of the governor allowed to manipulate protocol settings
+        - **Config governor:** Address of the governor allowed to manipulate module's settings
         - **Modules governor:** Address of the governor allowed to manipulate module's addresses
     - **Settings:** Object containing
         - **Fee token:** Address of the token contract that is used to pay for the fees
@@ -20,11 +20,11 @@ To read more information about its responsibilities and how the whole architectu
         - **Heartbeat fee:** Amount of fee tokens per dispute to cover terms update costs
         - **Draft fee:**  Amount of fee tokens per guardian to cover the drafting costs
         - **Settle fee:** Amount of fee tokens per guardian to cover round settlement costs
-        - **Evidence terms:** Max submitting evidence period duration in Protocol terms
-        - **Commit terms:** Duration of the commit phase in Protocol terms
-        - **Reveal terms:** Duration of the reveal phase in Protocol terms
-        - **Appeal terms:** Duration of the appeal phase in Protocol terms
-        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Protocol terms
+        - **Evidence terms:** Max submitting evidence period duration in Court terms
+        - **Commit terms:** Duration of the commit phase in Court terms
+        - **Reveal terms:** Duration of the reveal phase in Court terms
+        - **Appeal terms:** Duration of the appeal phase in Court terms
+        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Court terms
         - **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted guardian (1/10,000)
         - **Final-round reduction:** ‱ of fee reduction for the last appeal round (1/10,000)
         - **First-round guardians number:** Number of guardians to be drafted for the first round of a dispute
