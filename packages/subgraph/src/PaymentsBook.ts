@@ -90,7 +90,7 @@ export function loadOrCreatePaymentsBookModule(address: Address): PaymentsBookMo
   if (module === null) {
     const paymentsBook = PaymentsBook.bind(address)
     module = new PaymentsBookModule(address.toHexString())
-    module.protocol = paymentsBook.controller().toHexString()
+    module.court = paymentsBook.controller().toHexString()
     module.currentPeriod = BigInt.fromI32(0)
     module.governorSharePct = BigInt.fromI32(paymentsBook.governorSharePct())
     module.periodDuration = paymentsBook.periodDuration()

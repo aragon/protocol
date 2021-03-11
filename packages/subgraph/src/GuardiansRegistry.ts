@@ -3,7 +3,7 @@ import { ethereum, Address, BigInt } from '@graphprotocol/graph-ts'
 import { buildId } from '../helpers/utils'
 import { loadOrCreateERC20 } from './ERC20'
 
-import { Protocol, Guardian, StakingMovement, GuardiansRegistryModule } from '../types/schema'
+import { Court, Guardian, StakingMovement, GuardiansRegistryModule } from '../types/schema'
 import {
   Staked,
   Unstaked,
@@ -191,15 +191,15 @@ export function loadOrCreateGuardiansRegistryModule(address: Address): Guardians
   if (module === null) {
     const registry = GuardiansRegistry.bind(address)
     module = new GuardiansRegistryModule(address.toHexString())
-    module.protocol = registry.controller().toHexString()
+    module.court = registry.controller().toHexString()
     module.totalStaked = BigInt.fromI32(0)
     module.totalActive = BigInt.fromI32(0)
     module.totalDeactivation = BigInt.fromI32(0)
     module.save()
 
-    const protocol = Protocol.load(module.protocol)
-    protocol.token = loadOrCreateERC20(registry.guardiansToken()).id
-    protocol.save()
+    const court = Court.load(module.court)
+    court.token = loadOrCreateERC20(registry.guardiansToken()).id
+    court.save()
   }
 
   return module!

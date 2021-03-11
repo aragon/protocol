@@ -1,4 +1,4 @@
-type Protocol @entity {
+type Court @entity {
   id: ID!
   token: ERC20
   currentTerm: BigInt!
@@ -24,20 +24,20 @@ type Protocol @entity {
   fundsGovernor: Bytes
   configGovernor: Bytes
   modulesGovernor: Bytes
-  guardiansRegistry: GuardiansRegistryModule @derivedFrom(field: "protocol")
-  paymentsBook: PaymentsBookModule @derivedFrom(field: "protocol")
-  modules: [ProtocolModule!] @derivedFrom(field: "protocol")
-  terms: [ProtocolTerm!] @derivedFrom(field: "protocol")
+  guardiansRegistry: GuardiansRegistryModule @derivedFrom(field: "court")
+  paymentsBook: PaymentsBookModule @derivedFrom(field: "court")
+  modules: [CourtModule!] @derivedFrom(field: "court")
+  terms: [CourtTerm!] @derivedFrom(field: "court")
 }
 
-type ProtocolModule @entity {
+type CourtModule @entity {
   id: ID!
-  protocol: Protocol!
+  court: Court!
   moduleId: String!
-  type: ProtocolModuleType!
+  type: CourtModuleType!
 }
 
-enum ProtocolModuleType {
+enum CourtModuleType {
   Unknown
   DisputeManager
   GuardiansRegistry
@@ -46,12 +46,12 @@ enum ProtocolModuleType {
   PaymentsBook
 }
 
-type ProtocolTerm @entity {
+type CourtTerm @entity {
   id: ID!
   startTime: BigInt!
   randomnessBN: BigInt!
   randomness: Bytes
-  protocol: Protocol!
+  court: Court!
   createdAt: BigInt!
 }
 
@@ -208,7 +208,7 @@ enum StakingMovementType {
 
 type GuardiansRegistryModule @entity {
   id: ID!
-  protocol: Protocol!
+  court: Court!
   totalStaked: BigInt!
   totalActive: BigInt!
   totalDeactivation: BigInt!
@@ -216,7 +216,7 @@ type GuardiansRegistryModule @entity {
 
 type PaymentsBookModule @entity {
   id: ID!
-  protocol: Protocol!
+  court: Court!
   currentPeriod: BigInt!
   periodDuration: BigInt!
   governorSharePct: BigInt!

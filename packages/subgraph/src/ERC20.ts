@@ -2,7 +2,7 @@ import { Address } from '@graphprotocol/graph-ts'
 
 import { ZERO_ADDRESS } from '../helpers/utils'
 import { ERC20 } from '../types/schema'
-import { ERC20 as ERC20Contract } from '../types/AragonProtocol/ERC20'
+import { ERC20 as ERC20Contract } from '../types/AragonCourt/ERC20'
 
 const ETH_SYMBOL = 'ETH'
 const ETH_DECIMALS = 18

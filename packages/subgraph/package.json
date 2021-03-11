@@ -1,7 +1,7 @@
 {
-  "name": "@aragon/protocol-subgraph",
+  "name": "@aragon/court-subgraph",
   "version": "1.0.0",
-  "description": "Aragon Protocol subgraph",
+  "description": "Aragon Court subgraph",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "GPL-3.0",
   "scripts": {

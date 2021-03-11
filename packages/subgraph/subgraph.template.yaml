@@ -1,35 +1,35 @@
 specVersion: 0.0.2
-description: Aragon Protocol subgraph
+description: Aragon Court subgraph
 repository: https://github.com/aragon/protocol-subgraph/
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: AragonProtocol
+    name: AragonCourt
     network: {{network}}
     source:
-      address: '{{protocol}}'
-      abi: AragonProtocol
+      address: '{{court}}'
+      abi: AragonCourt
       startBlock: {{startBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.3
       language: wasm/assemblyscript
       entities:
-        - Protocol
-        - ProtocolTerm
-        - ProtocolModule
+        - Court
+        - CourtTerm
+        - CourtModule
         - ERC20
         - Evidence
       abis:
-        - name: AragonProtocol
-          file: ./node_modules/@aragon/protocol-evm/abi/AragonProtocol.json
+        - name: AragonCourt
+          file: ./node_modules/@aragon/court-evm/abi/AragonCourt.json
         - name: GuardiansRegistry
-          file: ./node_modules/@aragon/protocol-evm/abi/GuardiansRegistry.json
+          file: ./node_modules/@aragon/court-evm/abi/GuardiansRegistry.json
         - name: PaymentsBook
-          file: ./node_modules/@aragon/protocol-evm/abi/PaymentsBook.json
+          file: ./node_modules/@aragon/court-evm/abi/PaymentsBook.json
         - name: ERC20
-          file: ./node_modules/@aragon/protocol-evm/abi/ERC20Mock.json
+          file: ./node_modules/@aragon/court-evm/abi/ERC20Mock.json
       eventHandlers:
         - event: Heartbeat(uint64,uint64)
           handler: handleHeartbeat
@@ -41,7 +41,7 @@ dataSources:
           handler: handleModulesGovernorChanged
         - event: ModuleSet(bytes32,address)
           handler: handleModuleSet
-      file: ./src/AragonProtocol.ts
+      file: ./src/AragonCourt.ts
 templates:
   - kind: ethereum/contract
     name: DisputeManager
@@ -63,9 +63,9 @@ templates:
         - FeeMovement
       abis:
         - name: Controller
-          file: ./node_modules/@aragon/protocol-evm/abi/Controller.json
+          file: ./node_modules/@aragon/court-evm/abi/Controller.json
         - name: DisputeManager
-          file: ./node_modules/@aragon/protocol-evm/abi/DisputeManager.json
+          file: ./node_modules/@aragon/court-evm/abi/DisputeManager.json
       eventHandlers:
         - event: NewDispute(indexed uint256,indexed address,indexed uint64,bytes)
           handler: handleNewDispute
@@ -108,9 +108,9 @@ templates:
         - FeeMovement
       abis:
         - name: Controller
-          file: ./node_modules/@aragon/protocol-evm/abi/Controller.json
+          file: ./node_modules/@aragon/court-evm/abi/Controller.json
         - name: GuardiansRegistry
-          file: ./node_modules/@aragon/protocol-evm/abi/GuardiansRegistry.json
+          file: ./node_modules/@aragon/court-evm/abi/GuardiansRegistry.json
       eventHandlers:
         - event: Staked(indexed address,uint256,uint256)
           handler: handleStaked
@@ -149,11 +149,11 @@ templates:
         - GuardianDraft
       abis:
         - name: Voting
-          file: ./node_modules/@aragon/protocol-evm/abi/CRVoting.json
+          file: ./node_modules/@aragon/court-evm/abi/CRVoting.json
         - name: DisputeManager
-          file: ./node_modules/@aragon/protocol-evm/abi/DisputeManager.json
+          file: ./node_modules/@aragon/court-evm/abi/DisputeManager.json
         - name: Controller
-          file: ./node_modules/@aragon/protocol-evm/abi/Controller.json
+          file: ./node_modules/@aragon/court-evm/abi/Controller.json
       eventHandlers:
         - event: VoteCommitted(indexed uint256,indexed address,bytes32)
           handler: handleVoteCommitted
@@ -176,7 +176,7 @@ templates:
         - TreasuryBalance
       abis:
         - name: Treasury
-          file: ./node_modules/@aragon/protocol-evm/abi/ProtocolTreasury.json
+          file: ./node_modules/@aragon/court-evm/abi/CourtTreasury.json
       eventHandlers:
         - event: Assign(indexed address,indexed address,indexed address,uint256)
           handler: handleAssign
@@ -201,7 +201,7 @@ templates:
         - FeeMovement
       abis:
         - name: PaymentsBook
-          file: ./node_modules/@aragon/protocol-evm/abi/PaymentsBook.json
+          file: ./node_modules/@aragon/court-evm/abi/PaymentsBook.json
       eventHandlers:
         - event: PaymentReceived(indexed uint256,indexed address,indexed address,uint256,bytes)
           handler: handleGuardianShareClaimedWithoutToken
