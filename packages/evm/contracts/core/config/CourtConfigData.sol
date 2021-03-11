@@ -3,15 +3,15 @@ pragma solidity ^0.5.17;
 import "../../lib/standards/IERC20.sol";
 
 
-contract ProtocolConfigData {
+contract CourtConfigData {
     struct Config {
         FeesConfig fees;                        // Full fees-related config
         DisputesConfig disputes;                // Full disputes-related config
-        uint256 minActiveBalance;               // Minimum amount of tokens guardians have to activate to participate in the Protocol
+        uint256 minActiveBalance;               // Minimum amount of tokens guardians have to activate to participate in the Court
     }
 
     struct FeesConfig {
-        IERC20 token;                           // ERC20 token to be used for the fees of the Protocol
+        IERC20 token;                           // ERC20 token to be used for the fees of the Court
         uint16 finalRoundReduction;             // Permyriad of fees reduction applied for final appeal round (‱ - 1/10,000)
         uint256 guardianFee;                    // Amount of tokens paid to draft a guardian to adjudicate a dispute
         uint256 draftFee;                       // Amount of tokens paid per round to cover the costs of drafting guardians
@@ -34,7 +34,7 @@ contract ProtocolConfigData {
     }
 
     struct DraftConfig {
-        IERC20 feeToken;                         // ERC20 token to be used for the fees of the Protocol
+        IERC20 feeToken;                         // ERC20 token to be used for the fees of the Court
         uint16 penaltyPct;                      // Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
         uint256 draftFee;                       // Amount of tokens paid per round to cover the costs of drafting guardians
     }

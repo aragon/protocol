@@ -8,14 +8,14 @@ import "./core/modules/Controller.sol";
 import "./disputes/IDisputeManager.sol";
 
 
-contract AragonProtocol is IArbitrator, Controller {
+contract AragonCourt is IArbitrator, Controller {
     using Uint256Helpers for uint256;
 
     /**
     * @dev Constructor function
     * @param _termParams Array containing:
     *        0. _termDuration Duration in seconds per term
-    *        1. _firstTermStartTime Timestamp in seconds when the protocol will open (to give time for guardian on-boarding)
+    *        1. _firstTermStartTime Timestamp in seconds when the court will open (to give time for guardian on-boarding)
     * @param _governors Array containing:
     *        0. _fundsGovernor Address of the funds governor
     *        1. _configGovernor Address of the config governor
@@ -84,7 +84,7 @@ contract AragonProtocol is IArbitrator, Controller {
 
     /**
     * @notice Submit `_evidence` as evidence from `_submitter` for dispute #`_disputeId`
-    * @param _disputeId Id of the dispute in the Protocol
+    * @param _disputeId Id of the dispute in the Court
     * @param _submitter Address of the account submitting the evidence
     * @param _evidence Data submitted for the evidence related to the dispute
     */
@@ -96,7 +96,7 @@ contract AragonProtocol is IArbitrator, Controller {
     * @notice Submit `_evidence` as evidence from `_submitter` for dispute #`_disputeId`
     * @dev This entry point can be used to submit evidences to previous Dispute Manager instances
     * @param _disputeManager Dispute manager to be used
-    * @param _disputeId Id of the dispute in the Protocol
+    * @param _disputeId Id of the dispute in the Court
     * @param _submitter Address of the account submitting the evidence
     * @param _evidence Data submitted for the evidence related to the dispute
     */
@@ -177,7 +177,7 @@ contract AragonProtocol is IArbitrator, Controller {
     /**
     * @dev Internal function to submit evidence for a dispute
     * @param _disputeManager Dispute manager to be used
-    * @param _disputeId Id of the dispute in the Protocol
+    * @param _disputeId Id of the dispute in the Court
     * @param _submitter Address of the account submitting the evidence
     * @param _evidence Data submitted for the evidence related to the dispute
     */

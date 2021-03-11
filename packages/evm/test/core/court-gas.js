@@ -2,13 +2,13 @@ const { bigExp } = require('@aragon/contract-helpers-test')
 const { assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { printTable } = require('../helpers/utils/logging')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { getVoteId, hashVote, oppositeOutcome, SALT, OUTCOMES } = require('../helpers/utils/crvoting')
 
 const Arbitrable = artifacts.require('ArbitrableMock')
 
-contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000]) => {
-  let protocolHelper, disputeManager, voting, protocol, costs = {}
+contract('AragonCourt', ([_, sender, drafter, appealMaker, appealTaker, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000]) => {
+  let courtHelper, disputeManager, voting, court, costs = {}
 
   const guardians = [
     { address: guardian500,  initialActiveBalance: bigExp(500,  18) },
@@ -19,12 +19,12 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
     { address: guardian3000, initialActiveBalance: bigExp(3000, 18) }
   ]
 
-  before('create protocol and activate guardians', async () => {
-    protocolHelper = buildHelper()
-    protocol = await protocolHelper.deploy()
-    voting = protocolHelper.voting
-    disputeManager = protocolHelper.disputeManager
-    await protocolHelper.activate(guardians)
+  before('create court and activate guardians', async () => {
+    courtHelper = buildHelper()
+    court = await courtHelper.deploy()
+    voting = courtHelper.voting
+    disputeManager = courtHelper.disputeManager
+    await courtHelper.activate(guardians)
   })
 
   describe('gas costs', () => {
@@ -41,15 +41,15 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let arbitrable
 
       beforeEach('create arbitrable and approve fee amount', async () => {
-        await protocolHelper.setTerm(1)
-        arbitrable = await Arbitrable.new(protocol.address)
-        const { disputeFees } = await protocolHelper.getDisputeFees()
-        await protocolHelper.mintFeeTokens(arbitrable.address, disputeFees)
+        await courtHelper.setTerm(1)
+        arbitrable = await Arbitrable.new(court.address)
+        const { disputeFees } = await courtHelper.getDisputeFees()
+        await courtHelper.mintFeeTokens(arbitrable.address, disputeFees)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -58,8 +58,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -71,11 +71,11 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId
 
       beforeEach('create dispute and advance to the draft term', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // Mock term randomness to make sure we always have the same output for the draft, otherwise this test won't be deterministic
-        await protocolHelper.passRealTerms(1)
-        await protocol.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
+        await courtHelper.passRealTerms(1)
+        await court.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
       })
 
       itCostsAtMost('draft', 389e3, () => disputeManager.draft(disputeId))
@@ -88,14 +88,14 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       beforeEach('create dispute and draft', async () => {
         const roundId = 0
-        const disputeId = await protocolHelper.dispute()
+        const disputeId = await courtHelper.dispute()
         voteId = getVoteId(disputeId, roundId)
-        draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
+        draftedGuardians = await courtHelper.draft({ disputeId, drafter })
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -104,8 +104,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -120,17 +120,17 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       beforeEach('create dispute, draft and vote', async () => {
         const roundId = 0
-        const disputeId = await protocolHelper.dispute()
+        const disputeId = await courtHelper.dispute()
         voteId = getVoteId(disputeId, roundId)
 
         // draft and commit
-        draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -139,8 +139,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -152,26 +152,26 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId, roundId = 0, appealMakerRuling
 
       beforeEach('create dispute, draft and vote', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
         const voteId = getVoteId(disputeId, roundId)
 
         // draft, commit, and reveal votes
-        const draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
 
         // compute appeal ruling
         const winningRuling = await voting.getWinningOutcome(voteId)
         appealMakerRuling = oppositeOutcome(winningRuling)
 
         // mint appeal fees
-        const { appealDeposit } = await protocolHelper.getAppealFees(disputeId, roundId)
-        await protocolHelper.mintAndApproveFeeTokens(appealMaker, disputeManager.address, appealDeposit)
+        const { appealDeposit } = await courtHelper.getAppealFees(disputeId, roundId)
+        await courtHelper.mintAndApproveFeeTokens(appealMaker, disputeManager.address, appealDeposit)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -180,8 +180,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -193,26 +193,26 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId, roundId = 0, appealTakerRuling
 
       beforeEach('create dispute, draft, vote and appeal', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // draft, vote and appeal
-        const draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.appeal({ disputeId, roundId, appealMaker })
+        const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.appeal({ disputeId, roundId, appealMaker })
 
         // compute appeal confirmation ruling
-        const { appealedRuling } = await protocolHelper.getAppeal(disputeId, roundId)
+        const { appealedRuling } = await courtHelper.getAppeal(disputeId, roundId)
         appealTakerRuling = oppositeOutcome(appealedRuling)
 
         // mint appeal confirmation fees
-        const { confirmAppealDeposit } = await protocolHelper.getAppealFees(disputeId, roundId)
-        await protocolHelper.mintAndApproveFeeTokens(appealTaker, disputeManager.address, confirmAppealDeposit)
+        const { confirmAppealDeposit } = await courtHelper.getAppealFees(disputeId, roundId)
+        await courtHelper.mintAndApproveFeeTokens(appealTaker, disputeManager.address, confirmAppealDeposit)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -221,8 +221,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -235,32 +235,32 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       beforeEach('create dispute, draft and vote', async () => {
         const roundId = 0
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // draft, commit, and reveal votes
-        const draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.passTerms(protocolHelper.appealTerms)
+        const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.passTerms(courtHelper.appealTerms)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
-        itCostsAtMost('rule', 95e3, () => protocol.rule(disputeId))
+        itCostsAtMost('rule', 95e3, () => court.rule(disputeId))
       })
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
-        itCostsAtMost('rule', 156e3, () => protocol.rule(disputeId))
+        itCostsAtMost('rule', 156e3, () => court.rule(disputeId))
       })
     })
 
@@ -268,21 +268,21 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId, roundId = 0
 
       beforeEach('create dispute, draft and vote', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // Mock term randomness to make sure we always have the same output for the draft, otherwise this test won't be deterministic
-        await protocol.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
+        await court.mockSetTermRandomness('0x0000000000000000000000000000000000000000000000000000000000000001')
 
         // draft, commit and reveal votes
-        const draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.passTerms(protocolHelper.appealTerms)
+        const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.passTerms(courtHelper.appealTerms)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -291,8 +291,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -304,20 +304,20 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId, roundId = 0, draftedGuardians
 
       beforeEach('create dispute, draft and vote', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // draft, vote and settle penalties
-        draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
+        draftedGuardians = await courtHelper.draft({ disputeId, drafter })
         draftedGuardians = draftedGuardians.map(guardian => ({ ...guardian, outcome: OUTCOMES.LOW }))
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.passTerms(protocolHelper.appealTerms)
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.passTerms(courtHelper.appealTerms)
         await disputeManager.settlePenalties(disputeId, roundId, 0)
       })
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -326,8 +326,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -339,21 +339,21 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
       let disputeId, roundId = 0
 
       beforeEach('create dispute, draft and vote', async () => {
-        disputeId = await protocolHelper.dispute()
+        disputeId = await courtHelper.dispute()
 
         // draft, vote and appeal first round
-        const draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
-        await protocolHelper.appeal({ disputeId, roundId, appealMaker })
-        await protocolHelper.confirmAppeal({ disputeId, roundId, appealTaker })
+        const draftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId, voters: draftedGuardians })
+        await courtHelper.appeal({ disputeId, roundId, appealMaker })
+        await courtHelper.confirmAppeal({ disputeId, roundId, appealTaker })
 
         // vote on second round
         const newRoundId = roundId + 1
-        const newDraftedGuardians = await protocolHelper.draft({ disputeId, drafter })
-        await protocolHelper.commit({ disputeId, roundId: newRoundId, voters: newDraftedGuardians })
-        await protocolHelper.reveal({ disputeId, roundId: newRoundId, voters: newDraftedGuardians })
-        await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
+        const newDraftedGuardians = await courtHelper.draft({ disputeId, drafter })
+        await courtHelper.commit({ disputeId, roundId: newRoundId, voters: newDraftedGuardians })
+        await courtHelper.reveal({ disputeId, roundId: newRoundId, voters: newDraftedGuardians })
+        await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
 
         // settle first round penalties
         await disputeManager.settlePenalties(disputeId, roundId, 0)
@@ -361,7 +361,7 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is up-to-date', () => {
         beforeEach('assert needed transitions', async () => {
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 0, 'needed transitions does not match')
         })
 
@@ -370,8 +370,8 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
       context('when the current term is outdated by one term', () => {
         beforeEach('assert needed transitions', async () => {
-          await protocolHelper.increaseTimeInTerms(1)
-          const neededTransitions = await protocol.getNeededTermTransitions()
+          await courtHelper.increaseTimeInTerms(1)
+          const neededTransitions = await court.getNeededTermTransitions()
           assertBn(neededTransitions, 1, 'needed transitions does not match')
         })
 
@@ -382,6 +382,6 @@ contract('AragonProtocol', ([_, sender, drafter, appealMaker, appealTaker, guard
 
   after('print gas costs', () => {
     const parsedCosts = Object.keys(costs).map(method => [method].concat(costs[method]))
-    printTable('Protocol gas costs', [['Function', 'Without heartbeat', 'With heartbeat'], ...parsedCosts])
+    printTable('Court gas costs', [['Function', 'Without heartbeat', 'With heartbeat'], ...parsedCosts])
   })
 })

@@ -2,16 +2,16 @@ const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { DISPUTE_MANAGER_ERRORS } = require('../helpers/utils/errors')
-const { buildHelper, DISPUTE_STATES } = require('../helpers/wrappers/protocol')
+const { buildHelper, DISPUTE_STATES } = require('../helpers/wrappers/court')
 
 contract('DisputeManager', () => {
-  let protocolHelper, disputeManager
+  let courtHelper, disputeManager
 
   const setup = skippedDisputes => {
-    beforeEach('setup protocol', async () => {
-      protocolHelper = buildHelper()
-      await protocolHelper.deploy({ skippedDisputes })
-      disputeManager = protocolHelper.disputeManager
+    beforeEach('setup court', async () => {
+      courtHelper = buildHelper()
+      await courtHelper.deploy({ skippedDisputes })
+      disputeManager = courtHelper.disputeManager
     })
   }
 
@@ -19,7 +19,7 @@ contract('DisputeManager', () => {
     let disputeId
 
     beforeEach('create first dispute', async () => {
-      disputeId = await protocolHelper.dispute()
+      disputeId = await courtHelper.dispute()
     })
 
     it('skips the number of requested rounds', async () => {
@@ -27,7 +27,7 @@ contract('DisputeManager', () => {
     })
 
     it('ignores the previous disputes', async () => {
-      const { subject, possibleRulings: rulings, state, finalRuling, createTermId } = await protocolHelper.getDispute(0)
+      const { subject, possibleRulings: rulings, state, finalRuling, createTermId } = await courtHelper.getDispute(0)
 
       assert.equal(subject, ZERO_ADDRESS, 'dispute subject does not match')
       assertBn(state, DISPUTE_STATES.PRE_DRAFT, 'dispute state does not match')

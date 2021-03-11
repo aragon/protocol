@@ -5,10 +5,10 @@ import "../../lib/utils/PctHelpers.sol";
 import "../../lib/standards/IERC20.sol";
 
 import "./IConfig.sol";
-import "./ProtocolConfigData.sol";
+import "./CourtConfigData.sol";
 
 
-contract ProtocolConfig is IConfig, ProtocolConfigData {
+contract CourtConfig is IConfig, CourtConfigData {
     using SafeMath64 for uint64;
     using PctHelpers for uint256;
 
@@ -31,13 +31,13 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     // Future term ID in which a config change has been scheduled
     uint64 private configChangeTermId;
 
-    // List of all the configs used in the Protocol
+    // List of all the configs used in the Court
     Config[] private configs;
 
     // List of configs indexed by id
     mapping (uint64 => uint256) private configIdByTerm;
 
-    event NewConfig(uint64 fromTermId, uint64 protocolConfigId);
+    event NewConfig(uint64 fromTermId, uint64 courtConfigId);
 
     /**
     * @dev Constructor function
@@ -92,8 +92,8 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     }
 
     /**
-    * @dev Tell the full Protocol configuration parameters at a certain term
-    * @param _termId Identification number of the term querying the Protocol config of
+    * @dev Tell the full Court configuration parameters at a certain term
+    * @param _termId Identification number of the term querying the Court config of
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
     *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
@@ -115,7 +115,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     * @return appealCollateralParams Array containing params for appeal collateral:
     *         0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *         1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @return minActiveBalance Minimum amount of tokens guardians have to activate to participate in the Protocol
+    * @return minActiveBalance Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getConfig(uint64 _termId) external view
         returns (
@@ -140,7 +140,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     /**
     * @dev Tell the min active balance config at a certain term
     * @param _termId Term querying the min active balance config of
-    * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
+    * @return Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
 
@@ -167,7 +167,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
 
     /**
     * @dev Assumes that sender it's allowed (either it's from governor or it's on init)
-    * @param _termId Identification number of the current Protocol term
+    * @param _termId Identification number of the current Court term
     * @param _fromTermId Identification number of the term in which the config will be effective at
     * @param _feeToken Address of the token contract that is used to pay for fees.
     * @param _fees Array containing:
@@ -244,8 +244,8 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
             configs.length++;
         }
 
-        uint64 protocolConfigId = uint64(configs.length - 1);
-        Config storage config = configs[protocolConfigId];
+        uint64 courtConfigId = uint64(configs.length - 1);
+        Config storage config = configs[courtConfigId];
 
         config.fees = FeesConfig({
             token: _feeToken,
@@ -272,16 +272,16 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
 
         config.minActiveBalance = _minActiveBalance;
 
-        configIdByTerm[_fromTermId] = protocolConfigId;
+        configIdByTerm[_fromTermId] = courtConfigId;
         configChangeTermId = _fromTermId;
 
-        emit NewConfig(_fromTermId, protocolConfigId);
+        emit NewConfig(_fromTermId, courtConfigId);
     }
 
     /**
-    * @dev Internal function to get the Protocol config for a given term
-    * @param _termId Identification number of the term querying the Protocol config of
-    * @param _lastEnsuredTermId Identification number of the last ensured term of the Protocol
+    * @dev Internal function to get the Court config for a given term
+    * @param _termId Identification number of the term querying the Court config of
+    * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
     *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
@@ -346,7 +346,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     /**
     * @dev Tell the draft config at a certain term
     * @param _termId Identification number of the term querying the draft config of
-    * @param _lastEnsuredTermId Identification number of the last ensured term of the Protocol
+    * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return feeToken Address of the token used to pay for fees
     * @return draftFee Amount of fee tokens per guardian to cover the drafting cost
     * @return penaltyPct Permyriad of min active tokens balance to be locked for each drafted guardian (‱ - 1/10,000)
@@ -361,7 +361,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     /**
     * @dev Internal function to get the min active balance config for a given term
     * @param _termId Identification number of the term querying the min active balance config of
-    * @param _lastEnsuredTermId Identification number of the last ensured term of the Protocol
+    * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return Minimum amount of guardian tokens that can be activated at the given term
     */
     function _getMinActiveBalance(uint64 _termId, uint64 _lastEnsuredTermId) internal view returns (uint256) {
@@ -370,10 +370,10 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     }
 
     /**
-    * @dev Internal function to get the Protocol config for a given term
+    * @dev Internal function to get the Court config for a given term
     * @param _termId Identification number of the term querying the min active balance config of
-    * @param _lastEnsuredTermId Identification number of the last ensured term of the Protocol
-    * @return Protocol config for the given term
+    * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
+    * @return Court config for the given term
     */
     function _getConfigFor(uint64 _termId, uint64 _lastEnsuredTermId) internal view returns (Config storage) {
         uint256 id = _getConfigIdFor(_termId, _lastEnsuredTermId);
@@ -381,13 +381,13 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
     }
 
     /**
-    * @dev Internal function to get the Protocol config ID for a given term
-    * @param _termId Identification number of the term querying the Protocol config of
-    * @param _lastEnsuredTermId Identification number of the last ensured term of the Protocol
+    * @dev Internal function to get the Court config ID for a given term
+    * @param _termId Identification number of the term querying the Court config of
+    * @param _lastEnsuredTermId Identification number of the last ensured term of the Court
     * @return Identification number of the config for the given terms
     */
     function _getConfigIdFor(uint64 _termId, uint64 _lastEnsuredTermId) internal view returns (uint256) {
-        // If the given term is lower or equal to the last ensured Protocol term, it is safe to use a past Protocol config
+        // If the given term is lower or equal to the last ensured Court term, it is safe to use a past Court config
         if (_termId <= _lastEnsuredTermId) {
             return configIdByTerm[_termId];
         }
@@ -398,7 +398,7 @@ contract ProtocolConfig is IConfig, ProtocolConfigData {
             return configIdByTerm[scheduledChangeTermId];
         }
 
-        // If no changes are scheduled, use the Protocol config of the last ensured term
+        // If no changes are scheduled, use the Court config of the last ensured term
         return configIdByTerm[_lastEnsuredTermId];
     }
 }

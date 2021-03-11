@@ -3,7 +3,7 @@ const { bn, bigExp, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { roleId } = require('../helpers/utils/modules')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { PAYMENTS_BOOK_EVENTS } = require('../helpers/utils/events')
 const { PAYMENTS_BOOK_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 

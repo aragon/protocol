@@ -1,7 +1,7 @@
 const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 const CRVoting = artifacts.require('CRVoting')

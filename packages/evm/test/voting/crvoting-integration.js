@@ -1,10 +1,10 @@
 const { assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { SALT, OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
 
 const CRVoting = artifacts.require('CRVoting')
-const Protocol = artifacts.require('DisputeManagerMockForVoting')
+const Court = artifacts.require('DisputeManagerMockForVoting')
 
 contract('CRVoting', ([_, voterWeighted1, voterWeighted2, voterWeighted3, voterWeighted10, voterWeighted12, voterWeighted13, someone]) => {
   let controller, voting, disputeManager, voteId = 0
@@ -13,7 +13,7 @@ contract('CRVoting', ([_, voterWeighted1, voterWeighted2, voterWeighted3, voterW
 
   before('create base contracts', async () => {
     controller = await buildHelper().deploy()
-    disputeManager = await Protocol.new(controller.address)
+    disputeManager = await Court.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
   })
 

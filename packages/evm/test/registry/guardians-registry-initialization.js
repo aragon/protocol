@@ -1,7 +1,7 @@
 const { ZERO_ADDRESS, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { CONTROLLED_ERRORS, REGISTRY_ERRORS } = require('../helpers/utils/errors')
 
 const GuardiansRegistry = artifacts.require('GuardiansRegistry')
@@ -22,7 +22,7 @@ contract('GuardiansRegistry', ([_, something]) => {
       it('sets initial config correctly', async () => {
         const registry = await GuardiansRegistry.new(controller.address, ANT.address, TOTAL_ACTIVE_BALANCE_LIMIT)
 
-        assert.equal(await registry.name(), 'Protocol Staked Aragon Network Token', 'registry "ERC20-lite" name does not match')
+        assert.equal(await registry.name(), 'Court Staked Aragon Network Token', 'registry "ERC20-lite" name does not match')
         assert.equal(await registry.symbol(), 'sANT', 'registry "ERC20-lite" symbol does not match')
         assert.equal(await registry.decimals(), 18, 'registry "ERC20-lite" decimals does not match')
         assert.equal(await registry.controller(), controller.address, 'registry controller does not match')

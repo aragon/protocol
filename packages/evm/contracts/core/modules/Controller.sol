@@ -5,12 +5,12 @@ import "../../lib/utils/IsContract.sol";
 import "./ACL.sol";
 import "./ModuleIds.sol";
 import "./IModulesLinker.sol";
-import "../clock/ProtocolClock.sol";
-import "../config/ProtocolConfig.sol";
+import "../clock/CourtClock.sol";
+import "../config/CourtConfig.sol";
 import "../../disputes/IDisputeManager.sol";
 
 
-contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL {
+contract Controller is IsContract, ModuleIds, CourtClock, CourtConfig, ACL {
     string private constant ERROR_SENDER_NOT_GOVERNOR = "CTR_SENDER_NOT_GOVERNOR";
     string private constant ERROR_INVALID_GOVERNOR_ADDRESS = "CTR_INVALID_GOVERNOR_ADDRESS";
     string private constant ERROR_MODULE_NOT_SET = "CTR_MODULE_NOT_SET";
@@ -96,7 +96,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     * @dev Constructor function
     * @param _termParams Array containing:
     *        0. _termDuration Duration in seconds per term
-    *        1. _firstTermStartTime Timestamp in seconds when the protocol will open (to give time for guardian on-boarding)
+    *        1. _firstTermStartTime Timestamp in seconds when the court will open (to give time for guardian on-boarding)
     * @param _governors Array containing:
     *        0. _fundsGovernor Address of the funds governor
     *        1. _configGovernor Address of the config governor
@@ -137,8 +137,8 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
         uint256 _minActiveBalance
     )
         public
-        ProtocolClock(_termParams)
-        ProtocolConfig(_feeToken, _fees, _roundStateDurations, _pcts, _roundParams, _appealCollateralParams, _minActiveBalance)
+        CourtClock(_termParams)
+        CourtConfig(_feeToken, _fees, _roundStateDurations, _pcts, _roundParams, _appealCollateralParams, _minActiveBalance)
     {
         _setFundsGovernor(_governors[0]);
         _setConfigGovernor(_governors[1]);
@@ -167,7 +167,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     }
 
     /**
-    * @notice Change Protocol configuration params
+    * @notice Change Court configuration params
     * @param _fromTermId Identification number of the term in which the config will be effective at
     * @param _feeToken Address of the token contract that is used to pay for fees
     * @param _fees Array containing:
@@ -221,8 +221,8 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     }
 
     /**
-    * @notice Delay the Protocol start time to `_newFirstTermStartTime`
-    * @param _newFirstTermStartTime New timestamp in seconds when the protocol will open
+    * @notice Delay the Court start time to `_newFirstTermStartTime`
+    * @param _newFirstTermStartTime New timestamp in seconds when the court will open
     */
     function delayStartTime(uint64 _newFirstTermStartTime) external onlyConfigGovernor {
         _delayStartTime(_newFirstTermStartTime);
@@ -359,7 +359,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
 
     /**
     * @notice Disable module `_addr`
-    * @dev Current modules can be disabled to allow pausing the protocol. However, these can be enabled back again, see `enableModule`
+    * @dev Current modules can be disabled to allow pausing the court. However, these can be enabled back again, see `enableModule`
     * @param _addr Address of the module to be disabled
     */
     function disableModule(address _addr) external onlyModulesGovernor {
@@ -395,8 +395,8 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     }
 
     /**
-    * @dev Tell the full Protocol configuration parameters at a certain term
-    * @param _termId Identification number of the term querying the Protocol config of
+    * @dev Tell the full Court configuration parameters at a certain term
+    * @param _termId Identification number of the term querying the Court config of
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
     *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
@@ -450,7 +450,7 @@ contract Controller is IsContract, ModuleIds, ProtocolClock, ProtocolConfig, ACL
     /**
     * @dev Tell the min active balance config at a certain term
     * @param _termId Identification number of the term querying the min active balance config of
-    * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
+    * @return Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256) {
         uint64 lastEnsuredTermId = _lastEnsuredTermId();

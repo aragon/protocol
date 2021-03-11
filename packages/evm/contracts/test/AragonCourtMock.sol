@@ -1,10 +1,10 @@
 pragma solidity ^0.5.17;
 
-import "../AragonProtocol.sol";
+import "../AragonCourt.sol";
 import "./lib/TimeHelpersMock.sol";
 
 
-contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
+contract AragonCourtMock is AragonCourt, TimeHelpersMock {
     uint64 internal mockedTermId;
     bytes32 internal mockedTermRandomness;
 
@@ -19,7 +19,7 @@ contract AragonProtocolMock is AragonProtocol, TimeHelpersMock {
         uint256[2] memory _appealCollateralParams,
         uint256 _minActiveBalance
     )
-        AragonProtocol(
+        AragonCourt(
             _termParams,
             _governors,
             _feeToken,

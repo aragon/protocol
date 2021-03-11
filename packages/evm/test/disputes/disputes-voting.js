@@ -3,12 +3,12 @@ const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@
 
 const { filterGuardians } = require('../helpers/utils/guardians')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
-const { buildHelper, ROUND_STATES, DEFAULTS } = require('../helpers/wrappers/protocol')
+const { buildHelper, ROUND_STATES, DEFAULTS } = require('../helpers/wrappers/court')
 const { getVoteId, hashVote, outcomeFor, SALT, OUTCOMES } = require('../helpers/utils/crvoting')
 const { VOTING_ERRORS, DISPUTE_MANAGER_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
 contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000, guardian1500, guardian2000, guardian2500, guardian3000, guardian3500, guardian4000]) => {
-  let protocolHelper, voting
+  let courtHelper, voting
 
   const guardians = [
     { address: guardian100,  initialActiveBalance: bigExp(100,  18) },
@@ -23,22 +23,22 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
   ]
 
   before('create base contracts and activate guardians', async () => {
-    protocolHelper = buildHelper()
-    await protocolHelper.deploy({ modulesGovernor: _ })
-    voting = protocolHelper.voting
-    await protocolHelper.activate(guardians)
+    courtHelper = buildHelper()
+    await courtHelper.deploy({ modulesGovernor: _ })
+    voting = courtHelper.voting
+    await courtHelper.activate(guardians)
   })
 
   describe('voting', () => {
     let disputeId, voteId, voters, nonVoters
 
     beforeEach('activate guardians and create dispute', async () => {
-      disputeId = await protocolHelper.dispute()
+      disputeId = await courtHelper.dispute()
     })
 
     const itIsAtState = (roundId, state) => {
       it(`round is at state ${state}`, async () => {
-        const { roundState } = await protocolHelper.getRound(disputeId, roundId)
+        const { roundState } = await courtHelper.getRound(disputeId, roundId)
         assertBn(roundState, state, 'round state does not match')
       })
     }
@@ -74,7 +74,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
       let draftedGuardians, nonDraftedGuardians
 
       beforeEach('draft round', async () => {
-        draftedGuardians = await protocolHelper.draft({ disputeId, drafter })
+        draftedGuardians = await courtHelper.draft({ disputeId, drafter })
         nonDraftedGuardians = filterGuardians(guardians, draftedGuardians)
       })
 
@@ -96,7 +96,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
         context('when the sender was drafted', () => {
           context('when the voting module is disabled', () => {
             beforeEach('disable voting module', async () => {
-              await protocolHelper.protocol.disableModule(voting.address)
+              await courtHelper.court.disableModule(voting.address)
             })
 
             it('reverts', async () => {
@@ -108,7 +108,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
           context('when the voting module is enabled', () => {
             beforeEach('enable voting module', async () => {
-              await protocolHelper.protocol.enableModule(voting.address)
+              await courtHelper.court.enableModule(voting.address)
             })
 
             it('allows to commit a vote', async () => {
@@ -131,7 +131,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during reveal period', () => {
         beforeEach('commit votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
         })
 
         itIsAtState(roundId, ROUND_STATES.REVEALING)
@@ -183,8 +183,8 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during appeal period', () => {
         beforeEach('commit and reveal votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
         })
 
         itIsAtState(roundId, ROUND_STATES.APPEALING)
@@ -194,13 +194,13 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during the appeal confirmation period', () => {
         beforeEach('commit and reveal votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
         })
 
         context('when the round was not appealed', () => {
           beforeEach('pass appeal period', async () => {
-            await protocolHelper.passTerms(protocolHelper.appealTerms)
+            await courtHelper.passTerms(courtHelper.appealTerms)
           })
 
           itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -210,7 +210,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
         context('when the round was appealed', () => {
           beforeEach('appeal', async () => {
-            await protocolHelper.appeal({ disputeId, roundId })
+            await courtHelper.appeal({ disputeId, roundId })
           })
 
           itIsAtState(roundId, ROUND_STATES.CONFIRMING_APPEAL)
@@ -221,13 +221,13 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('after the appeal confirmation period', () => {
         beforeEach('commit and reveal votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
         })
 
         context('when the round was not appealed', () => {
           beforeEach('pass appeal and confirmation periods', async () => {
-            await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
+            await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
           })
 
           itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -237,12 +237,12 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
         context('when the round was appealed', () => {
           beforeEach('appeal', async () => {
-            await protocolHelper.appeal({ disputeId, roundId })
+            await courtHelper.appeal({ disputeId, roundId })
           })
 
           context('when the appeal was not confirmed', () => {
             beforeEach('pass appeal confirmation period', async () => {
-              await protocolHelper.passTerms(protocolHelper.appealConfirmTerms)
+              await courtHelper.passTerms(courtHelper.appealConfirmTerms)
             })
 
             itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -252,7 +252,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
           context('when the appeal was confirmed', () => {
             beforeEach('confirm appeal', async () => {
-              await protocolHelper.confirmAppeal({ disputeId, roundId })
+              await courtHelper.confirmAppeal({ disputeId, roundId })
             })
 
             itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -268,19 +268,19 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       beforeEach('simulate guardian without enough balance to vote on a final round', async () => {
         const expectedActiveBalance = bigExp(1, 18)
-        const { active: previousActiveBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
+        const { active: previousActiveBalance } = await courtHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
 
         if (previousActiveBalance.gt(expectedActiveBalance)) {
-          await protocolHelper.guardiansRegistry.collect(poorGuardian, previousActiveBalance.sub(expectedActiveBalance))
-          await protocolHelper.passTerms(bn(1))
+          await courtHelper.guardiansRegistry.collect(poorGuardian, previousActiveBalance.sub(expectedActiveBalance))
+          await courtHelper.passTerms(bn(1))
         }
 
-        const { active: currentActiveBalance } = await protocolHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
+        const { active: currentActiveBalance } = await courtHelper.guardiansRegistry.detailedBalanceOf(poorGuardian)
         assertBn(currentActiveBalance, expectedActiveBalance, 'poor guardian active balance does not match')
       })
 
       beforeEach('move to final round', async () => {
-        await protocolHelper.moveToFinalRound({ disputeId })
+        await courtHelper.moveToFinalRound({ disputeId })
       })
 
       beforeEach('define a group of voters', async () => {
@@ -316,7 +316,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during reveal period', () => {
         beforeEach('commit votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
         })
 
         itIsAtState(roundId, ROUND_STATES.REVEALING)
@@ -330,7 +330,7 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
             expectedTally = { [OUTCOMES.LOW]: 0, [OUTCOMES.HIGH]: 0 }
 
             for (const { address, outcome } of voters) {
-              const { weight } = await protocolHelper.getRoundGuardian(disputeId, roundId, address)
+              const { weight } = await courtHelper.getRoundGuardian(disputeId, roundId, address)
               expectedTally[outcome] += weight.toNumber()
               receipts.push(await voting.reveal(voteId, address, outcome, SALT))
             }
@@ -367,8 +367,8 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during appeal period', () => {
         beforeEach('commit and reveal votes', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
         })
 
         itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -378,9 +378,9 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('during the appeal confirmation period', () => {
         beforeEach('commit and reveal votes, and pass appeal period', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
-          await protocolHelper.passTerms(protocolHelper.appealTerms)
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.passTerms(courtHelper.appealTerms)
         })
 
         itIsAtState(roundId, ROUND_STATES.ENDED)
@@ -390,9 +390,9 @@ contract('DisputeManager', ([_, drafter, guardian100, guardian500, guardian1000,
 
       context('after the appeal confirmation period', () => {
         beforeEach('commit and reveal votes, and pass appeal and confirmation periods', async () => {
-          await protocolHelper.commit({ disputeId, roundId, voters })
-          await protocolHelper.reveal({ disputeId, roundId, voters })
-          await protocolHelper.passTerms(protocolHelper.appealTerms.add(protocolHelper.appealConfirmTerms))
+          await courtHelper.commit({ disputeId, roundId, voters })
+          await courtHelper.reveal({ disputeId, roundId, voters })
+          await courtHelper.passTerms(courtHelper.appealTerms.add(courtHelper.appealConfirmTerms))
         })
 
         itIsAtState(roundId, ROUND_STATES.ENDED)

@@ -6,7 +6,7 @@ import "../../lib/utils/TimeHelpers.sol";
 import "./IClock.sol";
 
 
-contract ProtocolClock is IClock, TimeHelpers {
+contract CourtClock is IClock, TimeHelpers {
     using SafeMath64 for uint64;
 
     string private constant ERROR_TERM_DOES_NOT_EXIST = "CLK_TERM_DOES_NOT_EXIST";
@@ -16,10 +16,10 @@ contract ProtocolClock is IClock, TimeHelpers {
     string private constant ERROR_BAD_FIRST_TERM_START_TIME = "CLK_BAD_FIRST_TERM_START_TIME";
     string private constant ERROR_TOO_MANY_TRANSITIONS = "CLK_TOO_MANY_TRANSITIONS";
     string private constant ERROR_INVALID_TRANSITION_TERMS = "CLK_INVALID_TRANSITION_TERMS";
-    string private constant ERROR_CANNOT_DELAY_STARTED_PROTOCOL = "CLK_CANNOT_DELAY_STARTED_PROT";
+    string private constant ERROR_CANNOT_DELAY_STARTED_COURT = "CLK_CANNOT_DELAY_STARTED_PROT";
     string private constant ERROR_CANNOT_DELAY_PAST_START_TIME = "CLK_CANNOT_DELAY_PAST_START_TIME";
 
-    // Maximum number of term transitions a callee may have to assume in order to call certain functions that require the Protocol being up-to-date
+    // Maximum number of term transitions a callee may have to assume in order to call certain functions that require the Court being up-to-date
     uint64 internal constant MAX_AUTO_TERM_TRANSITIONS_ALLOWED = 1;
 
     // Max duration in seconds that a term can last
@@ -34,13 +34,13 @@ contract ProtocolClock is IClock, TimeHelpers {
         bytes32 randomness;            // Entropy from randomnessBN block hash
     }
 
-    // Duration in seconds for each term of the Protocol
+    // Duration in seconds for each term of the Court
     uint64 private termDuration;
 
     // Last ensured term id
     uint64 private termId;
 
-    // List of Protocol terms indexed by id
+    // List of Court terms indexed by id
     mapping (uint64 => Term) private terms;
 
     event Heartbeat(uint64 previousTermId, uint64 currentTermId);
@@ -59,7 +59,7 @@ contract ProtocolClock is IClock, TimeHelpers {
     * @dev Constructor function
     * @param _termParams Array containing:
     *        0. _termDuration Duration in seconds per term
-    *        1. _firstTermStartTime Timestamp in seconds when the protocol will open (to give time for guardian on-boarding)
+    *        1. _firstTermStartTime Timestamp in seconds when the court will open (to give time for guardian on-boarding)
     */
     constructor(uint64[2] memory _termParams) public {
         uint64 _termDuration = _termParams[0];
@@ -76,7 +76,7 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @notice Ensure that the current term of the Protocol is up-to-date. If the Protocol is outdated by more than `MAX_AUTO_TERM_TRANSITIONS_ALLOWED`
+    * @notice Ensure that the current term of the Court is up-to-date. If the Court is outdated by more than `MAX_AUTO_TERM_TRANSITIONS_ALLOWED`
     *         terms, the heartbeat function must be called manually instead.
     * @return Identification number of the current term
     */
@@ -116,8 +116,8 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Tell the term duration of the Protocol
-    * @return Duration in seconds of the Protocol term
+    * @dev Tell the term duration of the Court
+    * @return Duration in seconds of the Court term
     */
     function getTermDuration() external view returns (uint64) {
         return termDuration;
@@ -140,8 +140,8 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Tell the number of terms the Protocol should transition to be up-to-date
-    * @return Number of terms the Protocol should transition to be up-to-date
+    * @dev Tell the number of terms the Court should transition to be up-to-date
+    * @return Number of terms the Court should transition to be up-to-date
     */
     function getNeededTermTransitions() external view returns (uint64) {
         return _neededTermTransitions();
@@ -170,7 +170,7 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Internal function to ensure that the current term of the Protocol is up-to-date. If the Protocol is outdated by more than
+    * @dev Internal function to ensure that the current term of the Court is up-to-date. If the Court is outdated by more than
     *      `MAX_AUTO_TERM_TRANSITIONS_ALLOWED` terms, the heartbeat function must be called manually.
     * @return Identification number of the resultant term ID after executing the corresponding transitions
     */
@@ -189,7 +189,7 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Internal function to transition the Protocol terms up to a requested number of terms
+    * @dev Internal function to transition the Court terms up to a requested number of terms
     * @param _maxRequestedTransitions Max number of term transitions allowed by the sender
     * @return Identification number of the resultant term ID after executing the requested transitions
     */
@@ -203,7 +203,7 @@ contract ProtocolClock is IClock, TimeHelpers {
         uint64 previousTermId = termId;
         uint64 currentTermId = previousTermId;
         for (uint256 transition = 1; transition <= transitions; transition++) {
-            // Term IDs are incremented by one based on the number of time periods since the Protocol started. Since time is represented in uint64,
+            // Term IDs are incremented by one based on the number of time periods since the Court started. Since time is represented in uint64,
             // even if we chose the minimum duration possible for a term (1 second), we can ensure terms will never reach 2^64 since time is
             // already assumed to fit in uint64.
             Term storage previousTerm = terms[currentTermId++];
@@ -226,10 +226,10 @@ contract ProtocolClock is IClock, TimeHelpers {
 
     /**
     * @dev Internal function to delay the first term start time only if it wasn't reached yet
-    * @param _newFirstTermStartTime New timestamp in seconds when the protocol will open
+    * @param _newFirstTermStartTime New timestamp in seconds when the court will open
     */
     function _delayStartTime(uint64 _newFirstTermStartTime) internal {
-        require(_currentTermId() == 0, ERROR_CANNOT_DELAY_STARTED_PROTOCOL);
+        require(_currentTermId() == 0, ERROR_CANNOT_DELAY_STARTED_COURT);
 
         Term storage term = terms[0];
         uint64 currentFirstTermStartTime = term.startTime.add(termDuration);
@@ -263,11 +263,11 @@ contract ProtocolClock is IClock, TimeHelpers {
     }
 
     /**
-    * @dev Internal function to tell the number of terms the Protocol should transition to be up-to-date
-    * @return Number of terms the Protocol should transition to be up-to-date
+    * @dev Internal function to tell the number of terms the Court should transition to be up-to-date
+    * @return Number of terms the Court should transition to be up-to-date
     */
     function _neededTermTransitions() internal view returns (uint64) {
-        // Note that the Protocol is always initialized providing a start time for the first-term in the future. If that's the case,
+        // Note that the Court is always initialized providing a start time for the first-term in the future. If that's the case,
         // no term transitions are required.
         uint64 currentTermStartTime = terms[termId].startTime;
         if (getTimestamp64() < currentTermStartTime) {

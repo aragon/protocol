@@ -1,17 +1,17 @@
 const { ZERO_BYTES32, NOW, ONE_DAY, NEXT_WEEK, bn } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { CLOCK_EVENTS } = require('../helpers/utils/events')
 const { CLOCK_ERRORS, CONTROLLER_ERRORS } = require('../helpers/utils/errors')
 
 contract('Controller', ([_, someone, configGovernor]) => {
-  let protocolHelper, controller
+  let courtHelper, controller
 
   const EMPTY_RANDOMNESS = ZERO_BYTES32
 
   beforeEach('build helper', () => {
-    protocolHelper = buildHelper()
+    courtHelper = buildHelper()
   })
 
   describe('constructor', () => {
@@ -21,7 +21,7 @@ contract('Controller', ([_, someone, configGovernor]) => {
       const firstTermStartTime = bn(NOW - 1)
 
       it('reverts', async () => {
-        await assertRevert(protocolHelper.deploy({ termDuration, firstTermStartTime }), CLOCK_ERRORS.BAD_FIRST_TERM_START_TIME)
+        await assertRevert(courtHelper.deploy({ termDuration, firstTermStartTime }), CLOCK_ERRORS.BAD_FIRST_TERM_START_TIME)
       })
     })
 
@@ -29,7 +29,7 @@ contract('Controller', ([_, someone, configGovernor]) => {
       const firstTermStartTime = bn(NOW).add(termDuration.sub(bn(1)))
 
       it('reverts', async () => {
-        await assertRevert(protocolHelper.deploy({ termDuration, firstTermStartTime }), CLOCK_ERRORS.BAD_FIRST_TERM_START_TIME)
+        await assertRevert(courtHelper.deploy({ termDuration, firstTermStartTime }), CLOCK_ERRORS.BAD_FIRST_TERM_START_TIME)
       })
     })
 
@@ -37,7 +37,7 @@ contract('Controller', ([_, someone, configGovernor]) => {
       const firstTermStartTime = bn(NEXT_WEEK)
 
       beforeEach('deploy controller', async () => {
-        controller = await protocolHelper.deploy({ termDuration, firstTermStartTime })
+        controller = await courtHelper.deploy({ termDuration, firstTermStartTime })
       })
 
       it('it must have already started term #0', async () => {
@@ -60,7 +60,7 @@ contract('Controller', ([_, someone, configGovernor]) => {
     const zeroTermStartTime = firstTermStartTime.sub(termDuration)
 
     beforeEach('create controller', async () => {
-      controller = await protocolHelper.deploy({ termDuration, firstTermStartTime })
+      controller = await courtHelper.deploy({ termDuration, firstTermStartTime })
     })
 
     const itRevertsOnHeartbeat = maxTransitionTerms => {
@@ -252,16 +252,16 @@ contract('Controller', ([_, someone, configGovernor]) => {
     const firstTermStartTime = bn(NEXT_WEEK)
 
     beforeEach('create controller', async () => {
-      controller = await protocolHelper.deploy({ termDuration, firstTermStartTime, configGovernor })
+      controller = await courtHelper.deploy({ termDuration, firstTermStartTime, configGovernor })
     })
 
     context('when the sender is the config governor', () => {
       const from = configGovernor
 
-      context('when the protocol has not started yet', () => {
-        beforeEach('assert the protocol has not started yet', async () => {
+      context('when the court has not started yet', () => {
+        beforeEach('assert the court has not started yet', async () => {
           const currentTerm = await controller.getCurrentTermId()
-          assertBn(currentTerm, 0, 'protocol has already started')
+          assertBn(currentTerm, 0, 'court has already started')
         })
 
         context('when the given timestamp is in the future', () => {
@@ -293,19 +293,19 @@ contract('Controller', ([_, someone, configGovernor]) => {
         })
       })
 
-      context('when the protocol has already started', () => {
-        beforeEach('start protocol', async () => {
-          await protocolHelper.setTerm(1)
+      context('when the court has already started', () => {
+        beforeEach('start court', async () => {
+          await courtHelper.setTerm(1)
 
           const currentTerm = await controller.getCurrentTermId()
-          assertBn(currentTerm, 1, 'protocol has not started yet')
+          assertBn(currentTerm, 1, 'court has not started yet')
         })
 
         context('when the given timestamp is in the future', () => {
           const newStartTime = firstTermStartTime.add(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(controller.delayStartTime(newStartTime, { from }), CLOCK_ERRORS.CANNOT_DELAY_STARTED_PROTOCOL)
+            await assertRevert(controller.delayStartTime(newStartTime, { from }), CLOCK_ERRORS.CANNOT_DELAY_STARTED_COURT)
           })
         })
 
@@ -313,7 +313,7 @@ contract('Controller', ([_, someone, configGovernor]) => {
           const newStartTime = firstTermStartTime.sub(bn(1))
 
           it('reverts', async () => {
-            await assertRevert(controller.delayStartTime(newStartTime, { from }), CLOCK_ERRORS.CANNOT_DELAY_STARTED_PROTOCOL)
+            await assertRevert(controller.delayStartTime(newStartTime, { from }), CLOCK_ERRORS.CANNOT_DELAY_STARTED_COURT)
           })
         })
       })

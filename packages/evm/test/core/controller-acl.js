@@ -1,6 +1,6 @@
 const { assertRevert, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { ACL_ERRORS } = require('../helpers/utils/errors')
 const { ACL_EVENTS } = require('../helpers/utils/events')
 

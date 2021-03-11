@@ -2,7 +2,7 @@ const { decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { OUTCOMES } = require('../helpers/utils/crvoting')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS, VOTING_ERRORS } = require('../helpers/utils/errors')
 

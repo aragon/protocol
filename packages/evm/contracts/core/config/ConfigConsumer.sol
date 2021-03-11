@@ -3,20 +3,20 @@ pragma solidity ^0.5.17;
 import "../../lib/standards/IERC20.sol";
 
 import "./IConfig.sol";
-import "./ProtocolConfigData.sol";
+import "./CourtConfigData.sol";
 
 
-contract ConfigConsumer is ProtocolConfigData {
+contract ConfigConsumer is CourtConfigData {
     /**
     * @dev Internal function to fetch the address of the Config module from the controller
     * @return Address of the Config module
     */
-    function _protocolConfig() internal view returns (IConfig);
+    function _courtConfig() internal view returns (IConfig);
 
     /**
-    * @dev Internal function to get the Protocol config for a certain term
-    * @param _termId Identification number of the term querying the Protocol config of
-    * @return Protocol config for the given term
+    * @dev Internal function to get the Court config for a certain term
+    * @param _termId Identification number of the term querying the Court config of
+    * @return Court config for the given term
     */
     function _getConfigAt(uint64 _termId) internal view returns (Config memory) {
         (IERC20 _feeToken,
@@ -25,7 +25,7 @@ contract ConfigConsumer is ProtocolConfigData {
         uint16[2] memory _pcts,
         uint64[4] memory _roundParams,
         uint256[2] memory _appealCollateralParams,
-        uint256 _minActiveBalance) = _protocolConfig().getConfig(_termId);
+        uint256 _minActiveBalance) = _courtConfig().getConfig(_termId);
 
         Config memory config;
 
@@ -63,7 +63,7 @@ contract ConfigConsumer is ProtocolConfigData {
     * @return Draft config for the given term
     */
     function _getDraftConfig(uint64 _termId) internal view returns (DraftConfig memory) {
-        (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct) = _protocolConfig().getDraftConfig(_termId);
+        (IERC20 feeToken, uint256 draftFee, uint16 penaltyPct) = _courtConfig().getDraftConfig(_termId);
         return DraftConfig({ feeToken: feeToken, draftFee: draftFee, penaltyPct: penaltyPct });
     }
 
@@ -73,6 +73,6 @@ contract ConfigConsumer is ProtocolConfigData {
     * @return Minimum amount of guardian tokens that can be activated
     */
     function _getMinActiveBalance(uint64 _termId) internal view returns (uint256) {
-        return _protocolConfig().getMinActiveBalance(_termId);
+        return _courtConfig().getMinActiveBalance(_termId);
     }
 }

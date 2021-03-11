@@ -109,15 +109,15 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     }
 
     /**
-    * @dev Internal function to ensure the Protocol term is up-to-date, it will try to update it if not
-    * @return Identification number of the current Protocol term
+    * @dev Internal function to ensure the Court term is up-to-date, it will try to update it if not
+    * @return Identification number of the current Court term
     */
     function _ensureCurrentTerm() internal returns (uint64) {
         return _clock().ensureCurrentTerm();
     }
 
     /**
-    * @dev Internal function to fetch the last ensured term ID of the Protocol
+    * @dev Internal function to fetch the last ensured term ID of the Court
     * @return Identification number of the last ensured term
     */
     function _getLastEnsuredTermId() internal view returns (uint64) {
@@ -203,7 +203,7 @@ contract Controlled is IModulesLinker, IsContract, ModuleIds, ConfigConsumer {
     * @dev Internal function to fetch the address of the Config module from the controller
     * @return Address of the Config module
     */
-    function _protocolConfig() internal view returns (IConfig) {
+    function _courtConfig() internal view returns (IConfig) {
         return IConfig(controller);
     }
 

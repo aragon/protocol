@@ -9,7 +9,7 @@ import "./IArbitrator.sol";
 
 /**
 * @dev The Arbitrable instances actually don't require to follow any specific interface.
-*      Note that this is actually optional, although it does allow the Protocol to at least have a way to identify a specific set of instances.
+*      Note that this is actually optional, although it does allow the Court to at least have a way to identify a specific set of instances.
 */
 contract IArbitrable {
     /**
