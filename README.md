@@ -1,5 +1,6 @@
 ![Aragon Court](.github/assets/aragon-court.png)
 
+<!-- #TODO: replace image with court wording  -->
 <img align="right" src="https://github.com/aragon/protocol/workflows/CI/badge.svg">
   <a href="https://github.com/aragon/protocol/actions"/>
 </img>
