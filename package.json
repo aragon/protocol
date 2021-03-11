@@ -1,7 +1,7 @@
 {
-  "name": "@aragon/protocol-monorepo",
+  "name": "@aragon/court-monorepo",
   "private": true,
-  "description": "Aragon Protocol monorepo",
+  "description": "Aragon Court monorepo",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "GPL-3.0",
   "dependencies": {},
@@ -9,18 +9,18 @@
   "scripts": {
     "postinstall": "yarn compile",
     "start": "./scripts/start.sh",
-    "compile": "yarn workspace @aragon/protocol-evm compile && yarn workspace @aragon/protocol-evm abi:extract",
-    "lint": "yarn workspace @aragon/protocol-evm lint",
-    "test": "yarn workspace @aragon/protocol-evm test"
+    "compile": "yarn workspace @aragon/court-evm compile && yarn workspace @aragon/court-evm abi:extract",
+    "lint": "yarn workspace @aragon/court-evm lint",
+    "test": "yarn workspace @aragon/court-evm test"
   },
   "workspaces": {
     "packages": [
       "packages/*"
     ],
     "nohoist": [
-      "**/@aragon/protocol-evm",
+      "**/@aragon/court-evm",
       "**/@aragon/contract-helpers-test",
-      "**/@aragon/protocol-evm",
+      "**/@aragon/court-evm",
       "**/@aragonone/erc20-faucet",
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**",

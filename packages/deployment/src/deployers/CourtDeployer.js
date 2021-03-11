@@ -4,7 +4,7 @@ const { MAX_UINT64 } = require('@aragon/contract-helpers-test')
 const BaseDeployer = require('./BaseDeployer')
 const ERC20Deployer = require('./ERC20Deployer')
 const Governor = require('../shared/Governor')
-const logger = require('../helpers/logger')('ProtocolDeployer')
+const logger = require('../helpers/logger')('CourtDeployer')
 
 const MODULES = {
   DISPUTE_MANAGER:    '0x14a6c70f0f6d449c014c7bbc9e68e31e79e8474fb03b7194df83109a2d888ae6',
@@ -23,7 +23,7 @@ module.exports = class extends BaseDeployer {
   async call() {
     await this.loadGovernorIfNecessary()
     await this.deployTokensIfNecessary()
-    await this.loadOrDeployProtocol()
+    await this.loadOrDeployCourt()
     await this.loadOrDeployDisputes()
     await this.loadOrDeployRegistry()
     await this.loadOrDeployVoting()
@@ -31,7 +31,7 @@ module.exports = class extends BaseDeployer {
     await this.loadOrDeployPaymentsBook()
     await this.setModules()
     await this.transferGovernor()
-    return this.protocol
+    return this.court
   }
 
   async loadGovernorIfNecessary() {
@@ -42,17 +42,17 @@ module.exports = class extends BaseDeployer {
     }
   }
 
-  async loadOrDeployProtocol() {
-    const { protocol } = this.previousDeploy
-    const AragonProtocol = await this.environment.getArtifact('AragonProtocol', '@aragon/protocol-evm')
+  async loadOrDeployCourt() {
+    const { court } = this.previousDeploy
+    const AragonCourt = await this.environment.getArtifact('AragonCourt', '@aragon/court-evm')
 
-    if (protocol && protocol.address) await this._loadAragonProtocol(AragonProtocol, protocol.address)
-    else await this._deployAragonProtocol(AragonProtocol)
+    if (court && court.address) await this._loadAragonCourt(AragonCourt, court.address)
+    else await this._deployAragonCourt(AragonCourt)
   }
 
   async loadOrDeployDisputes() {
     const { disputes } = this.previousDeploy
-    const DisputeManager = await this.environment.getArtifact('DisputeManager', '@aragon/protocol-evm')
+    const DisputeManager = await this.environment.getArtifact('DisputeManager', '@aragon/court-evm')
 
     if (disputes && disputes.address) await this._loadDisputes(DisputeManager, disputes.address)
     else await this._deployDisputes(DisputeManager)
@@ -60,7 +60,7 @@ module.exports = class extends BaseDeployer {
 
   async loadOrDeployRegistry() {
     const { registry } = this.previousDeploy
-    const GuardiansRegistry = await this.environment.getArtifact('GuardiansRegistry', '@aragon/protocol-evm')
+    const GuardiansRegistry = await this.environment.getArtifact('GuardiansRegistry', '@aragon/court-evm')
 
     if (registry && registry.address) await this._loadRegistry(GuardiansRegistry, registry.address)
     else await this._deployRegistry(GuardiansRegistry)
@@ -68,7 +68,7 @@ module.exports = class extends BaseDeployer {
 
   async loadOrDeployVoting() {
     const { voting } = this.previousDeploy
-    const Voting = await this.environment.getArtifact('CRVoting', '@aragon/protocol-evm')
+    const Voting = await this.environment.getArtifact('CRVoting', '@aragon/court-evm')
 
     if (voting && voting.address) await this._loadVoting(Voting, voting.address)
     else await this._deployVoting(Voting)
@@ -76,7 +76,7 @@ module.exports = class extends BaseDeployer {
 
   async loadOrDeployTreasury() {
     const { treasury } = this.previousDeploy
-    const Treasury = await this.environment.getArtifact('ProtocolTreasury', '@aragon/protocol-evm')
+    const Treasury = await this.environment.getArtifact('CourtTreasury', '@aragon/court-evm')
 
     if (treasury && treasury.address) await this._loadTreasury(Treasury, treasury.address)
     else await this._deployTreasury(Treasury)
@@ -84,7 +84,7 @@ module.exports = class extends BaseDeployer {
 
   async loadOrDeployPaymentsBook() {
     const { paymentsBook } = this.previousDeploy
-    const PaymentsBook = await this.environment.getArtifact('PaymentsBook', '@aragon/protocol-evm')
+    const PaymentsBook = await this.environment.getArtifact('PaymentsBook', '@aragon/court-evm')
 
     if (paymentsBook && paymentsBook.address) await this._loadPaymentsBook(PaymentsBook, paymentsBook.address)
     else await this._deployPaymentsBook(PaymentsBook)
@@ -92,13 +92,13 @@ module.exports = class extends BaseDeployer {
 
   async setModules() {
     const sender = await this.environment.getSender()
-    const modulesGovernor = await this.protocol.getModulesGovernor()
+    const modulesGovernor = await this.court.getModulesGovernor()
 
     if (modulesGovernor === sender) {
       logger.info('Setting modules...')
       const ids = [MODULES.DISPUTE_MANAGER, MODULES.GUARDIANS_REGISTRY, MODULES.VOTING, MODULES.PAYMENTS_BOOK, MODULES.TREASURY]
       const implementations = [this.disputes, this.registry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
-      await this.protocol.setModules(ids, implementations, ids, [])
+      await this.court.setModules(ids, implementations, ids, [])
       logger.success('Modules set successfully')
     } else {
       logger.warn('Cannot set modules since sender is no longer the modules governor')
@@ -107,12 +107,12 @@ module.exports = class extends BaseDeployer {
 
   async transferGovernor() {
     const sender = await this.environment.getSender()
-    const currentGovernor = await this.protocol.getModulesGovernor()
+    const currentGovernor = await this.court.getModulesGovernor()
     const { governor } = this.config
 
     if (currentGovernor === sender) {
       logger.info(`Transferring modules governor to ${governor} ...`)
-      await this.protocol.changeModulesGovernor(governor.address)
+      await this.court.changeModulesGovernor(governor.address)
       logger.success(`Modules governor transferred successfully to ${governor}`)
     } else if (currentGovernor === governor.address) {
       logger.success(`Modules governor is already set to ${governor}`)
@@ -139,9 +139,9 @@ module.exports = class extends BaseDeployer {
 
   /** loading methods **/
 
-  async _loadAragonProtocol(AragonProtocol, address) {
-    logger.warn(`Using previous deployed AragonProtocol instance at ${address}`)
-    this.protocol = await AragonProtocol.at(address)
+  async _loadAragonCourt(AragonCourt, address) {
+    logger.warn(`Using previous deployed AragonCourt instance at ${address}`)
+    this.court = await AragonCourt.at(address)
   }
 
   async _loadDisputes(DisputeManager, address) {
@@ -171,11 +171,11 @@ module.exports = class extends BaseDeployer {
 
   /** deploying methods **/
 
-  async _deployAragonProtocol(AragonProtocol) {
-    this._printAragonProtocolDeploy()
+  async _deployAragonCourt(AragonCourt) {
+    this._printAragonCourtDeploy()
     const sender = await this.environment.getSender()
 
-    this.protocol = await AragonProtocol.new(
+    this.court = await AragonCourt.new(
       [this.config.termDuration, this.config.firstTermStartTime],
       [this.config.governor.address, this.config.governor.address, sender],
       this.config.feeToken.address,
@@ -187,14 +187,14 @@ module.exports = class extends BaseDeployer {
       this.config.minActiveBalance
     )
 
-    const { address, transactionHash } = this.protocol
-    logger.success(`Created AragonProtocol instance at ${address}`)
-    this._saveDeploy({ protocol: { address, transactionHash }})
+    const { address, transactionHash } = this.court
+    logger.success(`Created AragonCourt instance at ${address}`)
+    this._saveDeploy({ court: { address, transactionHash }})
   }
 
   async _deployDisputes(DisputeManager) {
     this._printDisputesDeploy()
-    this.disputes = await DisputeManager.new(this.protocol.address, this.config.maxGuardiansPerDraftBatch, this.config.skippedDisputes)
+    this.disputes = await DisputeManager.new(this.court.address, this.config.maxGuardiansPerDraftBatch, this.config.skippedDisputes)
     const { address, transactionHash } = this.disputes
     logger.success(`Created DisputeManager instance at ${address}`)
     this._saveDeploy({ disputes: { address, transactionHash }})
@@ -203,7 +203,7 @@ module.exports = class extends BaseDeployer {
   async _deployRegistry(GuardiansRegistry) {
     this._printRegistryDeploy()
     const totalActiveBalanceLimit = this.config.minActiveBalance.mul(MAX_UINT64.div(this.config.finalRoundWeightPrecision))
-    this.registry = await GuardiansRegistry.new(this.protocol.address, this.config.token.address, totalActiveBalanceLimit)
+    this.registry = await GuardiansRegistry.new(this.court.address, this.config.token.address, totalActiveBalanceLimit)
     const { address, transactionHash } = this.registry
     logger.success(`Created GuardiansRegistry instance at ${address}`)
     this._saveDeploy({ registry: { address, transactionHash }})
@@ -211,7 +211,7 @@ module.exports = class extends BaseDeployer {
 
   async _deployVoting(Voting) {
     this._printVotingDeploy()
-    this.voting = await Voting.new(this.protocol.address)
+    this.voting = await Voting.new(this.court.address)
     const { address, transactionHash } = this.voting
     logger.success(`Created Voting instance at ${address}`)
     this._saveDeploy({ voting: { address, transactionHash }})
@@ -219,7 +219,7 @@ module.exports = class extends BaseDeployer {
 
   async _deployTreasury(Treasury) {
     this._printTreasuryDeploy()
-    this.treasury = await Treasury.new(this.protocol.address)
+    this.treasury = await Treasury.new(this.court.address)
     const { address, transactionHash } = this.treasury
     logger.success(`Created Treasury instance at ${address}`)
     this._saveDeploy({ treasury: { address, transactionHash }})
@@ -227,7 +227,7 @@ module.exports = class extends BaseDeployer {
 
   async _deployPaymentsBook(PaymentsBook) {
     this._printPaymentsBookDeploy()
-    this.paymentsBook = await PaymentsBook.new(this.protocol.address, this.config.paymentPeriodDuration, this.config.paymentsGovernorSharePct)
+    this.paymentsBook = await PaymentsBook.new(this.court.address, this.config.paymentPeriodDuration, this.config.paymentsGovernorSharePct)
     const { address, transactionHash } = this.paymentsBook
     logger.success(`Created PaymentsBook instance at ${address}`)
     this._saveDeploy({ paymentsBook: { address, transactionHash }})
@@ -235,8 +235,8 @@ module.exports = class extends BaseDeployer {
 
   /** logging methods **/
 
-  _printAragonProtocolDeploy() {
-    logger.info(`Deploying Aragon Protocol contract with config:`)
+  _printAragonCourtDeploy() {
+    logger.info(`Deploying Aragon Court contract with config:`)
     logger.info(` - Funds governor:                                 ${this.config.governor.describe()}`)
     logger.info(` - Config governor:                                ${this.config.governor.describe()}`)
     logger.info(` - Modules governor:                               ${this.config.governor.describe()} (initially sender)`)
@@ -265,31 +265,31 @@ module.exports = class extends BaseDeployer {
 
   _printDisputesDeploy() {
     logger.info(`Deploying DisputeManager contract with config:`)
-    logger.info(` - Controller:                                     ${this.protocol.address}`)
+    logger.info(` - Controller:                                     ${this.court.address}`)
     logger.info(` - Max number of guardians per draft batch:        ${this.config.maxGuardiansPerDraftBatch}`)
     logger.info(` - # of skipped disputes:                          ${this.config.skippedDisputes}`)
   }
 
   _printRegistryDeploy() {
     logger.info(`Deploying GuardiansRegistry contract with config:`)
-    logger.info(` - Controller:                                     ${this.protocol.address}`)
+    logger.info(` - Controller:                                     ${this.court.address}`)
     logger.info(` - Guardians token:                                ${this.config.token.symbol} at ${this.config.token.address}`)
     logger.info(` - Minimum active balance:                         ${fromWei(this.config.minActiveBalance)} ${this.config.token.symbol}`)
   }
 
   _printVotingDeploy() {
     logger.info('Deploying Voting contract with config:')
-    logger.info(` - Controller:                                     ${this.protocol.address}`)
+    logger.info(` - Controller:                                     ${this.court.address}`)
   }
 
   _printTreasuryDeploy() {
     logger.info(`Deploying Treasury contract with config:`)
-    logger.info(` - Controller:                                     ${this.protocol.address}`)
+    logger.info(` - Controller:                                     ${this.court.address}`)
   }
 
   _printPaymentsBookDeploy() {
     logger.info(`Deploying PaymentsBook contract with config:`)
-    logger.info(` - Controller:                                     ${this.protocol.address}`)
+    logger.info(` - Controller:                                     ${this.court.address}`)
     logger.info(` - Period duration:                                ${this.config.paymentPeriodDuration} terms`)
     logger.info(` - Governor share:                                 ${this.config.paymentsGovernorSharePct.toString()} ‱`)
   }
