@@ -1,15 +1,15 @@
 # 4.6. PaymentsBook
 
-The `PaymentsBook` module is in charge of collecting any extra payments paid by users to use Aragon Protocol.
+The `PaymentsBook` module is in charge of collecting any extra payments paid by users to use Aragon Court.
 This module is simply in charge of collecting any type of payment and distributing it to the corresponding parties: guardians and the governor.
-Aragon Protocol does not explicitly require users to provide these extra payments on-chain. The idea is that any custom mechanism can be built on top and then verified by guardians handling arising disputes.
+Aragon Court does not explicitly require users to provide these extra payments on-chain. The idea is that any custom mechanism can be built on top and then verified by guardians handling arising disputes.
 
 ### 4.6.1. Constructor
 
 - **Actor:** Deployer account
 - **Inputs:**
     - **Controller:** Address of the `Controller` contract that centralizes all the modules being used
-    - **Period duration:** Duration of the payment period in Protocol terms
+    - **Period duration:** Duration of the payment period in Court terms
     - **Governor share permyriad:** Initial ‱ of the collected payments that will be saved for the governor (1/10,000)
 - **Authentication:** Open
 - **Pre-flight checks:**
@@ -23,7 +23,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 
 ### 4.6.2. Pay
 
-- **Actor:** Users of the Protocol
+- **Actor:** Users of the Court
 - **Inputs:**
     - **Token:** Address of the token being used for the payment
     - **Amount:** Amount of tokens being paid
@@ -39,7 +39,7 @@ Aragon Protocol does not explicitly require users to provide these extra payment
 
 ### 4.6.3. Claim guardian share
 
-- **Actor:** Guardians of the Protocol
+- **Actor:** Guardians of the Court
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Guardian:** Address of the guardian claiming the shares for

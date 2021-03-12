@@ -1,14 +1,14 @@
 ## 4.2. Controller
 
-The `Controller` is core component of the architecture whose main responsibilities are permissions, modules, Protocol terms, and Protocol configurations management.
+The `Controller` is core component of the architecture whose main responsibilities are permissions, modules, Court terms, and Court configurations management.
 To read more information about its responsibilities and structure, go to [section 2](../2-architecture).
 
 ### 4.2.1. Constructor
 
 - **Actor:** Deployer account
 - **Inputs:**
-    - **Term duration:** Duration in seconds per Protocol term
-    - **First-term start time:** Timestamp in seconds when the Protocol will start
+    - **Term duration:** Duration in seconds per Court term
+    - **First-term start time:** Timestamp in seconds when the Court will start
     - **Governor:** Object containing
         - **Funds governor:** Address of the governor allowed to manipulate module's funds
         - **Config governor:** Address of the governor allowed to manipulate protocol settings
@@ -18,11 +18,11 @@ To read more information about its responsibilities and structure, go to [sectio
         - **Guardian fee:** Amount of fee tokens paid per drafted guardian per dispute
         - **Draft fee:**  Amount of fee tokens per guardian to cover the drafting costs
         - **Settle fee:** Amount of fee tokens per guardian to cover round settlement costs
-        - **Evidence terms:** Max submitting evidence period duration in Protocol terms
-        - **Commit terms:** Duration of the commit phase in Protocol terms
-        - **Reveal terms:** Duration of the reveal phase in Protocol terms
-        - **Appeal terms:** Duration of the appeal phase in Protocol terms
-        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Protocol terms
+        - **Evidence terms:** Max submitting evidence period duration in Court terms
+        - **Commit terms:** Duration of the commit phase in Court terms
+        - **Reveal terms:** Duration of the reveal phase in Court terms
+        - **Appeal terms:** Duration of the appeal phase in Court terms
+        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Court terms
         - **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted guardian (1/10,000)
         - **Final-round reduction:** ‱ of fee reduction for the last appeal round (1/10,000)
         - **First-round guardians number:** Number of guardians to be drafted for the first round of a dispute
@@ -35,8 +35,8 @@ To read more information about its responsibilities and structure, go to [sectio
 - **Authentication:** Open
 - **Pre-flight checks:**
     - Ensure that the term duration does not last longer than a year
-    - Ensure that the first Protocol term has not started yet
-    - Ensure that the first-term start time is at least scheduled one Protocol term ahead in the future
+    - Ensure that the first Court term has not started yet
+    - Ensure that the first-term start time is at least scheduled one Court term ahead in the future
     - Ensure that the first-term start time is scheduled earlier than 2 years in the future
     - Ensure that each dispute phase duration is not longer than 8670 terms
     - Ensure that the penalty permyriad is not above 10,000‱
@@ -48,9 +48,9 @@ To read more information about its responsibilities and structure, go to [sectio
     - Ensure that the appeal confirmation collateral factor is greater than zero
     - Ensure that the minimum guardians active balance is greater than zero
 - **State transitions:**
-    - Save the Protocol term duration
-    - Create a new term object for the first Protocol term
-    - Create the initial Protocol configuration object
+    - Save the Court term duration
+    - Create a new term object for the first Court term
+    - Create the initial Court configuration object
     - Create the governor object
 
 ### 4.2.2. Fallback
@@ -72,11 +72,11 @@ To read more information about its responsibilities and structure, go to [sectio
         - **Guardian fee:** Amount of fee tokens paid per drafted guardian per dispute
         - **Draft fee:**  Amount of fee tokens per guardian to cover the drafting costs
         - **Settle fee:** Amount of fee tokens per guardian to cover round settlement costs
-        - **Evidence terms:** Max submitting evidence period duration in Protocol terms
-        - **Commit terms:** Duration of the commit phase in Protocol terms
-        - **Reveal terms:** Duration of the reveal phase in Protocol terms
-        - **Appeal terms:** Duration of the appeal phase in Protocol terms
-        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Protocol terms
+        - **Evidence terms:** Max submitting evidence period duration in Court terms
+        - **Commit terms:** Duration of the commit phase in Court terms
+        - **Reveal terms:** Duration of the reveal phase in Court terms
+        - **Appeal terms:** Duration of the appeal phase in Court terms
+        - **Appeal confirmation terms:** Duration of the appeal confirmation phase in Court terms
         - **Penalty permyriad:** ‱ of min active tokens balance to be locked for each drafted guardian (1/10,000)
         - **Final-round reduction:** ‱ of fee reduction for the last appeal round (1/10,000)
         - **First-round guardians number:** Number of guardians to be drafted for the first round of a dispute
@@ -88,7 +88,7 @@ To read more information about its responsibilities and structure, go to [sectio
         - **Min active balance:** Minimum amount of guardian tokens that can be activated
 - **Authentication:** Only config governor
 - **Pre-flight checks:**
-    - Ensure that the Protocol term is up-to-date. If not, perform a heartbeat before continuing the execution
+    - Ensure that the Court term is up-to-date. If not, perform a heartbeat before continuing the execution
     - Ensure that the config changes are being scheduled at least 2 terms in the future
     - Ensure that each dispute phase duration is not longer than 8670 terms
     - Ensure that the penalty permyriad is not above 10,000‱
@@ -100,43 +100,43 @@ To read more information about its responsibilities and structure, go to [sectio
     - Ensure that the appeal confirmation collateral factor is greater than zero
     - Ensure that the minimum guardians active balance is greater than zero
 - **State transitions:**
-    - Update current Protocol term if needed
-    - Create a new Protocol configuration object
+    - Update current Court term if needed
+    - Create a new Court configuration object
     - Create a new future term object for the new configuration
 
 ### 4.2.4. Delay start time
 
 - **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
 - **Inputs:**
-    - **New first-term start time:** New timestamp in seconds when the Protocol will start
+    - **New first-term start time:** New timestamp in seconds when the Court will start
 - **Authentication:** Allowed only to the config governor
 - **Pre-flight checks:**
-    - Ensure that the Protocol has not started yet
+    - Ensure that the Court has not started yet
     - Ensure that the new proposed start time is in the future
 - **State transitions:**
     - Update the protocol first term start time
 
 ### 4.2.5. Heartbeat
 
-- **Actor:** Any entity incentivized to keep to Protocol term updated
+- **Actor:** Any entity incentivized to keep to Court term updated
 - **Inputs:**
-    - **Max allowed transitions:** Maximum number of transitions allowed, it can be set to zero to denote all the required transitions to update the Protocol to the current term
+    - **Max allowed transitions:** Maximum number of transitions allowed, it can be set to zero to denote all the required transitions to update the Court to the current term
 - **Authentication:** Open
 - **Pre-flight checks:**
     - Ensure that the number of terms to be updated is greater than zero
 - **State transitions:**
-    - Update the Protocol term
+    - Update the Court term
     - Create a new term object for each transitioned new term
 
 ### 4.2.6. Ensure current term
 
-- **Actor:** Any entity incentivized to keep to Protocol term updated
+- **Actor:** Any entity incentivized to keep to Court term updated
 - **Inputs:** None
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that the required number of transitions to update the Protocol term is not huge
+    - Ensure that the required number of transitions to update the Court term is not huge
 - **State transitions:**
-    - If necessary, update the Protocol term and create a new term object for each transitioned new term
+    - If necessary, update the Court term and create a new term object for each transitioned new term
 
 ### 4.2.7. Ensure current term randomness
 

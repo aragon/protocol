@@ -1,12 +1,12 @@
-## 6.1. AragonProtocol
+## 6.1. AragonCourt
 
 ### 6.1.1 Events
 
-No custom events are implemented by `AragonProtocol`.
+No custom events are implemented by `AragonCourt`.
 
 ### 6.1.2. Getters
 
-The following functions are state getters provided by `AragonProtocol`:
+The following functions are state getters provided by `AragonCourt`:
 
 #### 6.1.2.1. Dispute fees
 

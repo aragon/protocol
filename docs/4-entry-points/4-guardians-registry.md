@@ -1,7 +1,7 @@
 ## 4.4. Guardians Registry
 
 The `GuardiansRegistry` module is in charge of handling the guardians activity and mainly the different states of their staked balances.
-This module is in the one handling all the staking/unstaking logic for the guardians, all the ANT staked into the Protocol is held by the registry.
+This module is in the one handling all the staking/unstaking logic for the guardians, all the ANT staked into the Court is held by the registry.
 
 ### 4.4.1. Constructor
 
@@ -22,7 +22,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.2. Stake
 
-- **Actor:** Guardian or an external entity incentivized in a guardian of the Protocol
+- **Actor:** Guardian or an external entity incentivized in a guardian of the Court
 - **Inputs:**
     - **Guardian:** Address of the guardian staking the tokens for
     - **Amount:** Amount of tokens to be staked
@@ -56,13 +56,13 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Amount:** Amount of guardian tokens to be activated for the next term
 - **Authentication:** The guardian or an authorized role holder. Only for guardians with some available balance.
 - **Pre-flight checks:**
-    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the requested amount is greater than zero
     - Ensure that the guardian's available balance is enough for the requested amount
-    - Ensure that the new active balance is greater than the minimum active balance for the Protocol
+    - Ensure that the new active balance is greater than the minimum active balance for the Court
     - Ensure that the total active balance held in the registry does not reach the limit
 - **State transitions:**
-    - Update current Protocol term if needed
+    - Update current Court term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Update the guardian's active balance for the next term
     - Decrease the guardian's available balance
@@ -75,11 +75,11 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Amount:** Amount of guardian tokens to be deactivated for the next term
 - **Authentication:** The guardian or an authorized role holder. Only for guardians with some activated balance.
 - **Pre-flight checks:**
-    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure that the unlocked active balance of the guardians is enough for the requested amount
-    - Ensure that the remaining active balance is either zero or greater than the minimum active balance for the Protocol
+    - Ensure that the remaining active balance is either zero or greater than the minimum active balance for the Court
 - **State transitions:**
-    - Update current Protocol term if needed
+    - Update current Court term if needed
     - Process previous deactivation requests if there is any, increase the guardian's available balance
     - Create a new deactivation request object for the next term
 
@@ -114,7 +114,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.8. Unlock activation
 
-- **Actor:** External entity incentivized to unlock the activation of a guardian of the Protocol
+- **Actor:** External entity incentivized to unlock the activation of a guardian of the Court
 - **Inputs:**
     - **Guardian:** Address of the guardian unlocking the active balance of
     - **Lock manager:** Address of the lock manager controlling the lock
@@ -138,7 +138,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
     - **Guardian:** Address of the guardian to process the deactivation request of
 - **Authentication:** Open
 - **Pre-flight checks:**
-    - Ensure that the Protocol term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
+    - Ensure that the Court term is up-to-date. Otherwise, perform a heartbeat before continuing the execution.
     - Ensure there is an existing deactivation request for the guardian
     - Ensure that the existing deactivation request can be processed at the current term
 - **State transitions:**
