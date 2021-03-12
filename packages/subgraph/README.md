@@ -46,14 +46,15 @@ docker-compose up
   simply add a new env variable in `docker-compose.yml` named `ETHEREUM_REORG_THRESHOLD` assigning it to 0 and start it again.
 
 ##### 3. Deploy Aragon Court subgraph
-You can use the provided deployment script to create a manifest file, providing the court deployed address as follows:
+You can use the provided deployment script to create a manifest file, providing the court deployed address and subgraph access key as follows:
 
 ```bash
 cd packages/subgraph
-COURT=<COURT_ADDRESS> yarn deploy:ganache
+GRAPHKEY=<GRAPHKEY> COURT=<COURT_ADDRESS> yarn deploy:ganache
 ```
 
-Replace `COURT_ADDRESS` with the Aragon Court address outputted in the step 1.
+Replace `COURT_ADDRESS` with the Aragon Court address outputted in the step 1. <br>
+Replace `GRAPHEY` with the access token from [thegraph](https://thegraph.com).
 
 ##### 4. Query Aragon Court subgraph
 
