@@ -18,12 +18,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install
-      run: npm install
+      run: yarn --frozen-lockfile
     - name: Authenticate
       run: .github/scripts/kubectl-config.sh ${{secrets.KUBE_CA}} ${{secrets.KUBE_SERVER}} ${{secrets.KUBE_TOKEN}}
     - name: Staging
       run: echo npm run deploy:staging
     - name: Rinkeby
-      run: npm run deploy:rinkeby
+      run: yarn deploy:rinkeby
     - name: Ropsten
-      run: npm run deploy:ropsten
+      run: yarn deploy:ropsten
