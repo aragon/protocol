@@ -16,8 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install
-      run: npm install
+      run: yarn --frozen-lockfile
     - name: Authenticate
       run: .github/scripts/kubectl-config.sh ${{secrets.KUBE_CA}} ${{secrets.KUBE_SERVER}} ${{secrets.KUBE_TOKEN}}
     - name: Deploy
-      run: npm run deploy:mainnet
+      run: yarn workspace @aragon/court-subgraph deploy:mainnet
