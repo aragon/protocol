@@ -24,6 +24,6 @@ jobs:
     - name: Staging
       run: echo npm run deploy:staging
     - name: Rinkeby
-      run: yarn deploy:rinkeby
+      run: yarn workspace @aragon/court-subgraph deploy:rinkeby
     - name: Ropsten
-      run: yarn deploy:ropsten
+      run: yarn workspace @aragon/court-subgraph deploy:ropsten

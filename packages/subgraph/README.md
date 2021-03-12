@@ -13,7 +13,7 @@
 
 ### Local
 
-To test the subgraph locally please do the following tasks.
+To test the subgraph locally please do the following tasks
 
 ##### 1. Start local Aragon Court instance
 First make sure to clone this repo and install dependencies:
