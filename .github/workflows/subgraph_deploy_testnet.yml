@@ -7,6 +7,7 @@ on:
     branches:
     - 'master'
     - 'development'
+    - 'rename-protocol'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}
@@ -21,7 +22,7 @@ jobs:
     - name: Authenticate
       run: .github/scripts/kubectl-config.sh ${{secrets.KUBE_CA}} ${{secrets.KUBE_SERVER}} ${{secrets.KUBE_TOKEN}}
     - name: Staging
-      run: npm run deploy:staging
+      run: echo npm run deploy:staging
     - name: Rinkeby
       run: npm run deploy:rinkeby
     - name: Ropsten
