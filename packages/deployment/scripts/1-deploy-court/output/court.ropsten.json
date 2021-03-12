@@ -1,0 +1,26 @@
+{
+  "court": {
+    "address": "0x870714F981b830c3355b2CfdE704095cF23A4668",
+    "transactionHash": "0x32ee955557cee5995b6b141da66e55dc8816e169a75c75ec6308753e9dd80a1b"
+  },
+  "disputes": {
+    "address": "0xB8d428621C354BFd3a8D7368a65694F2BeEfab94",
+    "transactionHash": "0x5209c283dc8bc625d4248be7fd6d7b4707524155a830aa80b5cebd516b1b368b"
+  },
+  "registry": {
+    "address": "0xCFeC8335ef37842e2732E4bd7A5F0795092b57f1",
+    "transactionHash": "0x7fc6742ec2fa581d9cf7bf28570f99ef0ebbaaabae6ef8375e8d3b0566434f33"
+  },
+  "voting": {
+    "address": "0x8F21755ED6d06785D73AC60ACDfe60f450fa6d64",
+    "transactionHash": "0xa5246ccadedbd7d2b1b03366494d30ff64eb04162467f66e7f8dd288f3a755cb"
+  },
+  "treasury": {
+    "address": "0x5d58e99c49A99482b73Df124a2dd5C52d6Afc0f7",
+    "transactionHash": "0xf9ca823043303d24cbf9965620fd73595272177312ff77353663a9ff14a9758a"
+  },
+  "paymentsBook": {
+    "address": "0xba34A293005151C8f865CE34D2fB0c836b260377",
+    "transactionHash": "0xf2550d7e0b697c26c0ed18e7ef9e30ac1c239c47e21d940c06edacd4b3117d6c"
+  }
+}
