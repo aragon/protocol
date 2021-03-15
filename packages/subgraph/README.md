@@ -8,8 +8,6 @@
 
 1. [Mainnet](https://thegraph.com/explorer/subgraph/aragon/aragon-court-v2-mainnet)
 2. [Rinkeby](https://thegraph.com/explorer/subgraph/aragon/aragon-court-v2-rinkeby)
-3. [Ropsten](https://thegraph.com/explorer/subgraph/aragon/aragon-court-v2-ropsten)
-4. [Staging](https://thegraph.com/explorer/subgraph/aragon/aragon-court-v2-staging)
 
 ### Local
 
