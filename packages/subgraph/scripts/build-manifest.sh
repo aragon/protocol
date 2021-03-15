@@ -3,24 +3,28 @@
 # Exit script as soon as a command fails.
 set -o errexit
 
-# Court known addresses
-court_ropsten=0xc236205f7f1c4a4B0A857c350BF64bB0FF385702
-court_staging=0x3E5D4a431f955C1eaB2BF919e174426572c4714F
-court_rinkeby=0x3F5E248BB5cd3c1275304e692d6cacC708E004d0
-court_mainnet=
-
-# Known block numbers
-start_block_ropsten=9038827
-start_block_staging=7519974
-start_block_rinkeby=7519991
-start_block_mainnet=
-
 # Validate network
-networks=(ganache ropsten staging rinkeby mainnet)
+networks=(ganache rinkeby mainnet) # ropsten will be supported in the near future.
 if [[ -z $NETWORK || ! " ${networks[@]} " =~ " ${NETWORK} " ]]; then
   echo 'Please make sure the network provided is either ganache, ropsten, staging, rinkeby, or mainnet.'
   exit 1
 fi
+
+
+# Court known addresses
+court_rinkeby=0xA88c52E80f15440B223a24c1e8f22f21D18D8d5f
+court_mainnet=
+
+# Known block numbers
+start_block_rinkeby=7519991
+start_block_mainnet=
+
+# Lately, only rinkeby/mainnet deployments are supported. court_ropsten and court_staging
+# are commented until the aragon decides to fully support those networks too.
+# court_ropsten=0xc236205f7f1c4a4B0A857c350BF64bB0FF385702
+# court_staging=0x3E5D4a431f955C1eaB2BF919e174426572c4714F
+# start_block_ropsten=9038827
+# start_block_staging=7519974
 
 # Use mainnet network in case of local deployment
 if [[ "$NETWORK" = "ganache" ]]; then
