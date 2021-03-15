@@ -21,7 +21,6 @@ task('deploy-faucet', 'Deploy token faucet')
   .setAction((args, bre) => executeTask(bre, deployFaucet, args))
 
 
-const PRIVATE_KEYS = process.env.PRIVATE_KEY ? [`0x${process.env.PRIVATE_KEY}`] : [];
 
 module.exports = {
   networks: {
@@ -29,13 +28,6 @@ module.exports = {
       url: 'http://localhost:8545',
       gasLimit: 8000000,
       defaultBalanceEther: 1000
-    },
-
-    rinkeby: {
-      url: 'https://rinkeby.eth.aragon.network',
-      accounts: PRIVATE_KEYS
-    },
-    
-
+    }
   }
 }

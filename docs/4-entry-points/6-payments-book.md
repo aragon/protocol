@@ -56,7 +56,7 @@ Aragon Court does not explicitly require users to provide these extra payments o
 
 ### 4.6.4. Claim governor share
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **Period ID:** Period identification number
     - **Tokens:** List of addresses of the tokens being claimed
@@ -82,7 +82,7 @@ Aragon Court does not explicitly require users to provide these extra payments o
 
 ### 4.6.12. Set governor share permyriad
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **New governor share permyriad:** New ‱ of the collected payments that will be saved for the governor (1/10,000)
 - **Authentication:** Only config governor
@@ -93,7 +93,7 @@ Aragon Court does not explicitly require users to provide these extra payments o
 
 ### 4.6.13. Recover funds
 
-- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
+- **Actor:** External entity in charge of maintaining the court funds (funds governor)
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `PaymentsBook` module
     - **Recipient:** Address that will receive the funds of the `PaymentsBook` module

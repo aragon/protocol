@@ -1,6 +1,6 @@
 # 4. Entry points
 
-The following sections aim to deeply describe the functionality exposed by each of the components of the protocol mentioned in [section 2](../2-architecture).
+The following sections aim to deeply describe the functionality exposed by each of the components of the court mentioned in [section 2](../2-architecture).
 
 ## Table of Contents
 

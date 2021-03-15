@@ -11,7 +11,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - **First-term start time:** Timestamp in seconds when the Court will start
     - **Governor:** Object containing
         - **Funds governor:** Address of the governor allowed to manipulate module's funds
-        - **Config governor:** Address of the governor allowed to manipulate protocol settings
+        - **Config governor:** Address of the governor allowed to manipulate court settings
         - **Modules governor:** Address of the governor allowed to manipulate module's addresses
     - **Settings:** Object containing
         - **Fee token:** Address of the token contract that is used to pay for the fees
@@ -64,7 +64,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.3. Set config
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **From term ID:** Identification number of the term in which the config will be effective at
     - **Settings:** Object containing
@@ -106,7 +106,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.4. Delay start time
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **New first-term start time:** New timestamp in seconds when the Court will start
 - **Authentication:** Allowed only to the config governor
@@ -114,7 +114,7 @@ To read more information about its responsibilities and structure, go to [sectio
     - Ensure that the Court has not started yet
     - Ensure that the new proposed start time is in the future
 - **State transitions:**
-    - Update the protocol first term start time
+    - Update the court first term start time
 
 ### 4.2.5. Heartbeat
 
@@ -150,7 +150,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.8. Set automatic withdrawals
 
-- **Actor:** External entity holding funds in the protocol
+- **Actor:** External entity holding funds in the court
 - **Inputs:**
     - **Allowed:** Whether the automatic withdrawals for the sender are allowed or not
 - **Authentication:** Open
@@ -160,7 +160,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.9. Change funds governor
 
-- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
+- **Actor:** External entity in charge of maintaining the court funds (funds governor)
 - **Inputs:**
     - **New funds governor:** Address of the new funds governor to be set
 - **Authentication:** Only funds governor
@@ -171,7 +171,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.10. Change config governor
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **New config governor:** Address of the new config governor to be set
 - **Authentication:** Allowed only to the config governor
@@ -182,7 +182,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.11. Change modules governor
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **New modules governor:** Address of the new modules governor to be set
 - **Authentication:** Allowed only to the modules governor
@@ -193,7 +193,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.12. Eject funds governor
 
-- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
+- **Actor:** External entity in charge of maintaining the court funds (funds governor)
 - **Inputs:** None
 - **Authentication:** Only funds governor
 - **Pre-flight checks:** None
@@ -202,7 +202,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.13. Eject modules governor
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:** None
 - **Authentication:** Only modules governor
 - **Pre-flight checks:** None
@@ -211,7 +211,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.14. Set module
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **Module ID:** ID of the module to be set
     - **Address:** Address of the module to be set
@@ -223,7 +223,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.15. Set modules
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **New modules' IDs:** List of IDs of the new modules to be set
     - **New modules' addresses:** List of addresses of the new modules to be set
@@ -241,7 +241,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.16. Sync module links
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **Modules to be synced:** List of addresses of connected modules whose implementation links should be synced for the requested module ids
     - **IDs to be set:** List of IDs of the modules to be included in the sync
@@ -254,7 +254,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.17. Disable module
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **Address:** Address of the module to be disabled
 - **Authentication:** Only modules governor
@@ -266,7 +266,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.18. Enable module
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **Address:** Address of the module to be enabled
 - **Authentication:** Only modules governor
@@ -278,7 +278,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.19. Set custom function
 
-- **Actor:** External entity in charge of maintaining the protocol modules (modules governor)
+- **Actor:** External entity in charge of maintaining the court modules (modules governor)
 - **Inputs:**
     - **Signature:** Signature of the function to be customized
     - **Address:** Address of the target that will be forwarded with the function call
@@ -289,7 +289,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.20. Grant
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the court
 - **Inputs:**
     - **Role:** ID of the role to be granted
     - **Address:** Address of the entity to grant the role to
@@ -302,7 +302,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.21. Revoke
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the court
 - **Inputs:**
     - **Role:** ID of the role to be revoked
     - **Address:** Address of the entity to revoke the role from
@@ -315,7 +315,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.22. Freeze
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the court
 - **Inputs:**
     - **Role:** ID of the role to be frozen
 - **Authentication:** Only config governor
@@ -326,7 +326,7 @@ To read more information about its responsibilities and structure, go to [sectio
 
 ### 4.2.23. Bulk
 
-- **Actor:** External entity in charge of maintaining the protocol
+- **Actor:** External entity in charge of maintaining the court
 - **Inputs:**
     - **Ops:** List of requested operations
     - **Roles:** List of roles for the requested operations

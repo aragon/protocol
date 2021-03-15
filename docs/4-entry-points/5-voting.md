@@ -1,7 +1,7 @@
 ## 4.5. Voting
 
 The `Voting` module is in charge of handling all the votes submitted by the drafted guardians and computing the tallies to ensure the final ruling of a dispute once finished.
-In particular, the first version of the protocol uses a commit-reveal mechanism. Therefore, the `Voting` module allows guardians to commit and reveal their votes, and leaked other guardians votes.
+In particular, the first version of the court uses a commit-reveal mechanism. Therefore, the `Voting` module allows guardians to commit and reveal their votes, and leaked other guardians votes.
 
 ### 4.5.1. Constructor
 

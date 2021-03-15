@@ -17,10 +17,10 @@ The Aragon Court Dashboard is the central app where all dispute-related informat
 Aragon Court is a dispute resolution protocol running on Ethereum. It is the core component of the [Aragon Network](https://aragon.org/network/).
 
 #### 🚧 Project stage: v1 implementation
-After a long research and development phase, Aragon Protocol's v1 implementation will soon be released as an upgraded version of Aragon Court.
+After a long research and development phase, Aragon court's v1 implementation will soon be released as an upgraded version of Aragon Court.
 
 #### 🚨 Security review status: in progress
-Aragon Protocol v1 is being audited by a security firm. We will publish the results as soon as we finish the process.
+Aragon court v1 is being audited by a security firm. We will publish the results as soon as we finish the process.
 
 #### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragon-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 Don't be shy to contribute even the smallest tweak. Everyone will be especially nice and helpful to beginners to help you get started!

@@ -1,10 +1,10 @@
 const governor = require('../../../src/shared/Governor')
 
-const ropsten = governor('0x0090aED150056316E37FE6DFa10Dc63E79D173B6')    // EOA
+const ropsten = governor('0x94C34FB5025e054B24398220CBDaBE901bd8eE5e')    // EOA
 
-const staging = governor('0x0090aED150056316E37FE6DFa10Dc63E79D173B6')    // EOA
+const staging = governor('0x94C34FB5025e054B24398220CBDaBE901bd8eE5e')    // EOA
 
-const rinkeby = governor('0x0090aED150056316E37FE6DFa10Dc63E79D173B6')    // EOA
+const rinkeby = governor('0x94C34FB5025e054B24398220CBDaBE901bd8eE5e')    // EOA
 
 const mainnet = undefined // TODO
 

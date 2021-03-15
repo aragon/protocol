@@ -230,7 +230,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.16. Set total active balance limit
 
-- **Actor:** External entity in charge of maintaining the protocol configuration (config governor)
+- **Actor:** External entity in charge of maintaining the court configuration (config governor)
 - **Inputs:**
     - **New total active balance limit:** New limit of total active balance of guardian tokens
 - **Authentication:** Only config governor
@@ -241,7 +241,7 @@ This module is in the one handling all the staking/unstaking logic for the guard
 
 ### 4.4.17. Recover funds
 
-- **Actor:** External entity in charge of maintaining the protocol funds (funds governor)
+- **Actor:** External entity in charge of maintaining the court funds (funds governor)
 - **Inputs:**
     - **Token:** Address of the ERC20-compatible token or ETH to be recovered from the `GuardiansRegistry` module
     - **Recipient:** Address that will receive the funds of the `GuardiansRegistry` module

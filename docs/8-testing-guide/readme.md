@@ -127,7 +127,7 @@ You can check your current stake as a guardian in the dashboards linked above in
 
 ## 8.5. Creating a dispute
 
-As you may know, disputes can only be submitted to Aragon Court through smart contracts that implement a specific interface to support being ruled by the protocol itself.
+As you may know, disputes can only be submitted to Aragon Court through smart contracts that implement a specific interface to support being ruled by the court itself.
 This is specified by the [`IArbitrable`](../../packages/ethereum/contracts/arbitration/IArbitrable.sol) interface.
 
 Thus, the first thing we should do is to deploy an Arbitrable contract. You can do this from the CLI running the following command:
@@ -142,7 +142,7 @@ Where:
 
 This command will output the address of your new Arbitrable contract.
 
-Now, we are almost ready to create a dispute. The last step is to send some fake DAI to the Arbitrable instance so that it can pay for the protocol's dispute fees.
+Now, we are almost ready to create a dispute. The last step is to send some fake DAI to the Arbitrable instance so that it can pay for the court's dispute fees.
 The dispute fees are to pay the guardians for each dispute to be resolved.
 For the testing instances, each dispute costs 30.87 fake-DAI (`30870000000000000000` with 18 decimals).
 Thus, you will need to make a transfer from your account to your Arbitrable instance.
@@ -207,7 +207,7 @@ node ./bin/index.js dispute -a 0xe573D236d40F331d24420075Fb2EdE84B9968E3c -m '{ 
 
 ## 8.6. Ruling a dispute
 
-You can use any of the Court Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the protocol—and therefore can be difficult to come to a ruling you want).
+You can use any of the Court Dashboard instances linked in section 8.1 to interact with your created disputes (note that in some environments, it may be difficult to ensure that your account is drafted due to the randomness nature of the court and therefore can be difficult to come to a ruling you want).
 If your dispute's metadata was not correctly formatted or made available as explained in sections 8.5.1 and 8.5.2, the dispute will most likely not display the intended information to guardians.
 
 Alternatively, you can use the rest of the CLI tool [commands](https://github.com/aragon/protocol-backend/tree/master/packages/cli/#commands) to begin ruling your dispute:
