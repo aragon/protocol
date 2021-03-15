@@ -22,11 +22,13 @@ else
 fi
 
 # Create subgraph if missing
-{
-  graph create aragon/aragon-court-v2-${NETWORK} --node ${GRAPH_NODE}
-} || {
-  echo 'Subgraph was already created'
-}
+# This has been commented due to the error: `Creating subgraphs is only possible from the dashboard`.
+# This could still be needed in the future, so let's still keep it here.
+# {
+#   graph create aragon/aragon-court-v2-${NETWORK} --node ${GRAPH_NODE}
+# } || {
+#   echo 'Subgraph was already created'
+# }
 
 # Deploy subgraph
 graph deploy aragon/aragon-court-v2-${NETWORK} \
