@@ -7,6 +7,7 @@ on:
     branches:
     - 'master'
     - 'development'
+    - 'rename-protocol'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}
@@ -20,9 +21,5 @@ jobs:
       run: yarn --frozen-lockfile
     - name: Authenticate
       run: .github/scripts/kubectl-config.sh ${{secrets.KUBE_CA}} ${{secrets.KUBE_SERVER}} ${{secrets.KUBE_TOKEN}}
-    - name: Staging
-      run: yarn workspace @aragon/court-subgraph deploy:staging
     - name: Rinkeby
       run: yarn workspace @aragon/court-subgraph deploy:rinkeby
-    - name: Ropsten
-      run: yarn workspace @aragon/court-subgraph deploy:ropsten
