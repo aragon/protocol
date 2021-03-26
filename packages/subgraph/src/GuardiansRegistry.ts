@@ -53,13 +53,13 @@ export function handleGuardianDeactivationRequested(event: GuardianDeactivationR
 }
 
 export function handleGuardianDeactivationUpdated(event: GuardianDeactivationUpdated): void {
-  const guardian = loadOrCreateGuardian(event.params.guardian, event)
-  const previousDeactivationAmount = guardian.deactivationBalance
+  let guardian = loadOrCreateGuardian(event.params.guardian, event)
+  let previousDeactivationAmount = guardian.deactivationBalance
 
   updateGuardian(event.params.guardian, event)
   createStakingMovementForTerm(event.params.guardian, DEACTIVATION, event.params.amount, event.params.availableTermId, event)
 
-  const currentDeactivationAmount = event.params.amount
+  let currentDeactivationAmount = event.params.amount
   if (currentDeactivationAmount.gt(previousDeactivationAmount)) {
     increaseTotalDeactivation(event.address, currentDeactivationAmount.minus(previousDeactivationAmount))
   } else {
@@ -102,9 +102,9 @@ export function handleGuardianSlashed(event: GuardianSlashed): void {
 }
 
 function updateGuardian(guardianAddress: Address, event: ethereum.Event): void {
-  const guardian = loadOrCreateGuardian(guardianAddress, event)
-  const registry = GuardiansRegistry.bind(event.address)
-  const balances = registry.detailedBalanceOf(guardianAddress)
+  let guardian = loadOrCreateGuardian(guardianAddress, event)
+  let registry = GuardiansRegistry.bind(event.address)
+  let balances = registry.detailedBalanceOf(guardianAddress)
   guardian.withdrawalsLockTermId = registry.getWithdrawalsLockTermId(guardianAddress)
   guardian.activeBalance = balances.value0
   guardian.availableBalance = balances.value1
@@ -114,17 +114,17 @@ function updateGuardian(guardianAddress: Address, event: ethereum.Event): void {
 }
 
 function createStakingMovementForEvent(guardian: Address, type: string, amount: BigInt, event: ethereum.Event): void {
-  const id = buildId(event)
+  let id = buildId(event)
   createStakingMovement(id, guardian, type, amount, event.block.timestamp)
 }
 
 function createStakingMovementForTerm(guardian: Address, type: string, amount: BigInt, termId: BigInt, event: ethereum.Event): void {
-  const id = buildId(event)
+  let id = buildId(event)
   createStakingMovement(id, guardian, type, amount, event.block.timestamp, termId)
 }
 
 function createStakingMovement(id: string, guardian: Address, type: string, amount: BigInt, createdAt: BigInt, termId: BigInt | null = null): void {
-  const movement = new StakingMovement(id)
+  let movement = new StakingMovement(id)
   movement.guardian = guardian.toHexString()
   movement.amount = amount
   movement.type = type
@@ -134,43 +134,43 @@ function createStakingMovement(id: string, guardian: Address, type: string, amou
 }
 
 function increaseTotalStaked(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalStaked = module.totalStaked.plus(amount)
   module.save()
 }
 
 function decreaseTotalStaked(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalStaked = module.totalStaked.minus(amount)
   module.save()
 }
 
 function increaseTotalActive(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalActive = module.totalActive.plus(amount)
   module.save()
 }
 
 function decreaseTotalActive(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalActive = module.totalActive.minus(amount)
   module.save()
 }
 
 function increaseTotalDeactivation(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalDeactivation = module.totalDeactivation.plus(amount)
   module.save()
 }
 
 function decreaseTotalDeactivation(registryAddress: Address, amount: BigInt): void {
-  const module = GuardiansRegistryModule.load(registryAddress.toHexString())
+  let module = GuardiansRegistryModule.load(registryAddress.toHexString())
   module.totalDeactivation = module.totalDeactivation.minus(amount)
   module.save()
 }
 
 function loadOrCreateGuardian(guardianAddress: Address, event: ethereum.Event): Guardian {
-  const id = guardianAddress.toHexString()
+  let id = guardianAddress.toHexString()
   let guardian = Guardian.load(id)
 
   if (guardian === null) {
@@ -179,7 +179,7 @@ function loadOrCreateGuardian(guardianAddress: Address, event: ethereum.Event): 
   }
 
   // The guardian may have appeared in the system but may not have activated tokens yet, meaning he doesn't have a tree ID yet
-  const registry = GuardiansRegistry.bind(event.address)
+  let registry = GuardiansRegistry.bind(event.address)
   guardian.treeId = registry.getGuardianId(guardianAddress)
 
   return guardian!
@@ -189,7 +189,7 @@ export function loadOrCreateGuardiansRegistryModule(address: Address): Guardians
   let module = GuardiansRegistryModule.load(address.toHexString())
 
   if (module === null) {
-    const registry = GuardiansRegistry.bind(address)
+    let registry = GuardiansRegistry.bind(address)
     module = new GuardiansRegistryModule(address.toHexString())
     module.court = registry.controller().toHexString()
     module.totalStaked = BigInt.fromI32(0)
@@ -197,7 +197,7 @@ export function loadOrCreateGuardiansRegistryModule(address: Address): Guardians
     module.totalDeactivation = BigInt.fromI32(0)
     module.save()
 
-    const court = Court.load(module.court)
+    let court = Court.load(module.court)
     court.token = loadOrCreateERC20(registry.guardiansToken()).id
     court.save()
   }

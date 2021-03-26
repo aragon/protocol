@@ -23,29 +23,29 @@ const PAYMENTS_BOOK_ID = '0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5
 const TREASURY_ID = '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7'
 
 export function handleHeartbeat(event: Heartbeat): void {
-  const courtContract = AragonCourt.bind(event.address)
+  let courtContract = AragonCourt.bind(event.address)
 
-  const court = loadOrCreateCourt(event.address, event)
+  let court = loadOrCreateCourt(event.address, event)
   court.currentTerm = event.params.currentTermId
   court.save()
 
-  const previousTerm = loadOrCreateTerm(event.params.previousTermId, event)
-  const previousTermData = courtContract.getTerm(event.params.previousTermId)
+  let previousTerm = loadOrCreateTerm(event.params.previousTermId, event)
+  let previousTermData = courtContract.getTerm(event.params.previousTermId)
   previousTerm.court = event.address.toHexString()
   previousTerm.startTime = previousTermData.value0
   previousTerm.randomnessBN = previousTermData.value1
   previousTerm.randomness = previousTermData.value2
   previousTerm.save()
 
-  const currentTerm = loadOrCreateTerm(event.params.currentTermId, event)
-  const currentTermData = courtContract.getTerm(event.params.currentTermId)
+  let currentTerm = loadOrCreateTerm(event.params.currentTermId, event)
+  let currentTermData = courtContract.getTerm(event.params.currentTermId)
   currentTerm.court = event.address.toHexString()
   currentTerm.startTime = currentTermData.value0
   currentTerm.randomnessBN = currentTermData.value1
   currentTerm.randomness = currentTermData.value2
   currentTerm.save()
 
-  const paymentsBook = courtContract.getPaymentsBook().value0
+  let paymentsBook = courtContract.getPaymentsBook().value0
   if (!isModuleBlacklisted(paymentsBook.toHexString())) {
     log.warning('Ignoring blacklisted module {}', [paymentsBook.toHexString()])
     updateCurrentPaymentPeriod(paymentsBook, event.block.timestamp)
@@ -53,27 +53,27 @@ export function handleHeartbeat(event: Heartbeat): void {
 }
 
 export function handleFundsGovernorChanged(event: FundsGovernorChanged): void {
-  const config = loadOrCreateCourt(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.fundsGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleConfigGovernorChanged(event: ConfigGovernorChanged): void {
-  const config = loadOrCreateCourt(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.configGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleModulesGovernorChanged(event: ModulesGovernorChanged): void {
-  const config = loadOrCreateCourt(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.modulesGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleModuleSet(event: ModuleSet): void {
-  const court = Court.load(event.address.toHexString())
-  const address: Address = event.params.addr
-  const id: string = address.toHexString()
+  let court = Court.load(event.address.toHexString())
+  let address: Address = event.params.addr
+  let id: string = address.toHexString()
 
   if (isModuleBlacklisted(id)) {
     log.warning('Ignoring blacklisted module {}', [id])
@@ -85,7 +85,7 @@ export function handleModuleSet(event: ModuleSet): void {
     return
   }
 
-  const module = new CourtModule(id)
+  let module = new CourtModule(id)
   module.court = event.address.toHexString()
   module.moduleId = event.params.id.toHexString()
 
@@ -120,9 +120,9 @@ export function handleModuleSet(event: ModuleSet): void {
 }
 
 function loadOrCreateCourt(address: Address, event: ethereum.Event): Court {
-  const id = address.toHexString()
+  let id = address.toHexString()
   let court = Court.load(id)
-  const courtContract = AragonCourt.bind(event.address)
+  let courtContract = AragonCourt.bind(event.address)
 
   if (court === null) {
     court = new Court(id)
@@ -130,8 +130,8 @@ function loadOrCreateCourt(address: Address, event: ethereum.Event): Court {
     court.termDuration = courtContract.getTermDuration()
   }
 
-  const currentTermId = courtContract.getCurrentTermId()
-  const configData = courtContract.getConfig(currentTermId)
+  let currentTermId = courtContract.getCurrentTermId()
+  let configData = courtContract.getConfig(currentTermId)
 
   court.feeToken = loadOrCreateERC20(configData.value0).id
   court.guardianFee = configData.value1[0]

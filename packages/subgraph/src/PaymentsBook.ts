@@ -12,8 +12,8 @@ const PAYMENTS_BOOK_MOVEMENT = 'Payment'
 export function handlePaymentReceived(event: PaymentReceived): void {
   updateCurrentPaymentPeriod(event.address, event.block.timestamp, event.params.token)
 
-  const id = buildId(event)
-  const payment = new PaymentReceipt(id)
+  let id = buildId(event)
+  let payment = new PaymentReceipt(id)
   payment.token = loadOrCreateERC20(event.params.token).id
   payment.period = event.params.periodId.toString()
   payment.payer = event.params.payer
@@ -28,8 +28,8 @@ export function handleGuardianShareClaimed(event: GuardianShareClaimed): void {
   updateCurrentPaymentPeriod(event.address, event.block.timestamp, event.params.token)
   createFeeMovement(PAYMENTS_BOOK_MOVEMENT, event.params.guardian, event.params.amount, event)
 
-  const shareId = buildGuardianShareId(event.params.guardian, event.params.token, event.params.periodId)
-  const shareClaim = new GuardianShareClaim(shareId)
+  let shareId = buildGuardianShareId(event.params.guardian, event.params.token, event.params.periodId)
+  let shareClaim = new GuardianShareClaim(shareId)
   shareClaim.guardian = event.params.guardian.toHexString()
   shareClaim.period = event.params.periodId.toString()
   shareClaim.token = event.params.token.toHexString()
@@ -38,28 +38,28 @@ export function handleGuardianShareClaimed(event: GuardianShareClaimed): void {
 }
 
 export function handleGovernorSharePctChanged(event: GovernorSharePctChanged): void {
-  const module = loadOrCreatePaymentsBookModule(event.address)
+  let module = loadOrCreatePaymentsBookModule(event.address)
   module.governorSharePct = BigInt.fromI32(event.params.currentGovernorSharePct)
   module.save()
 }
 
 export function updateCurrentPaymentPeriod(address: Address, timestamp: BigInt, token: Address | null = null): void {
-  const paymentsBook = PaymentsBook.bind(address)
-  const periodId = paymentsBook.getCurrentPeriodId()
+  let paymentsBook = PaymentsBook.bind(address)
+  let periodId = paymentsBook.getCurrentPeriodId()
 
-  const paymentsBookModule = loadOrCreatePaymentsBookModule(address)
+  let paymentsBookModule = loadOrCreatePaymentsBookModule(address)
   paymentsBookModule.currentPeriod = periodId
   paymentsBookModule.save()
 
-  const period = loadOrCreatePaymentPeriod(periodId, timestamp)
-  const periodData = paymentsBook.getPeriodBalanceDetails(periodId)
+  let period = loadOrCreatePaymentPeriod(periodId, timestamp)
+  let periodData = paymentsBook.getPeriodBalanceDetails(periodId)
   period.book = address.toHexString()
   period.balanceCheckpoint = periodData.value0
   period.totalActiveBalance = periodData.value1
   period.save()
 
   if (token != null) {
-    const sharesData = paymentsBook.getPeriodShares(periodId, token!)
+    let sharesData = paymentsBook.getPeriodShares(periodId, token!)
     let guardiansShare = GuardiansShare.load(periodId.toString())
     if (guardiansShare == null) guardiansShare = new GuardiansShare(periodId.toString())
     guardiansShare.book = address.toHexString()
@@ -88,7 +88,7 @@ export function loadOrCreatePaymentsBookModule(address: Address): PaymentsBookMo
   let module = PaymentsBookModule.load(address.toHexString())
 
   if (module === null) {
-    const paymentsBook = PaymentsBook.bind(address)
+    let paymentsBook = PaymentsBook.bind(address)
     module = new PaymentsBookModule(address.toHexString())
     module.court = paymentsBook.controller().toHexString()
     module.currentPeriod = BigInt.fromI32(0)
