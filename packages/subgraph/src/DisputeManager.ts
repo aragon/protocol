@@ -8,7 +8,8 @@ import { AdjudicationRound, Dispute, Evidence, Appeal, GuardianDispute, Guardian
 import { DisputeManager, NewDispute, EvidenceSubmitted, EvidencePeriodClosed, GuardianDrafted, DisputeStateChanged, PenaltiesSettled, RewardSettled, AppealDepositSettled, RulingAppealed, RulingAppealConfirmed, RulingComputed } from '../types/templates/DisputeManager/DisputeManager'
 
 const APPEAL_MOVEMENT = 'Appeal'
-const GUARDIAN_MOVEMENT = 'Guardian'
+const DISPUTE_MOVEMENT = 'Dispute'
+
 let UINT128 = BigInt.fromI32(2).pow(128)
 
 export function handleNewDispute(event: NewDispute): void {
@@ -119,7 +120,7 @@ export function handleRewardSettled(event: RewardSettled): void {
   draft.rewardedAt = event.block.timestamp
   draft.save()
 
-  createFeeMovement(GUARDIAN_MOVEMENT, event.params.guardian, event.params.fees, event)
+  createFeeMovement(DISPUTE_MOVEMENT, event.params.guardian, event.params.fees, event)
 }
 
 export function handleAppealDepositSettled(event: AppealDepositSettled): void {
@@ -238,7 +239,7 @@ function createAppealFeesForGuardianFees(event: PenaltiesSettled, disputeId: Big
   let round = AdjudicationRound.load(roundId)
   if (round.coherentGuardians.isZero()) {
     if (event.params.roundId.isZero()) {
-      createFeeMovement(GUARDIAN_MOVEMENT, Address.fromString(dispute.subject.toHexString()), round.guardianFees, event)
+      createFeeMovement(DISPUTE_MOVEMENT, Address.fromString(dispute.subject.toHexString()), round.guardianFees, event)
     } else {
       let previousRoundId = event.params.roundId.minus(BigInt.fromI32(1))
       let appealId = buildAppealId(event.params.disputeId, previousRoundId).toString()

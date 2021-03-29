@@ -277,7 +277,6 @@ type TreasuryBalance @entity {
 type FeeMovement @entity {
   id: ID!
   owner: Bytes!
-  token: ERC20!
   type: FeeMovementType!
   amount: BigInt!
   createdAt: BigInt!
