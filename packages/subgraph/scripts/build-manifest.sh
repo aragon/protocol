@@ -12,7 +12,7 @@ fi
 
 
 # Court known addresses
-court_rinkeby=0xA88c52E80f15440B223a24c1e8f22f21D18D8d5f
+court_rinkeby=0x2f747539399CfaE0c556642F81114fCce98a3d74
 court_mainnet=
 
 # Known block numbers

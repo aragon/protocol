@@ -128,6 +128,14 @@ function loadOrCreateCourt(address: Address, event: ethereum.Event): Court {
     court = new Court(id)
     court.currentTerm = BigInt.fromI32(0)
     court.termDuration = courtContract.getTermDuration()
+    // create the first term by default as soon as court is created
+    let firstTerm = loadOrCreateTerm(BigInt.fromI32(0), event)
+    let firstTermData = courtContract.getTerm(BigInt.fromI32(0))
+    firstTerm.court = event.address.toHexString()
+    firstTerm.startTime = firstTermData.value0
+    firstTerm.randomnessBN = firstTermData.value1
+    firstTerm.randomness = firstTermData.value2
+    firstTerm.save()
   }
 
   let currentTermId = courtContract.getCurrentTermId()
