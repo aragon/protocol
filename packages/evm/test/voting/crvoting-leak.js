@@ -1,13 +1,13 @@
 const { bn } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { VOTING_ERRORS } = require('../helpers/utils/errors')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { SALT, OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
 
 const CRVoting = artifacts.require('CRVoting')
-const Protocol = artifacts.require('DisputeManagerMockForVoting')
+const Court = artifacts.require('DisputeManagerMockForVoting')
 
 contract('CRVoting leak', ([_, voter, someone]) => {
   let controller, voting, disputeManager
@@ -20,7 +20,7 @@ contract('CRVoting leak', ([_, voter, someone]) => {
     voting = await CRVoting.new(controller.address)
     await controller.setVoting(voting.address)
 
-    disputeManager = await Protocol.new(controller.address)
+    disputeManager = await Court.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)
   })
 

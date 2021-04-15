@@ -16,8 +16,8 @@ export function handleWithdraw(event: Withdraw): void {
 }
 
 export function createFeeMovement(type: string, owner: Address, amount: BigInt, event: ethereum.Event, id: string | null = null): void {
-  const feeId = id === null ? buildId(event) : id
-  const movement = new FeeMovement(feeId)
+  let feeId = id === null ? buildId(event) : id
+  let movement = new FeeMovement(feeId)
   movement.type = type
   movement.owner = owner
   movement.amount = amount
@@ -26,14 +26,14 @@ export function createFeeMovement(type: string, owner: Address, amount: BigInt, 
 }
 
 function updateTreasuryBalance(owner: Address, token: Address, event: ethereum.Event): void {
-  const treasuryBalance = loadOrCreateTreasuryBalance(owner, token)
-  const treasury = Treasury.bind(event.address)
+  let treasuryBalance = loadOrCreateTreasuryBalance(owner, token)
+  let treasury = Treasury.bind(event.address)
   treasuryBalance.amount = treasury.balanceOf(token, owner)
   treasuryBalance.save()
 }
 
 function loadOrCreateTreasuryBalance(owner: Address, token: Address): TreasuryBalance {
-  const id = buildTreasuryBalanceId(owner, token)
+  let id = buildTreasuryBalanceId(owner, token)
   let treasuryBalance = TreasuryBalance.load(id)
 
   if (treasuryBalance === null) {

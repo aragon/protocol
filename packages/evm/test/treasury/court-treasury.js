@@ -2,19 +2,19 @@ const { ZERO_ADDRESS, MAX_UINT256, bn, bigExp } = require('@aragon/contract-help
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { roleId } = require('../helpers/utils/modules')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { TREASURY_EVENTS } = require('../helpers/utils/events')
 const { TREASURY_ERRORS, CONTROLLED_ERRORS, MATH_ERRORS } = require('../helpers/utils/errors')
 
-const ProtocolTreasury = artifacts.require('ProtocolTreasury')
+const CourtTreasury = artifacts.require('CourtTreasury')
 const ERC20 = artifacts.require('ERC20Mock')
 
-contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) => {
+contract('CourtTreasury', ([_, disputeManager, holder, someone, governor]) => {
   let controller, treasury, DAI, ANT
 
   beforeEach('create treasury', async () => {
     controller = await buildHelper().deploy({ configGovernor: governor })
-    treasury = await ProtocolTreasury.new(controller.address)
+    treasury = await CourtTreasury.new(controller.address)
     await controller.setTreasury(treasury.address)
     await controller.setDisputeManagerMock(disputeManager)
   })
@@ -22,7 +22,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
   describe('constructor', () => {
     context('when the initialization succeeds', () => {
       it('is initialized', async () => {
-        treasury = await ProtocolTreasury.new(controller.address)
+        treasury = await CourtTreasury.new(controller.address)
 
         assert.equal(await treasury.controller(), controller.address, 'treasury is not initialized')
       })
@@ -33,7 +33,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
         const controllerAddress = ZERO_ADDRESS
 
         it('reverts', async () => {
-          await assertRevert(ProtocolTreasury.new(controllerAddress), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(CourtTreasury.new(controllerAddress), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
 
@@ -41,7 +41,7 @@ contract('ProtocolTreasury', ([_, disputeManager, holder, someone, governor]) =>
         const controllerAddress = someone
 
         it('reverts', async () => {
-          await assertRevert(ProtocolTreasury.new(controllerAddress), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
+          await assertRevert(CourtTreasury.new(controllerAddress), CONTROLLED_ERRORS.CONTROLLER_NOT_CONTRACT)
         })
       })
     })

@@ -18,9 +18,9 @@ const DAI = {
 
 module.exports = {
   governor:                       governor,
-  token:                          ANT,                  // protocol token is ANT
-  minActiveBalance:               bigExp(100, 18),      // 100 ANT is the minimum balance guardians must activate to participate in the Protocol
-  feeToken:                       DAI,                  // fee token for the protocol is DAI
+  token:                          ANT,                  // court token is ANT
+  minActiveBalance:               bigExp(100, 18),      // 100 ANT is the minimum balance guardians must activate to participate in the Court
+  feeToken:                       DAI,                  // fee token for the court is DAI
   termDuration:                   bn(TERM_DURATION),    // terms lasts 8 hours
   firstTermStartTime:             bn(START_DATE),       // first term start timestamp in seconds
   evidenceTerms:                  bn(21),               // evidence period lasts 21 terms (7 days)

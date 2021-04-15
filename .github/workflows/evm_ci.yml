@@ -22,7 +22,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Lint
-      run: yarn workspace @aragon/protocol-evm lint
+      run: yarn workspace @aragon/court-evm lint
 
   core:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Core
-      run: yarn workspace @aragon/protocol-evm test:core
+      run: yarn workspace @aragon/court-evm test:core
 
   disputes:
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Disputes
-      run: yarn workspace @aragon/protocol-evm test:disputes
+      run: yarn workspace @aragon/court-evm test:disputes
 
   appeals:
     runs-on: ubuntu-latest
@@ -61,7 +61,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Appeals
-      run: yarn workspace @aragon/protocol-evm test:appeals
+      run: yarn workspace @aragon/court-evm test:appeals
 
   settle_rounds:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Settle Rounds
-      run: yarn workspace @aragon/protocol-evm test:settle-rounds
+      run: yarn workspace @aragon/court-evm test:settle-rounds
 
   settle_appeals:
     runs-on: ubuntu-latest
@@ -87,7 +87,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Settle Appeals
-      run: yarn workspace @aragon/protocol-evm test:settle-appeals
+      run: yarn workspace @aragon/court-evm test:settle-appeals
 
   registry:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Registry
-      run: yarn workspace @aragon/protocol-evm test:registry
+      run: yarn workspace @aragon/court-evm test:registry
 
   lib:
     runs-on: ubuntu-latest
@@ -113,7 +113,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Lib
-      run: yarn workspace @aragon/protocol-evm test:lib
+      run: yarn workspace @aragon/court-evm test:lib
 
   voting:
     runs-on: ubuntu-latest
@@ -126,7 +126,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Voting
-      run : yarn workspace @aragon/protocol-evm test:voting
+      run : yarn workspace @aragon/court-evm test:voting
 
   payments:
     runs-on: ubuntu-latest
@@ -139,7 +139,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Payments
-      run: yarn workspace @aragon/protocol-evm test:payments
+      run: yarn workspace @aragon/court-evm test:payments
 
   treasury:
     runs-on: ubuntu-latest
@@ -152,7 +152,7 @@ jobs:
     - name: Install
       run: yarn --frozen-lockfile
     - name: Treasury
-      run: yarn workspace @aragon/protocol-evm test:treasury
+      run: yarn workspace @aragon/court-evm test:treasury
 
 env:
   CI: true

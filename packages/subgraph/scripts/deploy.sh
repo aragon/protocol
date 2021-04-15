@@ -22,14 +22,16 @@ else
 fi
 
 # Create subgraph if missing
-{
-  graph create aragon/aragon-protocol-${NETWORK} --node ${GRAPH_NODE}
-} || {
-  echo 'Subgraph was already created'
-}
+# This has been commented due to the error: `Creating subgraphs is only possible from the dashboard`.
+# This could still be needed in the future, so let's still keep it here.
+# {
+#   graph create aragon/aragon-court-v2-${NETWORK} --node ${GRAPH_NODE}
+# } || {
+#   echo 'Subgraph was already created'
+# }
 
 # Deploy subgraph
-graph deploy aragon/aragon-protocol-${NETWORK} \
+graph deploy aragon/aragon-court-v2-${NETWORK} \
   --ipfs ${IPFS_NODE} \
   --node ${GRAPH_NODE} \
   --access-token "$GRAPHKEY" > deploy-output.txt
@@ -42,7 +44,7 @@ if [[ -z "$SUBGRAPH_ID" || "$NETWORK" == "ganache" ]]; then
   echo "Could not find subgraph ID in deploy output, cannot deploy to Aragon infra."
 else
   echo "Deploying subgraph ${SUBGRAPH_ID} to Aragon infra..."
-  kubectl exec graph-shell-0 -- create aragon/aragon-protocol-${NETWORK}
-  kubectl exec graph-shell-0 -- deploy aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
-  kubectl exec graph-shell-0 -- reassign aragon/aragon-protocol-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell-0 -- create aragon/aragon-court-v2-${NETWORK}
+  kubectl exec graph-shell-0 -- deploy aragon/aragon-court-v2-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
+  kubectl exec graph-shell-0 -- reassign aragon/aragon-court-v2-${NETWORK} ${SUBGRAPH_ID} graph_index_node_0
 fi

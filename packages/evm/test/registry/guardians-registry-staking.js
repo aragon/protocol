@@ -2,7 +2,7 @@ const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { roleId } = require('../helpers/utils/modules')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')
 const { REGISTRY_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 
@@ -16,7 +16,7 @@ contract('GuardiansRegistry', ([_, guardian, someone, governor]) => {
   const MIN_ACTIVE_AMOUNT = bigExp(100, 18)
   const TOTAL_ACTIVE_BALANCE_LIMIT = bigExp(100e6, 18)
 
-  before('create protocol and custom disputes module', async () => {
+  before('create court and custom disputes module', async () => {
     controller = await buildHelper().deploy({ minActiveBalance: MIN_ACTIVE_AMOUNT, configGovernor: governor })
     disputeManager = await DisputeManager.new(controller.address)
     await controller.setDisputeManager(disputeManager.address)

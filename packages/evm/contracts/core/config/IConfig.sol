@@ -6,8 +6,8 @@ import "../../lib/standards/IERC20.sol";
 interface IConfig {
 
     /**
-    * @dev Tell the full Protocol configuration parameters at a certain term
-    * @param _termId Identification number of the term querying the Protocol config of
+    * @dev Tell the full Court configuration parameters at a certain term
+    * @param _termId Identification number of the term querying the Court config of
     * @return token Address of the token used to pay for fees
     * @return fees Array containing:
     *         0. guardianFee Amount of fee tokens that is paid per guardian per dispute
@@ -29,7 +29,7 @@ interface IConfig {
     * @return appealCollateralParams Array containing params for appeal collateral:
     *         0. appealCollateralFactor Multiple of dispute fees required to appeal a preliminary ruling
     *         1. appealConfirmCollateralFactor Multiple of dispute fees required to confirm appeal
-    * @return minActiveBalance Minimum amount of tokens guardians have to activate to participate in the Protocol
+    * @return minActiveBalance Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getConfig(uint64 _termId) external view
         returns (
@@ -54,7 +54,7 @@ interface IConfig {
     /**
     * @dev Tell the min active balance config at a certain term
     * @param _termId Term querying the min active balance config of
-    * @return Minimum amount of tokens guardians have to activate to participate in the Protocol
+    * @return Minimum amount of tokens guardians have to activate to participate in the Court
     */
     function getMinActiveBalance(uint64 _termId) external view returns (uint256);
 }

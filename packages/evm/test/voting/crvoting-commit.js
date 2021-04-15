@@ -2,7 +2,7 @@ const { bn, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
 const { roleId } = require('../helpers/utils/modules')
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { VOTING_EVENTS } = require('../helpers/utils/events')
 const { OUTCOMES, hashVote } = require('../helpers/utils/crvoting')
 const { DISPUTE_MANAGER_ERRORS, VOTING_ERRORS, CONTROLLED_ERRORS } = require('../helpers/utils/errors')

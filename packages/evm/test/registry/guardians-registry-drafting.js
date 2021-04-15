@@ -2,7 +2,7 @@ const { keccak256 } = require('web3-utils')
 const { ZERO_ADDRESS, bn, bigExp, getEventAt, decodeEvents } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { simulateDraft } = require('../helpers/utils/registry')
 const { countEqualGuardians } = require('../helpers/utils/guardians')
 const { REGISTRY_EVENTS } = require('../helpers/utils/events')

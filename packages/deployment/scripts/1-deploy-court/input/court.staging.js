@@ -1,5 +1,5 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
-const { ropsten: governor } = require('./governor')
+const { staging: governor } = require('./governor')
 
 const TERM_DURATION = 60 * 10                                          // 10 minutes
 const START_DATE = Math.floor(new Date() / 1000 + TERM_DURATION + 120) // 2 minutes from now
@@ -7,20 +7,20 @@ const START_DATE = Math.floor(new Date() / 1000 + TERM_DURATION + 120) // 2 minu
 const ANT = {
   symbol: 'ANT',
   decimals: 18,
-  address: '0x45B4704F873E39670450Ac5A2C5f9Dad6BEa5679' // fake Ropsten ANT
+  address: '0x5CbDc338f71888A93323C922cAaba84402dB1193' // fake Staging ANT
 }
 
 const DAI = {
   symbol: 'DAI',
   decimals: 18,
-  address: '0x0c0Ad38e0b58C20Dd713633Ff9Ca19e0654B0f9e' // fake Ropsten DAI
+  address: '0x8F2Ac3fD1a9Ce7208eFff7C31aC0e2A98b0778f3' // fake Staging DAI
 }
 
 module.exports = {
   governor:                       governor,
-  token:                          ANT,                  // protocol token is ANT
-  minActiveBalance:               bigExp(100, 18),      // 100 ANT is the minimum balance guardians must activate to participate in the Protocol
-  feeToken:                       DAI,                  // fee token for the protocol is DAI
+  token:                          ANT,                  // court token is ANT
+  minActiveBalance:               bigExp(100, 18),      // 100 ANT is the minimum balance guardians must activate to participate in the Court
+  feeToken:                       DAI,                  // fee token for the court is DAI
   termDuration:                   bn(TERM_DURATION),    // terms lasts 8 hours
   firstTermStartTime:             bn(START_DATE),       // first term start timestamp in seconds
   evidenceTerms:                  bn(2),                // evidence period lasts 2 terms (20 minutes)

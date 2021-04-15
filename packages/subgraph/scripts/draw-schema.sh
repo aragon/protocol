@@ -16,7 +16,7 @@ schema {
 }
 
 type Query {
-  protocolConfig: Protocol
+  courtConfig: Court
   dispute: Dispute
 }
 ' > schema.graphql

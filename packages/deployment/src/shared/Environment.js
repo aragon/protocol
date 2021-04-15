@@ -21,6 +21,7 @@ module.exports = class {
   }
 
   async getSender() {
+    console.log(this.networkConfig, "good")
     const { from } = this.networkConfig
     return from || (await this._getDefaultSender())
   }

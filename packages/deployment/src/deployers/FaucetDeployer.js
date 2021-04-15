@@ -34,7 +34,7 @@ module.exports = class extends BaseDeployer {
     const faucet = await ERC20Faucet.new(tokensAddresses, quotaPeriods, quotaAmounts)
 
     logger.info(`\nFunding faucet...`)
-    const ERC20 = await this.environment.getArtifact('ERC20Mock', '@aragon/protocol-evm')
+    const ERC20 = await this.environment.getArtifact('ERC20Mock', '@aragon/court-evm')
     for (const token of tokens) {
       logger.info(`Funding faucet with ${fromWei(token.donation)} ${token.symbol}...`)
       const erc20 = await ERC20.at(token.address)

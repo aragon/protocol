@@ -1,7 +1,7 @@
 {
-  "name": "@aragon/protocol-subgraph",
+  "name": "@aragon/court-subgraph",
   "version": "1.0.0",
-  "description": "Aragon Protocol subgraph",
+  "description": "Aragon Court subgraph",
   "author": "Aragon Association <legal@aragon.org>",
   "license": "GPL-3.0",
   "scripts": {
@@ -32,7 +32,7 @@
     "deploy:mainnet": "NETWORK=mainnet npm run deploy"
   },
   "devDependencies": {
-    "@aragon/protocol-evm": "1.0.0-beta.3",
+    "@aragon/court-evm": "1.0.0-beta.3",
     "@graphprotocol/graph-cli": "^0.18.0",
     "@graphprotocol/graph-ts": "^0.18.0",
     "graphqlviz": "^3.1.0"

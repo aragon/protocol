@@ -44,20 +44,20 @@ const DEFAULTS = {
   finalRoundLockTerms:                bn(10),          //  coherent guardians in the final round won't be able to withdraw for 10 terms
   appealCollateralFactor:             bn(25000),       //  permyriad multiple of dispute fees required to appeal a preliminary ruling (1/10,000)
   appealConfirmCollateralFactor:      bn(35000),       //  permyriad multiple of dispute fees required to confirm appeal (1/10,000)
-  minActiveBalance:                   bigExp(100, 18), //  100 ANT is the minimum balance guardians must activate to participate in the Protocol
+  minActiveBalance:                   bigExp(100, 18), //  100 ANT is the minimum balance guardians must activate to participate in the Court
   finalRoundWeightPrecision:          bn(1000),        //  use to improve division rounding for final round maths
   paymentPeriodDuration:              bn(10),          //  each payment period lasts 10 terms
   paymentsGovernorSharePct:           bn(0)            //  none payments governor share
 }
 
-class ProtocolHelper {
+class CourtHelper {
   constructor() {
     this.web3 = getWeb3()
     this.artifacts = getArtifacts()
   }
 
   async getConfig(termId) {
-    const { feeToken, fees, roundStateDurations, pcts, roundParams, appealCollateralParams, minActiveBalance } = await this.protocol.getConfig(termId)
+    const { feeToken, fees, roundStateDurations, pcts, roundParams, appealCollateralParams, minActiveBalance } = await this.court.getConfig(termId)
     return {
       feeToken: await this.artifacts.require('ERC20Mock').at(feeToken),
       guardianFee: fees[0],
@@ -192,7 +192,7 @@ class ProtocolHelper {
 
   async dispute({ arbitrable = undefined, possibleRulings = bn(2), metadata = '0x', closeEvidence = true } = {}) {
     // create an arbitrable if no one was given
-    if (!arbitrable) arbitrable = await this.artifacts.require('ArbitrableMock').new(this.protocol.address)
+    if (!arbitrable) arbitrable = await this.artifacts.require('ArbitrableMock').new(this.court.address)
 
     // mint fee tokens for the arbitrable instance
     const { disputeFees } = await this.getDisputeFees()
@@ -206,7 +206,7 @@ class ProtocolHelper {
     // close evidence submission if requested
     if (closeEvidence) {
       await this.passTerms(1)
-      const currentTerm = await this.protocol.getCurrentTermId()
+      const currentTerm = await this.court.getCurrentTermId()
       const { draftTerm } = await this.getRound(disputeId, 0)
       if (draftTerm.gt(currentTerm)) await arbitrable.submitEvidence(disputeId, '0x', true)
     }
@@ -234,7 +234,7 @@ class ProtocolHelper {
     }
 
     // move to draft term if needed
-    const currentTerm = await this.protocol.getCurrentTermId()
+    const currentTerm = await this.court.getCurrentTermId()
     if (draftTerm.gt(currentTerm)) await this.passTerms(draftTerm.sub(currentTerm))
     else await this.advanceBlocks(2) // to ensure term randomness
 
@@ -340,7 +340,7 @@ class ProtocolHelper {
       minActiveBalance
     } = newConfig
 
-    return this.protocol.setConfig(
+    return this.court.setConfig(
       termId,
       feeToken.address,
       [guardianFee, draftFee, settleFee],
@@ -359,10 +359,10 @@ class ProtocolHelper {
     if (!this.fundsGovernor) this.fundsGovernor = await this._getAccount(0)
     if (!this.configGovernor) this.configGovernor = await this._getAccount(0)
     if (!this.modulesGovernor) this.modulesGovernor = await this._getAccount(0)
-    if (!this.feeToken) this.feeToken = await this.artifacts.require('ERC20Mock').new('Protocol Fee Token', 'CFT', 18)
+    if (!this.feeToken) this.feeToken = await this.artifacts.require('ERC20Mock').new('Court Fee Token', 'CFT', 18)
     if (!this.guardianToken) this.guardianToken = await this.artifacts.require('ERC20Mock').new('Aragon Network Guardian Token', 'ANT', 18)
 
-    this.protocol = await this.artifacts.require('AragonProtocolMock').new(
+    this.court = await this.artifacts.require('AragonCourtMock').new(
       [this.termDuration, this.firstTermStartTime],
       [this.fundsGovernor, this.configGovernor, this.modulesGovernor],
       this.feeToken.address,
@@ -374,13 +374,13 @@ class ProtocolHelper {
       this.minActiveBalance
     )
 
-    if (!this.disputeManager) this.disputeManager = await this.artifacts.require('DisputeManager').new(this.protocol.address, this.maxGuardiansPerDraftBatch, this.skippedDisputes)
-    if (!this.voting) this.voting = await this.artifacts.require('CRVoting').new(this.protocol.address)
-    if (!this.treasury) this.treasury = await this.artifacts.require('ProtocolTreasury').new(this.protocol.address)
+    if (!this.disputeManager) this.disputeManager = await this.artifacts.require('DisputeManager').new(this.court.address, this.maxGuardiansPerDraftBatch, this.skippedDisputes)
+    if (!this.voting) this.voting = await this.artifacts.require('CRVoting').new(this.court.address)
+    if (!this.treasury) this.treasury = await this.artifacts.require('CourtTreasury').new(this.court.address)
 
     if (!this.guardiansRegistry) {
       this.guardiansRegistry = await this.artifacts.require('GuardiansRegistryMock').new(
-        this.protocol.address,
+        this.court.address,
         this.guardianToken.address,
         this.minActiveBalance.mul(MAX_UINT64.div(this.finalRoundWeightPrecision))
       )
@@ -388,7 +388,7 @@ class ProtocolHelper {
 
     if (!this.paymentsBook) {
       this.paymentsBook = await this.artifacts.require('PaymentsBook').new(
-        this.protocol.address,
+        this.court.address,
         this.paymentPeriodDuration,
         this.paymentsGovernorSharePct
       )
@@ -396,25 +396,25 @@ class ProtocolHelper {
 
     const ids = Object.values(MODULE_IDS)
     const implementations = [this.disputeManager, this.guardiansRegistry, this.voting, this.paymentsBook, this.treasury].map(i => i.address)
-    await this.protocol.setModules(ids, implementations, ids, [], { from: this.modulesGovernor })
+    await this.court.setModules(ids, implementations, ids, [], { from: this.modulesGovernor })
 
     const zeroTermStartTime = this.firstTermStartTime.sub(this.termDuration)
     await this.setTimestamp(zeroTermStartTime)
 
-    return this.protocol
+    return this.court
   }
 
   async setTimestamp(timestamp) {
-    await this.protocol.mockSetTimestamp(timestamp)
+    await this.court.mockSetTimestamp(timestamp)
   }
 
   async increaseTimeInTerms(terms) {
     const seconds = this.termDuration.mul(bn(terms))
-    await this.protocol.mockIncreaseTime(seconds)
+    await this.court.mockIncreaseTime(seconds)
   }
 
   async advanceBlocks(blocks) {
-    await this.protocol.mockAdvanceBlocks(blocks)
+    await this.court.mockAdvanceBlocks(blocks)
   }
 
   async setTerm(termId) {
@@ -423,15 +423,15 @@ class ProtocolHelper {
     await this.setTimestamp(timestamp)
 
     // call heartbeat function for X needed terms
-    const neededTransitions = await this.protocol.getNeededTermTransitions()
-    if (neededTransitions.gt(bn(0))) await this.protocol.heartbeat(neededTransitions)
+    const neededTransitions = await this.court.getNeededTermTransitions()
+    if (neededTransitions.gt(bn(0))) await this.court.heartbeat(neededTransitions)
   }
 
   async passTerms(terms) {
     // increase X terms based on term duration
     await this.increaseTimeInTerms(terms)
     // call heartbeat function for X terms
-    await this.protocol.heartbeat(terms)
+    await this.court.heartbeat(terms)
     // advance 2 blocks to ensure we can compute term randomness
     await this.advanceBlocks(2)
   }
@@ -440,7 +440,7 @@ class ProtocolHelper {
     // increase X terms based on term duration
     await this.increaseTimeInTerms(terms)
     // call heartbeat function for X terms
-    await this.protocol.heartbeat(terms)
+    await this.court.heartbeat(terms)
     // advance 2 blocks to ensure we can compute term randomness
     await advanceBlocks(2)
   }
@@ -455,5 +455,5 @@ module.exports = {
   DEFAULTS,
   DISPUTE_STATES,
   ROUND_STATES,
-  buildHelper: () => new ProtocolHelper()
+  buildHelper: () => new CourtHelper()
 }

@@ -5,10 +5,10 @@ import { loadOrCreateERC20 } from './ERC20'
 import { loadOrCreateGuardiansRegistryModule } from './GuardiansRegistry'
 import { loadOrCreatePaymentsBookModule, updateCurrentPaymentPeriod } from './PaymentsBook'
 
-import { AragonProtocol } from '../types/AragonProtocol/AragonProtocol'
-import { ProtocolModule, Protocol, ProtocolTerm } from '../types/schema'
+import { AragonCourt } from '../types/AragonCourt/AragonCourt'
+import { CourtModule, Court, CourtTerm } from '../types/schema'
 import { DisputeManager, GuardiansRegistry, Treasury, Voting, PaymentsBook } from '../types/templates'
-import { Heartbeat, ModuleSet, FundsGovernorChanged, ConfigGovernorChanged, ModulesGovernorChanged } from '../types/AragonProtocol/AragonProtocol'
+import { Heartbeat, ModuleSet, FundsGovernorChanged, ConfigGovernorChanged, ModulesGovernorChanged } from '../types/AragonCourt/AragonCourt'
 
 const DISPUTE_MANAGER_TYPE = 'DisputeManager'
 const GUARDIANS_REGISTRY_TYPE = 'GuardiansRegistry'
@@ -23,29 +23,29 @@ const PAYMENTS_BOOK_ID = '0xfa275b1417437a2a2ea8e91e9fe73c28eaf0a28532a250541da5
 const TREASURY_ID = '0x06aa03964db1f7257357ef09714a5f0ca3633723df419e97015e0c7a3e83edb7'
 
 export function handleHeartbeat(event: Heartbeat): void {
-  const protocolContract = AragonProtocol.bind(event.address)
+  let courtContract = AragonCourt.bind(event.address)
 
-  const protocol = loadOrCreateProtocol(event.address, event)
-  protocol.currentTerm = event.params.currentTermId
-  protocol.save()
+  let court = loadOrCreateCourt(event.address, event)
+  court.currentTerm = event.params.currentTermId
+  court.save()
 
-  const previousTerm = loadOrCreateTerm(event.params.previousTermId, event)
-  const previousTermData = protocolContract.getTerm(event.params.previousTermId)
-  previousTerm.protocol = event.address.toHexString()
+  let previousTerm = loadOrCreateTerm(event.params.previousTermId, event)
+  let previousTermData = courtContract.getTerm(event.params.previousTermId)
+  previousTerm.court = event.address.toHexString()
   previousTerm.startTime = previousTermData.value0
   previousTerm.randomnessBN = previousTermData.value1
   previousTerm.randomness = previousTermData.value2
   previousTerm.save()
 
-  const currentTerm = loadOrCreateTerm(event.params.currentTermId, event)
-  const currentTermData = protocolContract.getTerm(event.params.currentTermId)
-  currentTerm.protocol = event.address.toHexString()
+  let currentTerm = loadOrCreateTerm(event.params.currentTermId, event)
+  let currentTermData = courtContract.getTerm(event.params.currentTermId)
+  currentTerm.court = event.address.toHexString()
   currentTerm.startTime = currentTermData.value0
   currentTerm.randomnessBN = currentTermData.value1
   currentTerm.randomness = currentTermData.value2
   currentTerm.save()
 
-  const paymentsBook = protocolContract.getPaymentsBook().value0
+  let paymentsBook = courtContract.getPaymentsBook().value0
   if (!isModuleBlacklisted(paymentsBook.toHexString())) {
     log.warning('Ignoring blacklisted module {}', [paymentsBook.toHexString()])
     updateCurrentPaymentPeriod(paymentsBook, event.block.timestamp)
@@ -53,40 +53,40 @@ export function handleHeartbeat(event: Heartbeat): void {
 }
 
 export function handleFundsGovernorChanged(event: FundsGovernorChanged): void {
-  const config = loadOrCreateProtocol(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.fundsGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleConfigGovernorChanged(event: ConfigGovernorChanged): void {
-  const config = loadOrCreateProtocol(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.configGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleModulesGovernorChanged(event: ModulesGovernorChanged): void {
-  const config = loadOrCreateProtocol(event.address, event)
+  let config = loadOrCreateCourt(event.address, event)
   config.modulesGovernor = event.params.currentGovernor
   config.save()
 }
 
 export function handleModuleSet(event: ModuleSet): void {
-  const protocol = Protocol.load(event.address.toHexString())
-  const address: Address = event.params.addr
-  const id: string = address.toHexString()
+  let court = Court.load(event.address.toHexString())
+  let address: Address = event.params.addr
+  let id: string = address.toHexString()
 
   if (isModuleBlacklisted(id)) {
     log.warning('Ignoring blacklisted module {}', [id])
     return
   }
 
-  if (ProtocolModule.load(id) != null) {
+  if (CourtModule.load(id) != null) {
     log.warning('Ignoring already tracked module {}', [id])
     return
   }
 
-  const module = new ProtocolModule(id)
-  module.protocol = event.address.toHexString()
+  let module = new CourtModule(id)
+  module.court = event.address.toHexString()
   module.moduleId = event.params.id.toHexString()
 
   if (module.moduleId == GUARDIANS_REGISTRY_ID) {
@@ -115,54 +115,62 @@ export function handleModuleSet(event: ModuleSet): void {
     module.type = 'Unknown'
   }
 
-  protocol.save()
+  court.save()
   module.save()
 }
 
-function loadOrCreateProtocol(address: Address, event: ethereum.Event): Protocol {
-  const id = address.toHexString()
-  let protocol = Protocol.load(id)
-  const protocolContract = AragonProtocol.bind(event.address)
+function loadOrCreateCourt(address: Address, event: ethereum.Event): Court {
+  let id = address.toHexString()
+  let court = Court.load(id)
+  let courtContract = AragonCourt.bind(event.address)
 
-  if (protocol === null) {
-    protocol = new Protocol(id)
-    protocol.currentTerm = BigInt.fromI32(0)
-    protocol.termDuration = protocolContract.getTermDuration()
+  if (court === null) {
+    court = new Court(id)
+    court.currentTerm = BigInt.fromI32(0)
+    court.termDuration = courtContract.getTermDuration()
+    // create the first term by default as soon as court is created
+    let firstTerm = loadOrCreateTerm(BigInt.fromI32(0), event)
+    let firstTermData = courtContract.getTerm(BigInt.fromI32(0))
+    firstTerm.court = event.address.toHexString()
+    firstTerm.startTime = firstTermData.value0
+    firstTerm.randomnessBN = firstTermData.value1
+    firstTerm.randomness = firstTermData.value2
+    firstTerm.save()
   }
 
-  const currentTermId = protocolContract.getCurrentTermId()
-  const configData = protocolContract.getConfig(currentTermId)
+  let currentTermId = courtContract.getCurrentTermId()
+  let configData = courtContract.getConfig(currentTermId)
 
-  protocol.feeToken = loadOrCreateERC20(configData.value0).id
-  protocol.guardianFee = configData.value1[0]
-  protocol.draftFee = configData.value1[1]
-  protocol.settleFee = configData.value1[2]
-  protocol.evidenceTerms = configData.value2[0]
-  protocol.commitTerms = configData.value2[1]
-  protocol.revealTerms = configData.value2[2]
-  protocol.appealTerms = configData.value2[3]
-  protocol.appealConfirmationTerms = configData.value2[4]
-  protocol.penaltyPct = configData.value3[0]
-  protocol.finalRoundReduction = configData.value3[1]
-  protocol.firstRoundGuardiansNumber = configData.value4[0]
-  protocol.appealStepFactor = configData.value4[1]
-  protocol.maxRegularAppealRounds = configData.value4[2]
-  protocol.finalRoundLockTerms = configData.value4[3]
-  protocol.appealCollateralFactor = configData.value5[0]
-  protocol.appealConfirmCollateralFactor = configData.value5[1]
-  protocol.minActiveBalance = configData.value6
-  protocol.fundsGovernor = protocolContract.getFundsGovernor()
-  protocol.configGovernor = protocolContract.getConfigGovernor()
-  protocol.modulesGovernor = protocolContract.getModulesGovernor()
+  court.feeToken = loadOrCreateERC20(configData.value0).id
+  court.guardianFee = configData.value1[0]
+  court.draftFee = configData.value1[1]
+  court.settleFee = configData.value1[2]
+  court.evidenceTerms = configData.value2[0]
+  court.commitTerms = configData.value2[1]
+  court.revealTerms = configData.value2[2]
+  court.appealTerms = configData.value2[3]
+  court.appealConfirmationTerms = configData.value2[4]
+  court.penaltyPct = configData.value3[0]
+  court.finalRoundReduction = configData.value3[1]
+  court.firstRoundGuardiansNumber = configData.value4[0]
+  court.appealStepFactor = configData.value4[1]
+  court.maxRegularAppealRounds = configData.value4[2]
+  court.finalRoundLockTerms = configData.value4[3]
+  court.appealCollateralFactor = configData.value5[0]
+  court.appealConfirmCollateralFactor = configData.value5[1]
+  court.minActiveBalance = configData.value6
+  court.fundsGovernor = courtContract.getFundsGovernor()
+  court.configGovernor = courtContract.getConfigGovernor()
+  court.modulesGovernor = courtContract.getModulesGovernor()
 
-  return protocol!
+  return court!
 }
 
-function loadOrCreateTerm(id: BigInt, event: ethereum.Event): ProtocolTerm {
-  let term = ProtocolTerm.load(id.toString())
+function loadOrCreateTerm(id: BigInt, event: ethereum.Event): CourtTerm {
+  let term = CourtTerm.load(id.toString())
 
   if (term === null) {
-    term = new ProtocolTerm(id.toString())
+    term = new CourtTerm(id.toString())
     term.createdAt = event.block.timestamp
   }
 

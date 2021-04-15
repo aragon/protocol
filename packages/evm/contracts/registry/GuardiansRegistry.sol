@@ -47,19 +47,19 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable {
     uint256 internal constant MAX_DRAFT_ITERATIONS = 10;
 
     // "ERC20-lite" interface to provide help for tooling
-    string public constant name = "Protocol Staked Aragon Network Token";
+    string public constant name = "Court Staked Aragon Network Token";
     string public constant symbol = "sANT";
     uint8 public constant decimals = 18;
 
     /**
     * @dev Guardians have three kind of balances, these are:
-    *      - active: tokens activated for the Protocol that can be locked in case the guardian is drafted
+    *      - active: tokens activated for the Court that can be locked in case the guardian is drafted
     *      - locked: amount of active tokens that are locked for a draft
-    *      - available: tokens that are not activated for the Protocol and can be withdrawn by the guardian at any time
+    *      - available: tokens that are not activated for the Court and can be withdrawn by the guardian at any time
     *
     *      Due to a gas optimization for drafting, the "active" tokens are stored in a `HexSumTree`, while the others
     *      are stored in this contract as `lockedBalance` and `availableBalance` respectively. Given that the guardians'
-    *      active balances cannot be affected during the current Protocol term, if guardians want to deactivate some of
+    *      active balances cannot be affected during the current Court term, if guardians want to deactivate some of
     *      their active tokens, their balance will be updated for the following term, and they won't be allowed to
     *      withdraw them until the current term has ended.
     *
@@ -83,7 +83,7 @@ contract GuardiansRegistry is IGuardiansRegistry, ControlledRecoverable {
     }
 
     /**
-    * @dev Given that the guardians balances cannot be affected during a Protocol term, if guardians want to deactivate some
+    * @dev Given that the guardians balances cannot be affected during a Court term, if guardians want to deactivate some
     *      of their tokens, the tree will always be updated for the following term, and they won't be able to
     *      withdraw the requested amount until the current term has finished. Thus, we need to keep track the term
     *      when a token deactivation was requested and its corresponding amount.

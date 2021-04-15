@@ -1,7 +1,7 @@
 const { ZERO_ADDRESS, bn, bigExp } = require('@aragon/contract-helpers-test')
 const { assertRevert, assertBn, assertAmountOfEvents, assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
 
-const { buildHelper } = require('../helpers/wrappers/protocol')
+const { buildHelper } = require('../helpers/wrappers/court')
 const { CONTROLLED_EVENTS } = require('../helpers/utils/events')
 const { CONTROLLED_ERRORS } = require('../helpers/utils/errors')
 

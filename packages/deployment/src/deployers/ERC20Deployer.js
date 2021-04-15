@@ -9,7 +9,7 @@ module.exports = class extends BaseDeployer {
 
   async call() {
     const token = this.previousDeploy[this.config.symbol]
-    const ERC20 = await this.environment.getArtifact('ERC20Mock', '@aragon/protocol-evm')
+    const ERC20 = await this.environment.getArtifact('ERC20Mock', '@aragon/court-evm')
 
     return (token && token.address)
       ? this._loadToken(ERC20, token.address)

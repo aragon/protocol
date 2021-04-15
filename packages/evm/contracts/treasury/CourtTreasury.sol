@@ -9,7 +9,7 @@ import "../core/modules/Controller.sol";
 import "../core/modules/ControlledRecoverable.sol";
 
 
-contract ProtocolTreasury is ITreasury, ControlledRecoverable {
+contract CourtTreasury is ITreasury, ControlledRecoverable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 

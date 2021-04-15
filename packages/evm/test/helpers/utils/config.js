@@ -7,7 +7,7 @@ const PCT_BASE = bn(10000)
 async function buildNewConfig(config, iteration = 1) {
   const artifacts = getArtifacts()
   return {
-    feeToken: await artifacts.require('ERC20Mock').new('Protocol Fee Token', 'CFT', 18),
+    feeToken: await artifacts.require('ERC20Mock').new('Court Fee Token', 'CFT', 18),
     guardianFee: config.guardianFee.add(bigExp(iteration * 10, 18)),
     draftFee: config.draftFee.add(bigExp(iteration * 10, 18)),
     settleFee: config.settleFee.add(bigExp(iteration * 10, 18)),
