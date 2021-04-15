@@ -1,13 +1,13 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { rinkeby: governor } = require('./governor')
 
-const TERM_DURATION = 60 * 60 * 8                                      // 8 hours
+const TERM_DURATION = 60 * 60 * 2                                     // 8 hours
 const START_DATE = Math.floor(new Date() / 1000 + TERM_DURATION + 120) // 2 minutes from now
 
 const ANT = {
   symbol: 'ANT',
   decimals: 18,
-  address: '0xd0389B41c33BDFBed6BbB8e083A27F880B99B0CC' // fake Rinkeby ANT
+  address: '0xf0f8D83CdaB2F9514bEf0319F1b434267be36B5c' // Rinkeby ANT v2
 }
 
 const DAI = {
@@ -24,10 +24,10 @@ module.exports = {
   termDuration:                   bn(TERM_DURATION),    // terms lasts 8 hours
   firstTermStartTime:             bn(START_DATE),       // first term start timestamp in seconds
   evidenceTerms:                  bn(21),               // evidence period lasts 21 terms (7 days)
-  commitTerms:                    bn(6),                // vote commits last 6 terms (2 days)
-  revealTerms:                    bn(6),                // vote reveals last 6 terms (2 days)
-  appealTerms:                    bn(6),                // appeals last 6 terms (2 days)
-  appealConfirmTerms:             bn(6),                // appeal confirmations last 6 terms (2 days)
+  commitTerms:                    bn(2),                // vote commits last 6 terms (2 days)
+  revealTerms:                    bn(2),                // vote reveals last 6 terms (2 days)
+  appealTerms:                    bn(2),                // appeals last 6 terms (2 days)
+  appealConfirmTerms:             bn(2),                // appeal confirmations last 6 terms (2 days)
   maxGuardiansPerDraftBatch:      bn(81),               // max number of guardians drafted per batch
   guardianFee:                    bigExp(40, 18),       // 40 fee tokens for guardian fees
   draftFee:                       bigExp(6, 18),        // 6 fee tokens for draft fees
