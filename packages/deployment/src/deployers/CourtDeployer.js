@@ -45,7 +45,6 @@ module.exports = class extends BaseDeployer {
   async loadOrDeployCourt() {
     const { court } = this.previousDeploy
     const AragonCourt = await this.environment.getArtifact('AragonCourt', '@aragon/court-evm')
-
     if (court && court.address) await this._loadAragonCourt(AragonCourt, court.address)
     else await this._deployAragonCourt(AragonCourt)
   }
@@ -177,7 +176,7 @@ module.exports = class extends BaseDeployer {
 
     this.court = await AragonCourt.new(
       [this.config.termDuration, this.config.firstTermStartTime],
-      [this.config.governor.address, this.config.governor.address, sender],
+      [this.config.governor.address, this.config.governor.address, this.config.governor.address],
       this.config.feeToken.address,
       [this.config.guardianFee, this.config.draftFee, this.config.settleFee],
       [this.config.evidenceTerms, this.config.commitTerms, this.config.revealTerms, this.config.appealTerms, this.config.appealConfirmTerms],

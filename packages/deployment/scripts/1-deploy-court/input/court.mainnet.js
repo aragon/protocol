@@ -1,8 +1,8 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { mainnet: governor } = require('./governor')
 
-const TERM_DURATION = 60 * 60 * 8                                           // 8 hours
-const START_DATE = 0                                                        // TODO
+const TERM_DURATION = 60 * 60 * 8                                // 8 hours
+const START_DATE = 1623657600 + TERM_DURATION                    // 2021-06-14 08:00 AM (UTC)
 
 const ANT = {
   symbol: 'ANT',
