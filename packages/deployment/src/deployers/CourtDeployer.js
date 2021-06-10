@@ -176,7 +176,7 @@ module.exports = class extends BaseDeployer {
 
     this.court = await AragonCourt.new(
       [this.config.termDuration, this.config.firstTermStartTime],
-      [this.config.governor.address, this.config.governor.address, this.config.governor.address],
+      [this.config.governor.address, this.config.governor.address, sender],
       this.config.feeToken.address,
       [this.config.guardianFee, this.config.draftFee, this.config.settleFee],
       [this.config.evidenceTerms, this.config.commitTerms, this.config.revealTerms, this.config.appealTerms, this.config.appealConfirmTerms],

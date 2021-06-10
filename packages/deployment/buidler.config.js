@@ -27,15 +27,6 @@ module.exports = {
       url: 'http://localhost:8545',
       gasLimit: 8000000,
       defaultBalanceEther: 1000
-    },
-    staging: {
-      url: "https://rinkeby.infura.io/v3/7a03fcb37be7479da06f92c5117afd47",
-      accounts: ['0x188f20fbb60eaf10ca87088ace8d4c20bb5687848ee462044db4a9ad442dcc81']
-    },
-    mainnet: {
-      url: 'https://mainnet.infura.io/v3/7a03fcb37be7479da06f92c5117afd47',
-      accounts: ['0x082be7c0b8f7bb0efb0e08dfa08f2fc03704bc8cba3caff5e611f8b06ac13c25'],
-      timeout: 200000000
     }
   }
 }

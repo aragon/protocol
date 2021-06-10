@@ -1,7 +1,7 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { rinkeby: governor } = require('./governor')
 
-const TERM_DURATION = 60 * 60 * 2                                     // 8 hours
+const TERM_DURATION = 60 * 60 * 2                                      // 2 hours
 const START_DATE = Math.floor(new Date() / 1000 + TERM_DURATION + 120) // 2 minutes from now
 
 const ANT = {
