@@ -6,7 +6,6 @@ on:
     - 'packages/subgraph/**'
     branches:
     - 'development'
-    - 'feature/deployments'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}
