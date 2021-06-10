@@ -18,7 +18,7 @@ court_mainnet=0xFb072baA713B01cE944A0515c3e1e98170977dAF
 # Known block numbers
 start_block_rinkeby=7519991
 start_block_staging=7519974
-start_block_mainnet=7519974
+start_block_mainnet=12605540
 
 # Lately, only rinkeby/mainnet deployments are supported. court_ropsten and court_staging
 # are commented until the aragon decides to fully support those networks too.
