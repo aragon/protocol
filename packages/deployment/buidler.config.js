@@ -21,7 +21,6 @@ task('deploy-faucet', 'Deploy token faucet')
   .setAction((args, bre) => executeTask(bre, deployFaucet, args))
 
 
-
 module.exports = {
   networks: {
     ganache: {

@@ -5,9 +5,7 @@ on:
     paths:
     - 'packages/subgraph/**'
     branches:
-    - 'master'
     - 'development'
-    - 'rename-protocol'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}
@@ -23,3 +21,5 @@ jobs:
       run: .github/scripts/kubectl-config.sh ${{secrets.KUBE_CA}} ${{secrets.KUBE_SERVER}} ${{secrets.KUBE_TOKEN}}
     - name: Rinkeby
       run: yarn workspace @aragon/court-subgraph deploy:rinkeby
+    - name: Staging
+      run: yarn workspace @aragon/court-subgraph deploy:staging

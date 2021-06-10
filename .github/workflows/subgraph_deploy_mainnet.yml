@@ -4,8 +4,8 @@ on:
   push:
     paths:
     - 'packages/subgraph/**'
-    tags:
-    - v*
+    branches:
+    - 'master'
 
 env:
   GRAPHKEY: ${{secrets.GRAPHKEY}}

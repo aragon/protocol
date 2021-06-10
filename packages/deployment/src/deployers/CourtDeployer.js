@@ -45,7 +45,6 @@ module.exports = class extends BaseDeployer {
   async loadOrDeployCourt() {
     const { court } = this.previousDeploy
     const AragonCourt = await this.environment.getArtifact('AragonCourt', '@aragon/court-evm')
-
     if (court && court.address) await this._loadAragonCourt(AragonCourt, court.address)
     else await this._deployAragonCourt(AragonCourt)
   }
