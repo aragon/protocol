@@ -141,6 +141,11 @@ module.exports = class extends BaseDeployer {
   async _loadAragonCourt(AragonCourt, address) {
     logger.warn(`Using previous deployed AragonCourt instance at ${address}`)
     this.court = await AragonCourt.at(address)
+
+    await this.court.heartbeat(300);
+    await this.court.heartbeat(300);
+    await this.court.heartbeat(300);
+    await this.court.heartbeat(200);
   }
 
   async _loadDisputes(DisputeManager, address) {

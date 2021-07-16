@@ -12,12 +12,12 @@ fi
 
 # Court known addresses
 court_rinkeby=0xC464EB732A1D2f5BbD705727576065C91B2E9f18
-court_staging=0xD2c15eCd1751C2cE8b02ab2D95db32E662517D61
+court_staging=0x9c003eC97676c30a041f128D671b3Db2f790c3E7
 court_mainnet=0xFb072baA713B01cE944A0515c3e1e98170977dAF
 
 # Known block numbers
 start_block_rinkeby=7519991
-start_block_staging=7519974
+start_block_staging=7519991
 start_block_mainnet=12605540
 
 # Lately, only rinkeby/mainnet deployments are supported. court_ropsten and court_staging

@@ -1,7 +1,7 @@
 const { bn, bigExp } = require('@aragon/contract-helpers-test')
 const { staging: governor } = require('./governor')
 
-const TERM_DURATION = 60 * 10                                          // 10 minutes
+const TERM_DURATION = 60 * 3                                          // 3 minutes
 const START_DATE = Math.floor(new Date() / 1000 + TERM_DURATION + 120) // 2 minutes from now
 
 const ANT = {
@@ -23,11 +23,11 @@ module.exports = {
   feeToken:                       DAI,                  // fee token for the court is DAI
   termDuration:                   bn(TERM_DURATION),    // terms lasts 8 hours
   firstTermStartTime:             bn(START_DATE),       // first term start timestamp in seconds
-  evidenceTerms:                  bn(2),                // evidence period lasts 2 terms (20 minutes)
-  commitTerms:                    bn(2),                // vote commits last 2 terms (20 minutes)
-  revealTerms:                    bn(2),                // vote reveals last 2 terms (20 minutes)
-  appealTerms:                    bn(2),                // appeals last 2 terms (20 minutes)
-  appealConfirmTerms:             bn(2),                // appeal confirmations last 2 terms (20 minutes)
+  evidenceTerms:                  bn(2),                // evidence period lasts 2 terms (6 minutes)
+  commitTerms:                    bn(2),                // vote commits last 2 terms (6 minutes)
+  revealTerms:                    bn(2),                // vote reveals last 2 terms (6 minutes)
+  appealTerms:                    bn(2),                // appeals last 2 terms (6 minutes)
+  appealConfirmTerms:             bn(2),                // appeal confirmations last 2 terms (6 minutes)
   maxGuardiansPerDraftBatch:      bn(81),               // max number of guardians drafted per batch
   guardianFee:                    bigExp(40, 18),       // 40 fee tokens for guardian fees
   draftFee:                       bigExp(6, 18),        // 6 fee tokens for draft fees
