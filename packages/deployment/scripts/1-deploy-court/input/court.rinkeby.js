@@ -13,7 +13,7 @@ const ANT = {
 const DAI = {
   symbol: 'DAI',
   decimals: 18,
-  address: '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735' // fake Rinkeby DAI
+  address: '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' // fake Rinkeby DAI
 }
 
 module.exports = {
